@@ -2,13 +2,13 @@ import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import { createBrowserRouter, RouterProvider } from "react-router-dom";
 import "./index.css";
-import App from "./App.tsx";
-import Signup from "./routes/Signup.tsx";
+import Root from "./routes/Root/Root.tsx";
+import Signup from "./routes/Signup/Signup.tsx";
 
 const router = createBrowserRouter([
   {
     path: "/",
-    element: <App />,
+    element: <Root />,
   },
   {
     path: "/signup",

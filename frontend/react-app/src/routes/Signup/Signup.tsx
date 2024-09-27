@@ -1,10 +1,10 @@
 import { useState } from "react";
-import "../App.css";
+import "../Root/Root.css";
 
 function Signup() {
   const [errorTitle, setErrorTitle] = useState("");
 
-  const handleSubmit = (event: any) => {
+  const handleSubmit = async (event: any) => {
     event.preventDefault();
     const formData = new FormData(event.currentTarget);
     const myHeaders = new Headers();
@@ -19,33 +19,33 @@ function Signup() {
       redirect: "follow",
     };
 
-    fetch("http://localhost:3000/api/signup", requestOptions)
-      .then((response) => response.json())
-      .then((result) => {
-        if (result.status === "fail") {
-          let errors = result.data?.errors;
-          let invalid = "";
-          if (errors) {
-            invalid = errors
-              .map((error: any) => {
-                error.path;
-              })
-              .toString();
-          }
+    try {
+      const repsonse = await fetch(
+        "http://localhost:3000/api/signup",
+        requestOptions
+      );
+      const result = await repsonse.json();
 
-          setErrorTitle(`${result.data.title} ${invalid}`);
-          return;
+      if (result.status === "fail") {
+        let errors = result.data?.errors;
+        let invalid = "";
+        if (errors) {
+          invalid = errors.map((error: any) => error.path).toString();
         }
-        if (result.status === "error") {
-          setErrorTitle(result.data.title);
-          return;
-        }
-        setErrorTitle("Success");
-      })
-      .catch((error) => {
-        setErrorTitle("Some error");
-        console.error(error);
-      });
+
+        setErrorTitle(`${result.data.title} ${invalid}`);
+        return;
+      }
+
+      if (result.status === "error") {
+        setErrorTitle(result.data.title);
+        return;
+      }
+      setErrorTitle("Success");
+    } catch (error) {
+      setErrorTitle("Some error");
+      console.error(error);
+    }
   };
 
   return (

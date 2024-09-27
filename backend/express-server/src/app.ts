@@ -8,6 +8,7 @@ import usersRouter from "./routes/users.js";
 import apiRouter from "./routes/api.js";
 const __dirname = import.meta.dirname;
 import db from "./db-object.js";
+import cors from "cors";
 
 const sql = `
   CREATE TABLE IF NOT EXISTS accounts (
@@ -35,6 +36,7 @@ var app = express();
 app.set("views", join(__dirname, "../views"));
 app.set("view engine", "pug");
 
+app.use(cors());
 app.use(logger("dev"));
 app.use(json());
 app.use(urlencoded({ extended: false }));
