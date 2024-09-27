@@ -4,6 +4,11 @@ import { body, validationResult } from "express-validator";
 import db from "../db-object.js";
 import { randomBytes, pbkdf2 } from "crypto";
 
+/* GET TEST */
+router.get("/", function (req, res, next) {
+  res.send("API is working properlyhhaa");
+});
+
 /* Create new account */
 router.post(
   "/signup",

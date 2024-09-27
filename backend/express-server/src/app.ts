@@ -32,30 +32,30 @@ db.none(sql)
 var app = express();
 
 // view engine setup
-app.set("views", join(__dirname, "views"));
+app.set("views", join(__dirname, "../views"));
 app.set("view engine", "pug");
 
 app.use(logger("dev"));
 app.use(json());
 app.use(urlencoded({ extended: false }));
 app.use(cookieParser());
-// app.use("/static", express.static(path.join(__dirname, "public")));
+// app.use("/static", express.static(path.join(__dirname, "../public")));
 
 // app.use("/", indexRouter);
 app.use("/users", usersRouter);
 app.use("/api", apiRouter);
 
-app.use(express.static(join(__dirname, "../../frontend/react-app/dist")));
+app.use(express.static(join(__dirname, "../../../frontend/react-app/dist")));
 
 app.get("*", function (req, res) {
   res.sendFile("index.html", {
-    root: join(__dirname, "../../frontend/react-app/dist/"),
+    root: join(__dirname, "../../../frontend/react-app/dist/"),
   });
 });
 
 // catch 404 and forward to error handler
 app.use(function (req, res, next) {
-  next(createError(404));
+  next(createError(403));
 });
 
 // error handler

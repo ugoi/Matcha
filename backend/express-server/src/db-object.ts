@@ -3,13 +3,14 @@ const pgp = pgPromise({
   /* Initialization Options */
 });
 import "dotenv/config";
-const cn = {
+import { IConnectionParameters } from "pg-promise/typescript/pg-subset.js";
+const cn: IConnectionParameters = {
   host: process.env.DB_HOST,
-  port: process.env.DB_PORT,
+  port: parseInt(process.env.DB_PORT),
   database: process.env.DB_NAME,
   user: process.env.DB_USER,
   password: process.env.DB_PASSWORD,
-  max: process.env.DB_MAX, // use up to 30 connections
+  max: parseInt(process.env.DB_MAX), // max number of clients in the pool
   // "types" - in case you want to set custom type parsers on the pool level
 };
 
