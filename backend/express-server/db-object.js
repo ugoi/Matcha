@@ -1,5 +1,8 @@
-const pgp = require("pg-promise")(/* options */);
-require('dotenv').config()
+import pgPromise from "pg-promise";
+const pgp = pgPromise({
+  /* Initialization Options */
+});
+import "dotenv/config";
 const cn = {
   host: process.env.DB_HOST,
   port: process.env.DB_PORT,
@@ -14,4 +17,4 @@ const cn = {
 const db = pgp(cn);
 
 // Exporting the database object for shared use:
-module.exports = db;
+export default db;

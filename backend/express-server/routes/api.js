@@ -1,8 +1,8 @@
-var express = require("express");
-var router = express.Router();
-const { body, validationResult } = require("express-validator");
-var db = require("../db-object");
-var crypto = require("crypto");
+import { Router } from "express";
+var router = Router();
+import { body, validationResult } from "express-validator";
+import db from "../db-object.js";
+import { randomBytes, pbkdf2 } from "crypto";
 
 /* Create new account */
 router.post(
@@ -12,8 +12,8 @@ router.post(
   function (req, res, next) {
     const result = validationResult(req);
     if (result.isEmpty()) {
-      var salt = crypto.randomBytes(16);
-      crypto.pbkdf2(
+      var salt = randomBytes(16);
+      pbkdf2(
         req.body.password,
         salt,
         310000,
@@ -72,4 +72,4 @@ router.get("/login", function (req, res, next) {
   res.send("Successfully signed in");
 });
 
-module.exports = router;
+export default router;

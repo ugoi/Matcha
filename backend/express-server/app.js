@@ -1,10 +1,14 @@
-var createError = require("http-errors");
-var express = require("express");
-var path = require("path");
-var cookieParser = require("cookie-parser");
-var logger = require("morgan");
+import createError from "http-errors";
+import express, { json, urlencoded } from "express";
+import { join } from "path";
+import cookieParser from "cookie-parser";
+import logger from "morgan";
+import indexRouter from "./routes/index.js";
+import usersRouter from "./routes/users.js";
+import apiRouter from "./routes/api.js";
+const __dirname = import.meta.dirname;
+import db from "./db-object.js";
 
-var db = require("./db-object");
 const sql = `
   CREATE TABLE IF NOT EXISTS accounts (
     user_id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
@@ -25,18 +29,15 @@ db.none(sql)
     console.log("ERROR:", error); // print error;
   });
 
-var indexRouter = require("./routes/index");
-var usersRouter = require("./routes/users");
-var apiRouter = require("./routes/api");
 var app = express();
 
 // view engine setup
-app.set("views", path.join(__dirname, "views"));
+app.set("views", join(__dirname, "views"));
 app.set("view engine", "pug");
 
 app.use(logger("dev"));
-app.use(express.json());
-app.use(express.urlencoded({ extended: false }));
+app.use(json());
+app.use(urlencoded({ extended: false }));
 app.use(cookieParser());
 // app.use("/static", express.static(path.join(__dirname, "public")));
 
@@ -44,11 +45,11 @@ app.use(cookieParser());
 app.use("/users", usersRouter);
 app.use("/api", apiRouter);
 
-app.use(express.static(path.join(__dirname, "../../frontend/react-app/dist")));
+app.use(express.static(join(__dirname, "../../frontend/react-app/dist")));
 
 app.get("*", function (req, res) {
   res.sendFile("index.html", {
-    root: path.join(__dirname, "../../frontend/react-app/dist/"),
+    root: join(__dirname, "../../frontend/react-app/dist/"),
   });
 });
 
@@ -68,4 +69,4 @@ app.use(function (err, req, res, next) {
   res.render("error");
 });
 
-module.exports = app;
+export default app;
