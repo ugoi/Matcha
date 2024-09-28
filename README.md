@@ -65,3 +65,15 @@ The backend is accessible at `http://localhost:3000/api`.
 
 The database is a PostgreSQL database.
 It's hosted on Supabase but you can use any PostgreSQL database. Just update .env file in the backend folder with your database credentials.
+
+
+## Example .env file for the backend
+
+```bash
+DB_HOST=<your database host>
+DB_PORT=<your database port>
+DB_NAME=<your database name>
+DB_USER=<your database user>
+DB_PASSWORD=<your database password>
+DB_MAX=<your database max connections>
+```
