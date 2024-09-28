@@ -5,7 +5,7 @@ Full Stack Matcha dating app
 ## Quick Start for Production
 
 This will build the frontend to the `frontend/react-app/dist` folder and start the backend server.
-The backend server the static files from the `frontend/react-app/dist` folder.
+The backend serves the static files from the `frontend/react-app/dist` folder.
 It is accessible at `http://localhost:3000`.
 With this approach, life reload for the frontend is not supported. You will have to rebuild the frontend to see changes.
 
