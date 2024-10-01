@@ -1,8 +1,12 @@
 import { Router } from "express";
 var router = Router();
-import { body, validationResult } from "express-validator";
+import { body, ValidationError, validationResult } from "express-validator";
 import db from "../db-object.js";
 import { randomBytes, pbkdf2 } from "crypto";
+import bcrypt from "bcrypt";
+import { ErrorStatus, JError, JFail } from "../errorHandlers/customErrors.js";
+import lodash from "lodash";
+const { unescape, escape } = lodash;
 
 /* GET TEST */
 router.get("/", function (req, res, next) {
@@ -12,63 +16,65 @@ router.get("/", function (req, res, next) {
 /* Create new account */
 router.post(
   "/signup",
-  body("email").isEmail(),
-  body("password").isLength({ min: 8 }),
-  function (req, res, next) {
+  body("email")
+    .isEmail()
+    .custom((value) => {
+      if (escape(value) !== value) {
+        throw new Error("Email cannot contain html tags");
+      }
+    }),
+  body("password").isStrongPassword(),
+  async function (req, res, next) {
     const result = validationResult(req);
     if (result.isEmpty()) {
-      var salt = randomBytes(16);
-      pbkdf2(
-        req.body.password,
-        salt,
-        310000,
-        32,
-        "sha256",
-        function (err, hashedPassword) {
-          if (err) {
-            return next(err);
-          }
-          db.one(
-            "INSERT INTO accounts(email, password, salt, created_at) VALUES($1, $2, $3, $4) RETURNING user_id, email, phone",
-            [req.body.email, hashedPassword, salt, new Date()]
-          )
-            .then((data) => {
-              return res.json({
-                status: "success",
-                data: {
-                  user: {
-                    id: data.user_id,
-                    email: data.email,
-                  },
-                },
-              });
-            })
-            .catch((error) => {
-              if (error.code == "23505") {
-                return res.json({
-                  status: "fail",
-                  data: {
-                    title:
-                      "The email address you entered is already associated with an account",
-                  },
-                });
-              }
+      let hashedPassword = "";
+      try {
+        hashedPassword = await bcrypt.hash(req.body.password, 10);
+      } catch (error) {
+        return next(error);
+      }
 
-              console.log("ERROR:", error); // print error;
-              return res.json({
-                status: "error",
-                message: "Unable to communicate with database",
-              });
-            });
+      try {
+        let data = await db.one(
+          "INSERT INTO accounts(email, hashed_password, created_at) VALUES($1, $2, $3) RETURNING user_id, email, phone",
+          [req.body.email, hashedPassword, new Date()]
+        );
+        res.json({
+          status: "success",
+          data: {
+            user: {
+              id: data.user_id,
+              email: data.email,
+            },
+          },
+        });
+        return;
+      } catch (error) {
+        if (error.code == "23505") {
+          next(
+            new JFail({
+              title:
+                "The email address you entered is already associated with an account",
+            })
+          );
+          return;
         }
-      );
-      return;
+
+        console.log("ERROR:", error); // print error;
+        next(new JError("An error occurred while creating your account"));
+        return;
+      }
     }
 
-    res.send({
-      status: "fail",
-      data: { title: "Invalid input", errors: result.array() },
+    // Type narrowing: only process 'field' errors that contain 'value'
+    const errors = result.array().map((error) => {
+      if (error.type === "field" && "value" in error) {
+        error.value = escape(error.value);
+      }
+      return error;
     });
+
+    next(new JFail({ title: "Invalid input", errors: errors }));
   }
 );
 

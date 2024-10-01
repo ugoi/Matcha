@@ -3,21 +3,22 @@ import express, { json, urlencoded } from "express";
 import { join } from "path";
 import cookieParser from "cookie-parser";
 import logger from "morgan";
-import indexRouter from "./routes/index.js";
-import usersRouter from "./routes/users.js";
 import apiRouter from "./routes/api.js";
 const __dirname = import.meta.dirname;
 import db from "./db-object.js";
 import cors from "cors";
+import { clientErrorHandler } from "./errorHandlers/clientErrorHandler.js";
 
 const sql = `
   CREATE TABLE IF NOT EXISTS accounts (
     user_id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
     username TEXT UNIQUE, 
-    password TEXT,
+    hashed_password TEXT,
     salt TEXT,
     email TEXT UNIQUE,
     phone TEXT UNIQUE, 
+    is_email_verified BOOLEAN DEFAULT FALSE,
+    is_phone_verified BOOLEAN DEFAULT FALSE,
     created_at TIMESTAMP NOT NULL, 
     last_login TIMESTAMP
   );
@@ -41,14 +42,8 @@ app.use(logger("dev"));
 app.use(json());
 app.use(urlencoded({ extended: false }));
 app.use(cookieParser());
-// app.use("/static", express.static(path.join(__dirname, "../public")));
-
-// app.use("/", indexRouter);
-app.use("/users", usersRouter);
 app.use("/api", apiRouter);
-
 app.use(express.static(join(__dirname, "../../../frontend/react-app/dist")));
-
 app.get("*", function (req, res) {
   res.sendFile("index.html", {
     root: join(__dirname, "../../../frontend/react-app/dist/"),
@@ -57,9 +52,11 @@ app.get("*", function (req, res) {
 
 // catch 404 and forward to error handler
 app.use(function (req, res, next) {
-  next(createError(403));
+  next(createError(404));
 });
 
+
+app.use(clientErrorHandler);
 // error handler
 app.use(function (err, req, res, next) {
   // set locals, only providing error in development
