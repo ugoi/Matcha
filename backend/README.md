@@ -2,7 +2,9 @@
 
 - `cd express-server` - Change directory
 - `npm install` - Install dependencies
-- `DEBUG=express-server:* npm start` - Run the app
+- `npm run dev` - Run the app
+- `npm run db:down` - Drop the database
+- `npm run db:up` - Create the database
 
 # API Syntax
 

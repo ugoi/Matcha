@@ -6,24 +6,25 @@ export enum ErrorStatus {
 export class JFail extends Error {
   status: ErrorStatus;
   data: Object;
-  errorMessage: string;
+  message: string;
 
   constructor(data: Object, message?: string) {
     super(message);
-    this.name = "JFail";
     this.status = ErrorStatus.Fail;
     this.data = data;
+    this.message = message;
   }
 }
 
 export class JError extends Error {
   status: ErrorStatus;
+  message: string;
   data: Object;
 
   constructor(message: string, data?: Object) {
     super(message);
-    this.name = "JError";
     this.status = ErrorStatus.Error;
-    this.data = data || null;
+    this.data = data;
+    this.message = message;
   }
 }

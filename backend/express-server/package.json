@@ -6,7 +6,9 @@
   "scripts": {
     "start": "npx tsc && node ./dist/bin/www.js",
     "dev": "npx tsx --watch ./src/bin/www.ts",
-    "build": "tsc"
+    "build": "tsc",
+    "db:down": "npx tsc && node ./dist/migrations/down.script.js",
+    "db:up": "npx tsc && node ./dist/migrations/up.script.js"
   },
   "dependencies": {
     "bcrypt": "^5.1.1",
@@ -31,16 +33,9 @@
     "@types/lodash": "^4.17.9",
     "@types/morgan": "^1.9.9",
     "@types/node": "^22.7.4",
-    "nodemon": "^3.1.7",
+    "cpy-cli": "^5.0.0",
+    "del-cli": "^5.1.0",
     "tsx": "^4.19.1",
     "typescript": "^5.6.2"
-  },
-  "nodemonConfig": {
-    "watch": [
-      "./src",
-      "../../frontend/react-app/src"
-    ],
-    "ext": "ts",
-    "exec": "ts-node ./src/bin/www.ts"
   }
 }
