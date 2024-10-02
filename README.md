@@ -9,7 +9,6 @@ The backend serves the static files from the `frontend/react-app/dist` folder.
 It is accessible at `http://localhost:3000`.
 With this approach, life reload for the frontend is not supported. You will have to rebuild the frontend to see changes.
 
-````bash
 
 1. Build the fornend
 ```bash
