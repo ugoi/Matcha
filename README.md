@@ -68,6 +68,8 @@ It's hosted on Supabase but you can use any PostgreSQL database. Just update .en
 
 ## Example .env file for the backend
 
+Place this in `backend/express-server/.env` file.
+
 ```bash
 ## Database
 DB_HOST=your_database_host
