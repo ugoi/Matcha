@@ -69,10 +69,22 @@ It's hosted on Supabase but you can use any PostgreSQL database. Just update .en
 ## Example .env file for the backend
 
 ```bash
-DB_HOST=<your database host>
-DB_PORT=<your database port>
-DB_NAME=<your database name>
-DB_USER=<your database user>
-DB_PASSWORD=<your database password>
-DB_MAX=<your database max connections>
+## Database
+DB_HOST=your_database_host
+DB_PORT=your_database_port
+DB_NAME=your_database_name
+DB_USER=your_database_user
+DB_PASSWORD=your_database_password
+DB_MAX=your_database_connection_limit
+
+## Mail
+BREVO_API_KEY=your_brevo_api_key
+BREVO_SENDER_EMAIL=your_sender_email
+BREVO_SENDER_NAME=your_sender_name
+
+## JWT
+JWT_SECRET=your_jwt_secret
+JWT_EXPIRES_IN=your_jwt_expiration
+JWT_ISSUER=your_jwt_issuer
+JWT_AUDIENCE=your_jwt_audience
 ```
