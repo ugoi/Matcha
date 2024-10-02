@@ -1,78 +1,15 @@
-import { RegisterInput, RegisterOutput } from "./auth.interface.js";
 import db from "../../db-object.js";
-import bcrypt from "bcrypt";
 import { JFail } from "../../error-handlers/custom-errors.js";
 import apiInstance from "../../brevo-object.js";
 import brevo from "@getbrevo/brevo";
 import fs from "node:fs";
 import { join } from "path";
+import { LoginInput, LoginOutput } from "./auth.interface.js";
+import { accountRepository } from "../account/account.repository.js";
+import bcrypt from "bcrypt";
 const __dirname = import.meta.dirname;
-
-export async function createAccount(
-  input: RegisterInput
-): Promise<RegisterOutput> {
-  let hashedPassword = "";
-
-  hashedPassword = await bcrypt.hash(input.password, 10);
-
-  try {
-    let data = await db.one(
-      `
-      INSERT INTO accounts(first_name, last_name, username, email, hashed_password, created_at) 
-      VALUES($1, $2, $3, $4, $5, $6)
-      RETURNING user_id, first_name, last_name, username, email
-      `,
-      [
-        input.firstName,
-        input.lastName,
-        input.username,
-        input.email,
-        hashedPassword,
-        new Date(),
-      ]
-    );
-
-    const nextMonth = new Date();
-    nextMonth.setDate(new Date().getDate() + 30);
-
-    let tokenData = await db.one(
-      `
-      INSERT INTO tokens(user_id, token_type, expiry_date)
-      VALUES($1, $2, $3)
-      RETURNING token_id
-      `,
-      [data.user_id, "email_verification", nextMonth]
-    );
-
-    // On successful account creation, send verification email and return user data
-    sendVerificationEmail(
-      `${data.first_name} ${data.last_name}`,
-      data.email,
-      `http://localhost:3000/verify-email?token=${tokenData.token_id}`
-    );
-    return {
-      status: "success",
-      data: {
-        user: {
-          id: data.user_id,
-          firstName: data.first_name,
-          lastName: data.last_name,
-          username: data.user_name,
-          email: data.email,
-        },
-      },
-    };
-  } catch (error) {
-    if (error.code == "23505") {
-      throw new JFail({
-        title: "The details you entered are already associated with an account",
-      });
-    } else {
-      // rethrow error
-      throw error;
-    }
-  }
-}
+import jwt from "jsonwebtoken";
+import { env } from "node:process";
 
 export async function sendVerificationEmail(
   name: string,
@@ -154,4 +91,42 @@ export async function verifyEmail(token: string) {
       `,
     [data.user_id]
   );
+}
+
+export async function login(input: LoginInput): Promise<LoginOutput> {
+  // Login user
+  const { username, password } = input;
+  let account = await accountRepository.findOne({
+    username: username,
+    email: username,
+  });
+
+  if (!account) {
+    throw new JFail({
+      title: "Invalid credentials",
+    });
+  }
+
+  if (!(await bcrypt.compare(password, account.hashed_password))) {
+    throw new JFail({
+      title: "Invalid credentials",
+    });
+  }
+
+  var token = jwt.sign(
+    {
+      sub: account.user_id,
+      iss: process.env.JWT_ISSUER,
+      aud: process.env.JWT_AUDIENCE,
+    },
+
+    env.JWT_SECRET
+  );
+
+  return {
+    status: "success",
+    data: {
+      token: token,
+    },
+  };
 }

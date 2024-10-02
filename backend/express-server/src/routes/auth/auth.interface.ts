@@ -1,20 +1,11 @@
-export interface RegisterInput {
-  firstName: string;
-  lastName: string;
+export interface LoginInput {
   username: string;
-  email: string;
   password: string;
 }
 
-export interface RegisterOutput {
+export interface LoginOutput {
   status: string;
   data: {
-    user: {
-      id: string;
-      firstName: string;
-      lastName: string;
-      username: string;
-      email: string;
-    };
+    token: string;
   };
 }

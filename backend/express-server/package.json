@@ -8,7 +8,8 @@
     "dev": "npx tsx --watch ./src/bin/www.ts",
     "build": "tsc",
     "db:down": "npx tsc && node ./dist/migrations/down.script.js",
-    "db:up": "npx tsc && node ./dist/migrations/up.script.js"
+    "db:up": "npx tsc && node ./dist/migrations/up.script.js",
+    "test": "vitest"
   },
   "dependencies": {
     "@getbrevo/brevo": "^2.2.0",
@@ -20,8 +21,11 @@
     "express": "~4.16.1",
     "express-validator": "^7.2.0",
     "http-errors": "~1.6.3",
+    "jsonwebtoken": "^9.0.2",
     "lodash": "^4.17.21",
     "morgan": "~1.9.1",
+    "passport": "^0.7.0",
+    "passport-jwt": "^4.0.1",
     "pg-promise": "^11.9.1",
     "pug": "2.0.0-beta11"
   },
@@ -34,9 +38,12 @@
     "@types/lodash": "^4.17.9",
     "@types/morgan": "^1.9.9",
     "@types/node": "^22.7.4",
+    "@types/passport": "^1.0.16",
+    "@types/passport-jwt": "^4.0.1",
     "cpy-cli": "^5.0.0",
     "del-cli": "^5.1.0",
     "tsx": "^4.19.1",
-    "typescript": "^5.6.2"
+    "typescript": "^5.6.2",
+    "vitest": "^2.1.2"
   }
 }

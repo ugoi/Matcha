@@ -10,6 +10,9 @@ import cors from "cors";
 import { clientErrorHandler } from "./error-handlers/client-error-handler.js";
 import { defaultErrorHandler } from "./error-handlers/default-error-handler.js";
 import { up } from "./migrations/up.js";
+import passport from "passport";
+import { accountRepository } from "./routes/account/account.repository.js";
+import { Strategy as JwtStrategy, ExtractJwt } from "passport-jwt";
 
 up();
 
@@ -31,6 +34,34 @@ app.get("*", function (req, res) {
     root: join(__dirname, "../../../frontend/react-app/dist/"),
   });
 });
+
+// Configure passport
+var cookieExtractor = function (req) {
+  var token = null;
+  if (req && req.cookies) {
+    token = req.cookies["jwt"];
+  }
+  return token;
+};
+var opts: any = {};
+opts.jwtFromRequest = cookieExtractor;
+opts.secretOrKey = process.env.JWT_SECRET;
+opts.issuer = process.env.JWT_ISSUER;
+opts.audience = process.env.JWT_AUDIENCE;
+passport.use(
+  new JwtStrategy(opts, function (jwt_payload, done) {
+    try {
+      const user = accountRepository.findOne({ id: jwt_payload.sub });
+      if (user) {
+        return done(null, user);
+      } else {
+        return done(null, false);
+      }
+    } catch (error) {
+      return done(error, false);
+    }
+  })
+);
 
 // catch 404 and forward to error handler
 app.use(function (req, res, next) {

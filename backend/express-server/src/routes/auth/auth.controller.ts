@@ -3,8 +3,9 @@ var router = Router();
 import { body, param, query, validationResult } from "express-validator";
 import { JFail } from "../../error-handlers/custom-errors.js";
 import lodash from "lodash";
-import { createAccount, verifyEmail } from "./auth.service.js";
+import { login, verifyEmail } from "./auth.service.js";
 import { isHtmlTagFree } from "../../utils/utils.js";
+import { createAccount } from "../account/account.service.js";
 const { unescape, escape } = lodash;
 
 /* GET TEST */
@@ -76,8 +77,30 @@ router.patch(
 );
 
 /* Signs user in with existing account */
-router.get("/login", function (req, res, next) {
-  res.send("Successfully signed in");
-});
+router.post(
+  "/login",
+  body("username").notEmpty(),
+  body("password").notEmpty(),
+
+  async function (req, res, next) {
+    try {
+      const result = await login({
+        username: req.body.username,
+        password: req.body.password,
+      });
+
+      // Set token in cookie
+      res.cookie("jwt", result.data.token, {
+        httpOnly: true,
+        secure: true,
+      });
+
+      res.json(result);
+    } catch (error) {
+      next(error);
+      return;
+    }
+  }
+);
 
 export default router;
