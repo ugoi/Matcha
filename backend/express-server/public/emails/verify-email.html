@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta http-equiv="X-UA-Compatible" content="ie=edge" />
+    <title>Verify your email - Matcha</title>
+    <style>
+      body {
+        font-family: "Arial", sans-serif;
+        background-color: #f7f7f7;
+        margin: 0;
+        padding: 0;
+      }
+
+      .email-container {
+        max-width: 600px;
+        margin: 0 auto;
+        background-color: #ffffff;
+        border-radius: 8px;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
+        overflow: hidden;
+      }
+
+      .email-header {
+        background-color: #ff4081;
+        padding: 20px;
+        text-align: center;
+        color: #ffffff;
+      }
+
+      .email-header h1 {
+        margin: 0;
+        font-size: 24px;
+      }
+
+      .email-body {
+        padding: 30px;
+      }
+
+      .email-body h2 {
+        color: #333333;
+        font-size: 22px;
+        margin-top: 0;
+      }
+
+      .email-body p {
+        color: #666666;
+        font-size: 16px;
+        line-height: 1.5;
+      }
+
+      .email-body .btn {
+        display: inline-block;
+        padding: 15px 30px;
+        margin-top: 20px;
+        background-color: #ff4081;
+        color: #ffffff;
+        text-decoration: none;
+        border-radius: 50px;
+        font-size: 18px;
+      }
+
+      .email-body .btn:hover {
+        background-color: #e3366f;
+      }
+
+      .email-footer {
+        background-color: #f7f7f7;
+        text-align: center;
+        padding: 20px;
+        color: #999999;
+        font-size: 14px;
+      }
+
+      .email-footer a {
+        color: #ff4081;
+        text-decoration: none;
+      }
+
+      .email-footer a:hover {
+        text-decoration: underline;
+      }
+    </style>
+  </head>
+
+  <body>
+    <div class="email-container">
+      <!-- Header -->
+      <div class="email-header">
+        <h1>Welcome to Matcha!</h1>
+      </div>
+
+      <!-- Body -->
+      <div class="email-body">
+        <h2>Verify Your Email Address</h2>
+        <p>
+          Hi there! Thank you for signing up for Matcha. We’re excited to help
+          you find meaningful connections!
+        </p>
+        <p>
+          To get started, please verify your email address by clicking the
+          button below:
+        </p>
+        <a href="{{params.verification_link}}" class="btn">Verify Email</a>
+        <p>
+          If you did not sign up for a Matcha account, you can safely ignore
+          this email.
+        </p>
+      </div>
+
+      <!-- Footer -->
+      <div class="email-footer">
+        <p>Need help? <a href="https://example.com/help">Contact Support</a></p>
+        <p>&copy; 2024 Matcha. All rights reserved.</p>
+      </div>
+    </div>
+  </body>
+</html>

@@ -1,16 +1,10 @@
 import { Router } from "express";
 var router = Router();
-import { body, ValidationError, validationResult } from "express-validator";
-import db from "../../db-object.js";
-import { randomBytes, pbkdf2 } from "crypto";
-import bcrypt from "bcrypt";
-import {
-  ErrorStatus,
-  JError,
-  JFail,
-} from "../../error-handlers/custom-errors.js";
+import { body, param, query, validationResult } from "express-validator";
+import { JFail } from "../../error-handlers/custom-errors.js";
 import lodash from "lodash";
-import { createAccount } from "./auth.service.js";
+import { createAccount, verifyEmail } from "./auth.service.js";
+import { isHtmlTagFree } from "../../utils/utils.js";
 const { unescape, escape } = lodash;
 
 /* GET TEST */
@@ -21,14 +15,10 @@ router.get("/", function (req, res, next) {
 /* Create new account */
 router.post(
   "/signup",
-  body("email")
-    .isEmail()
-    .custom((value) => {
-      if (escape(value) !== value) {
-        throw new Error("Email cannot contain html tags");
-      }
-      return true;
-    }),
+  body("firstName").notEmpty().escape(),
+  body("lastName").notEmpty().escape(),
+  body("username").notEmpty().custom(isHtmlTagFree),
+  body("email").isEmail().custom(isHtmlTagFree),
   body("password").isStrongPassword(),
 
   async function (req, res, next) {
@@ -37,6 +27,9 @@ router.post(
       // Create new account
       try {
         const account = await createAccount({
+          firstName: req.body.firstName,
+          lastName: req.body.lastName,
+          username: req.body.username,
           email: req.body.email,
           password: req.body.password,
         });
@@ -54,7 +47,30 @@ router.post(
         }
         return error;
       });
-      next(new JFail({ title: "Invalid inputt", errors: errors }));
+      next(new JFail({ title: "invalid input", errors: errors }));
+    }
+  }
+);
+
+/* Verify email */
+router.patch(
+  "/verify-email",
+  query("token").notEmpty(),
+  async function (req, res, next) {
+    const result = validationResult(req);
+    if (result.isEmpty()) {
+      // Verify email
+
+      try {
+        await verifyEmail(req.query.token);
+      } catch (error) {
+        next(error);
+        return;
+      }
+
+      res.json({ status: "success", data: { message: "Email verified" } });
+    } else {
+      next(new JFail({ title: "invalid input", errors: result.array() }));
     }
   }
 );
