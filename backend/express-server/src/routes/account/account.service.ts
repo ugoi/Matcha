@@ -6,6 +6,8 @@ import db from "../../db-object.js";
 import bcrypt from "bcrypt";
 import { JFail } from "../../error-handlers/custom-errors.js";
 import { sendVerificationEmail } from "../auth/auth.service.js";
+import { createToken } from "../token/token.repository.js";
+import { TokenType } from "../token/token.interface.js";
 
 export async function createAccount(
   input: CreateAccountInput
@@ -34,14 +36,11 @@ export async function createAccount(
     const nextMonth = new Date();
     nextMonth.setDate(new Date().getDate() + 30);
 
-    let tokenData = await db.one(
-      `
-      INSERT INTO tokens(user_id, token_type, expiry_date)
-      VALUES($1, $2, $3)
-      RETURNING token_id
-      `,
-      [data.user_id, "email_verification", nextMonth]
-    );
+    let tokenData = await createToken({
+      user_id: data.user_id,
+      token_type: TokenType.EmailVerification,
+      expiry_date: nextMonth,
+    });
 
     // On successful account creation, send verification email and return user data
     sendVerificationEmail(

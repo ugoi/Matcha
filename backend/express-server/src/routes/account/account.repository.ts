@@ -1,4 +1,5 @@
 import db from "../../db-object.js";
+import { Account } from "./account.interface.js";
 
 interface FindOneInput {
   id?: string;
@@ -7,7 +8,7 @@ interface FindOneInput {
 }
 
 export const accountRepository = {
-  findOne: async function findOne(input: FindOneInput) {
+  findOne: async function findOne(input: FindOneInput): Promise<Account> {
     const { id, username, email } = input;
 
     // Initialize query and values array
