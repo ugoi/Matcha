@@ -68,6 +68,8 @@ function Signup() {
           </div>
           <button type="submit">Register</button>
         </form>
+        <p>or</p>
+        <a href="/api/login/google">Sign in with Google</a>
       </div>
     </>
   );

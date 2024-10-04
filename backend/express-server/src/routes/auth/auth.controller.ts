@@ -3,12 +3,19 @@ var router = Router();
 import { body, param, query, validationResult } from "express-validator";
 import { JFail } from "../../error-handlers/custom-errors.js";
 import lodash from "lodash";
-import { login, resetPassword, sendPasswordResetEmail, verifyEmail } from "./auth.service.js";
+import {
+  login,
+  loginWithGoogle,
+  resetPassword,
+  sendPasswordResetEmail,
+  verifyEmail,
+} from "./auth.service.js";
 import { isHtmlTagFree } from "../../utils/utils.js";
 import { createAccount } from "../account/account.service.js";
 import { createToken } from "../token/token.repository.js";
 import { TokenType } from "../token/token.interface.js";
 import { accountRepository } from "../account/account.repository.js";
+import passport from "passport";
 const { unescape, escape } = lodash;
 
 /* GET TEST */
@@ -80,7 +87,7 @@ router.patch(
 );
 
 /* Signs user in with existing account */
-router.post(
+router.get(
   "/login",
   body("username").notEmpty(),
   body("password").notEmpty(),
@@ -159,6 +166,34 @@ router.patch(
       res.json({ status: "success", data: { message: "Password reset" } });
     } else {
       next(new JFail({ title: "invalid input", errors: result.array() }));
+    }
+  }
+);
+
+/* Google login */
+router.get(
+  "/login/google",
+  passport.authenticate("google", { scope: ["profile", "email"] })
+);
+
+/* Google login redirect */
+router.get(
+  "/oauth2/redirect/google",
+  passport.authenticate("google", { session: false }),
+  async function (req, res, next) {
+    try {
+      const result = await loginWithGoogle(req.user);
+
+      // Set token in cookie
+      res.cookie("jwt", result.data.token, {
+        httpOnly: true,
+        secure: true,
+      });
+
+      res.redirect("/");
+    } catch (error) {
+      next(error);
+      return;
     }
   }
 );

@@ -47,6 +47,8 @@ export const accountRepository = {
       return null;
     }
 
-    return data[0];
+    let account: Account = data[0];
+
+    return account;
   },
 };

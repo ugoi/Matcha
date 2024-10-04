@@ -4,13 +4,17 @@ import apiInstance from "../../brevo-object.js";
 import brevo from "@getbrevo/brevo";
 import fs from "node:fs";
 import { join } from "path";
-import { LoginInput, LoginOutput } from "./auth.interface.js";
+import {
+  LoginInput,
+  LoginOutput,
+} from "./auth.interface.js";
 import { accountRepository } from "../account/account.repository.js";
 import bcrypt from "bcrypt";
 const __dirname = import.meta.dirname;
 import jwt from "jsonwebtoken";
 import { env, exitCode } from "node:process";
 import { TokenType } from "../token/token.interface.js";
+import { Account } from "../account/account.interface.js";
 
 export async function sendVerificationEmail(
   name: string,
@@ -203,6 +207,32 @@ export async function login(input: LoginInput): Promise<LoginOutput> {
     },
 
     env.JWT_SECRET
+  );
+
+  return {
+    status: "success",
+    data: {
+      token: token,
+    },
+  };
+}
+
+export async function loginWithGoogle(account: Account): Promise<LoginOutput> {
+  if (!account) {
+    throw new JFail({
+      title: "Invalid credentials",
+    });
+  }
+
+  var token = jwt.sign(
+    {
+      sub: account.user_id,
+      iss: process.env.JWT_ISSUER,
+      aud: process.env.JWT_AUDIENCE,
+    },
+
+    env.JWT_SECRET,
+    { expiresIn: "30d" }
   );
 
   return {

@@ -1,13 +1,6 @@
 import { Router } from "express";
 var router = Router();
-import { body, param, query, validationResult } from "express-validator";
-import { JFail } from "../../error-handlers/custom-errors.js";
-import lodash from "lodash";
-import { isHtmlTagFree } from "../../utils/utils.js";
-import { createAccount } from "./account.service.js";
-import { accountRepository } from "./account.repository.js";
-import passport, { use } from "passport";
-const { unescape, escape } = lodash;
+import passport from "passport";
 
 /* Get account details*/
 router.get(

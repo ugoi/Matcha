@@ -27,7 +27,6 @@ export interface Account {
   phone: string;
   username: string;
   hashed_password: string;
-  salt: string;
   is_email_verified: boolean;
   is_phone_verified: boolean;
   created_at: Date;
