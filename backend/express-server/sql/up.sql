@@ -2,7 +2,6 @@
     user_id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
     first_name TEXT,
     last_name TEXT,
-    display_name TEXT,
     email TEXT UNIQUE,
     phone TEXT UNIQUE, 
     username TEXT UNIQUE, 

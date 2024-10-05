@@ -5,7 +5,7 @@ import { JFail } from "../../error-handlers/custom-errors.js";
 import lodash from "lodash";
 import {
   login,
-  loginWithGoogle,
+  createJwtToken,
   resetPassword,
   sendPasswordResetEmail,
   verifyEmail,
@@ -182,7 +182,32 @@ router.get(
   passport.authenticate("google", { session: false }),
   async function (req, res, next) {
     try {
-      const result = await loginWithGoogle(req.user);
+      const result = await createJwtToken(req.user);
+
+      // Set token in cookie
+      res.cookie("jwt", result.data.token, {
+        httpOnly: true,
+        secure: true,
+      });
+
+      res.redirect("/");
+    } catch (error) {
+      next(error);
+      return;
+    }
+  }
+);
+
+/* Facebook login */
+router.get("/login/facebook", passport.authenticate("facebook"));
+
+/* Facebook login redirect */
+router.get(
+  "/oauth2/redirect/facebook",
+  passport.authenticate("facebook", { session: false }),
+  async function (req, res, next) {
+    try {
+      const result = await createJwtToken(req.user);
 
       // Set token in cookie
       res.cookie("jwt", result.data.token, {

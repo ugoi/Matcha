@@ -70,6 +70,8 @@ function Signup() {
         </form>
         <p>or</p>
         <a href="/api/login/google">Sign in with Google</a>
+        <br />
+        <a href="/api/login/facebook">Sign in with Facebook</a>
       </div>
     </>
   );

@@ -14,6 +14,8 @@ import passport from "passport";
 import { accountRepository } from "./routes/account/account.repository.js";
 import { Strategy as JwtStrategy, ExtractJwt } from "passport-jwt";
 import { Strategy as GoogleStrategy } from "passport-google-oauth20";
+import { Strategy as FacebookStrategy } from "passport-facebook";
+import { authenticatedWithFederatedProvider } from "./routes/auth/auth.service.js";
 
 up();
 
@@ -74,38 +76,28 @@ passport.use(
       callbackURL: "http://localhost:3000/api/oauth2/redirect/google",
     },
     async function (accessToken, refreshToken, profile, cb) {
-      const issuer = profile.provider;
       try {
-        let cred = await db.oneOrNone(
-          "SELECT * FROM federated_credentials WHERE provider = $1 AND subject = $2",
-          [issuer, profile.id]
-        );
-        if (!cred) {
-          // The Google account has not logged in to this app before.  Create a
-          // new user record and link it to the Google account.
-          let accountData = await db.one(
-            "INSERT INTO accounts (display_name) VALUES ($1) RETURNING user_id",
-            [profile.displayName]
-          );
-          var id = accountData.user_id;
-          await db.none(
-            "INSERT INTO federated_credentials (user_id, provider, subject) VALUES ($1, $2, $3)",
-            [id, issuer, profile.id]
-          );
+        const user = await authenticatedWithFederatedProvider(profile);
+        return cb(null, user);
+      } catch (error) {
+        return cb(error);
+      }
+    }
+  )
+);
 
-          const user = await accountRepository.findOne({ id: id });
-
-          return cb(null, user);
-        } else {
-          // The Google account has previously logged in to the app.  Get the
-          // user record linked to the Google account and log the user in.
-          const user = await accountRepository.findOne({ id: cred.user_id });
-
-          if (!user) {
-            return cb(null, false);
-          }
-          return cb(null, user);
-        }
+// Configure facebook strategy
+passport.use(
+  new FacebookStrategy(
+    {
+      clientID: process.env.FACEBOOK_CLIENT_ID,
+      clientSecret: process.env.FACEBOOK_CLIENT_SECRET,
+      callbackURL: "http://localhost:3000/api/oauth2/redirect/facebook",
+    },
+    async function (accessToken, refreshToken, profile, cb) {
+      try {
+        const user = await authenticatedWithFederatedProvider(profile);
+        return cb(null, user);
       } catch (error) {
         return cb(error);
       }

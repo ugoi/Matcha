@@ -4,10 +4,7 @@ import apiInstance from "../../brevo-object.js";
 import brevo from "@getbrevo/brevo";
 import fs from "node:fs";
 import { join } from "path";
-import {
-  LoginInput,
-  LoginOutput,
-} from "./auth.interface.js";
+import { LoginInput, LoginOutput } from "./auth.interface.js";
 import { accountRepository } from "../account/account.repository.js";
 import bcrypt from "bcrypt";
 const __dirname = import.meta.dirname;
@@ -15,6 +12,7 @@ import jwt from "jsonwebtoken";
 import { env, exitCode } from "node:process";
 import { TokenType } from "../token/token.interface.js";
 import { Account } from "../account/account.interface.js";
+import { Profile } from "passport";
 
 export async function sendVerificationEmail(
   name: string,
@@ -217,7 +215,7 @@ export async function login(input: LoginInput): Promise<LoginOutput> {
   };
 }
 
-export async function loginWithGoogle(account: Account): Promise<LoginOutput> {
+export async function createJwtToken(account: Account): Promise<LoginOutput> {
   if (!account) {
     throw new JFail({
       title: "Invalid credentials",
@@ -241,4 +239,37 @@ export async function loginWithGoogle(account: Account): Promise<LoginOutput> {
       token: token,
     },
   };
+}
+
+export async function authenticatedWithFederatedProvider(
+  profile: Profile
+): Promise<Account> {
+  const issuer = profile.provider;
+  let cred = await db.oneOrNone(
+    "SELECT * FROM federated_credentials WHERE provider = $1 AND subject = $2",
+    [issuer, profile.id]
+  );
+  if (!cred) {
+    // The Google account has not logged in to this app before.  Create a
+    // new user record and link it to the Google account.
+    let accountData = await db.one(
+      "INSERT INTO accounts (first_name) VALUES ($1) RETURNING user_id",
+      [profile.name.givenName]
+    );
+    var id = accountData.user_id;
+    await db.none(
+      "INSERT INTO federated_credentials (user_id, provider, subject) VALUES ($1, $2, $3)",
+      [id, issuer, profile.id]
+    );
+
+    const user = await accountRepository.findOne({ id: id });
+
+    return user;
+  } else {
+    // The Google account has previously logged in to the app.  Get the
+    // user record linked to the Google account and log the user in.
+    const user = await accountRepository.findOne({ id: cred.user_id });
+
+    return user;
+  }
 }
