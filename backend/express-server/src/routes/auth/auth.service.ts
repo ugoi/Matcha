@@ -197,22 +197,7 @@ export async function login(input: LoginInput): Promise<LoginOutput> {
     });
   }
 
-  var token = jwt.sign(
-    {
-      sub: account.user_id,
-      iss: process.env.JWT_ISSUER,
-      aud: process.env.JWT_AUDIENCE,
-    },
-
-    env.JWT_SECRET
-  );
-
-  return {
-    status: "success",
-    data: {
-      token: token,
-    },
-  };
+  return await createJwtToken(account);
 }
 
 export async function createJwtToken(account: Account): Promise<LoginOutput> {
