@@ -55,8 +55,16 @@ function Signup() {
         <form onSubmit={handleSubmit}>
           <p>{errorTitle}</p>
           <div>
-            <label htmlFor="name">Name</label>
-            <input type="text" id="name" name="name" required />
+            <label htmlFor="firstName">First Name</label>
+            <input type="text" id="firstName" name="firstName" required />
+          </div>
+          <div>
+            <label htmlFor="lastName">Last Name</label>
+            <input type="text" id="lastName" name="lastName" required />
+          </div>
+          <div>
+            <label htmlFor="username">Username</label>
+            <input type="text" id="username" name="username" required />
           </div>
           <div>
             <label htmlFor="email">Email</label>

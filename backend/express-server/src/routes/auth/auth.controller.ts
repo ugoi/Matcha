@@ -203,7 +203,10 @@ router.get(
 );
 
 /* Facebook login */
-router.get("/login/facebook", passport.authenticate("facebook"));
+router.get(
+  "/login/facebook",
+  passport.authenticate("facebook", { scope: ["email"] })
+);
 
 /* Facebook login redirect */
 router.get(

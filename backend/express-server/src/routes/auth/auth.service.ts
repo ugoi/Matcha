@@ -237,9 +237,14 @@ export async function authenticatedWithFederatedProvider(
   if (!cred) {
     // The Google account has not logged in to this app before.  Create a
     // new user record and link it to the Google account.
+
+    const firstName = profile.name.givenName;
+    const lastName = profile.name.familyName;
+    const email = profile?.emails?.[0]?.value;
+
     let accountData = await db.one(
-      "INSERT INTO accounts (first_name) VALUES ($1) RETURNING user_id",
-      [profile.name.givenName]
+      "INSERT INTO accounts (first_name, last_name, email, is_email_verified) VALUES ($1, $2, $3, $4) RETURNING user_id",
+      [firstName, lastName, email, true]
     );
     var id = accountData.user_id;
     await db.none(
