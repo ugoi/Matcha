@@ -19,9 +19,13 @@ import passport from "passport";
 const { unescape, escape } = lodash;
 
 /* GET TEST */
-router.get("/", function (req, res, next) {
-  res.send("API is working properlyhhaa");
-});
+router.get(
+  "/check-auth",
+  passport.authenticate("jwt", { session: false }),
+  function (req, res) {
+    res.json({ status: "success", data: { message: "Authenticated" } });
+  }
+);
 
 /* Create new account */
 router.post(
