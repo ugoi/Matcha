@@ -7,6 +7,7 @@ export interface CreateTokenInput {
   user_id: string;
   token_type: TokenType;
   expiry_date: Date;
+  value: string;
 }
 
 export interface Token {

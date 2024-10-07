@@ -9,8 +9,13 @@ import {
   resetPassword,
   sendPasswordResetEmail,
   verifyEmail,
+  sendVerificationEmail,
 } from "./auth.service.js";
-import { isHtmlTagFree } from "../../utils/utils.js";
+import {
+  escapeErrors,
+  isEmailVerified,
+  isHtmlTagFree,
+} from "../../utils/utils.js";
 import { createAccount } from "../account/account.service.js";
 import { createToken } from "../token/token.repository.js";
 import { TokenType } from "../token/token.interface.js";
@@ -18,7 +23,7 @@ import { accountRepository } from "../account/account.repository.js";
 import passport from "passport";
 const { unescape, escape } = lodash;
 
-/* GET TEST */
+/* Check if user is authenticated */
 router.get(
   "/check-auth",
   passport.authenticate("jwt", { session: false }),
@@ -38,31 +43,117 @@ router.post(
 
   async function (req, res, next) {
     const result = validationResult(req);
-    if (result.isEmpty()) {
-      // Create new account
-      try {
-        const account = await createAccount({
-          firstName: req.body.firstName,
-          lastName: req.body.lastName,
-          username: req.body.username,
-          email: req.body.email,
-          password: req.body.password,
-        });
-        res.json(account);
-        return;
-      } catch (error) {
-        next(error);
+    if (!result.isEmpty()) {
+      // Escape html tags in error messages for security
+      const errors = escapeErrors(result.array());
+      next(new JFail({ title: "invalid input", errors: errors }));
+      return;
+    }
+    // Create new account
+    try {
+      const account = await createAccount({
+        firstName: req.body.firstName,
+        lastName: req.body.lastName,
+        username: req.body.username,
+        email: req.body.email,
+        password: req.body.password,
+      });
+      res.json(account);
+      return;
+    } catch (error) {
+      next(error);
+      return;
+    }
+  }
+);
+
+/* Signs user in with existing account */
+router.post(
+  "/login",
+  body("username").notEmpty().custom(isEmailVerified),
+  body("password").notEmpty(),
+
+  async function (req, res, next) {
+    const result = validationResult(req);
+    if (!result.isEmpty()) {
+      // Escape html tags in error messages for security
+      const errors = escapeErrors(result.array());
+      next(new JFail({ title: "invalid input", errors: errors }));
+      return;
+    }
+    try {
+      console.log("Before login");
+
+      const result = await login({
+        username: req.body.username,
+        password: req.body.password,
+      });
+      console.log("After login");
+
+      // Set token in cookie
+      res.cookie("jwt", result.data.token, {
+        httpOnly: true,
+        secure: true,
+      });
+
+      res.json(result);
+    } catch (error) {
+      next(error);
+      return;
+    }
+  }
+);
+
+/* Resend verification email */
+router.post(
+  "/resend-verification-email",
+  body("email").isEmail().escape(),
+
+  async function (req, res, next) {
+    try {
+      // Resend verification email
+      const user = await accountRepository.findOne({ email: req.body.email });
+
+      if (!user) {
+        next(
+          new JFail({ title: "invalid input", errors: ["email not found"] })
+        );
         return;
       }
-    } else {
-      // Escape html tags in error messages for security
-      const errors = result.array().map((error) => {
-        if (error.type === "field" && "value" in error) {
-          error.value = escape(error.value);
-        }
-        return error;
+
+      if (user.is_email_verified) {
+        next(
+          new JFail({
+            title: "invalid input",
+            errors: ["email already verified"],
+          })
+        );
+        return;
+      }
+
+      const nextMonth = new Date();
+      nextMonth.setDate(new Date().getDate() + 30);
+      const token = await createToken({
+        user_id: user.user_id,
+        token_type: TokenType.EmailVerification,
+        expiry_date: nextMonth,
+        value: user.email,
       });
-      next(new JFail({ title: "invalid input", errors: errors }));
+
+      await sendVerificationEmail(
+        user.first_name,
+        user.email,
+        `${req.protocol}://${req.get("host")}/verify-email?token=${
+          token.token_id
+        }`
+      );
+      res.json({
+        status: "success",
+        data: { message: "Verification email sent" },
+      });
+    } catch (error) {
+      next(error);
+      return;
     }
   }
 );
@@ -90,33 +181,6 @@ router.patch(
   }
 );
 
-/* Signs user in with existing account */
-router.get(
-  "/login",
-  body("username").notEmpty(),
-  body("password").notEmpty(),
-
-  async function (req, res, next) {
-    try {
-      const result = await login({
-        username: req.body.username,
-        password: req.body.password,
-      });
-
-      // Set token in cookie
-      res.cookie("jwt", result.data.token, {
-        httpOnly: true,
-        secure: true,
-      });
-
-      res.json(result);
-    } catch (error) {
-      next(error);
-      return;
-    }
-  }
-);
-
 /* Send reset password email */
 router.post(
   "/reset-password",
@@ -132,6 +196,7 @@ router.post(
         user_id: user.user_id,
         token_type: TokenType.PasswordReset,
         expiry_date: nextMonth,
+        value: user.email,
       });
 
       await sendPasswordResetEmail(

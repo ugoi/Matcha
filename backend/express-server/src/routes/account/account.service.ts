@@ -40,6 +40,7 @@ export async function createAccount(
       user_id: data.user_id,
       token_type: TokenType.EmailVerification,
       expiry_date: nextMonth,
+      value: data.email,
     });
 
     // On successful account creation, send verification email and return user data
@@ -55,7 +56,7 @@ export async function createAccount(
           id: data.user_id,
           firstName: data.first_name,
           lastName: data.last_name,
-          username: data.user_name,
+          username: data.username,
           email: data.email,
         },
       },

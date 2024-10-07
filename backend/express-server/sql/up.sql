@@ -18,6 +18,7 @@
     token_type TEXT,
     expiry_date TIMESTAMP,
     used BOOLEAN DEFAULT FALSE,
+    value TEXT,
     FOREIGN KEY (user_id) REFERENCES accounts(user_id)
   );
 

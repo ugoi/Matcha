@@ -84,15 +84,35 @@ export async function verifyEmail(token: string) {
       [token]
     );
 
-    if (!tokenData) {
+    const account = await accountRepository.findOne({ id: tokenData.user_id });
+
+    if (account.is_email_verified) {
+      throw new JFail({
+        title: "Email already verified",
+      });
+    }
+
+    if (account.email !== tokenData.value) {
       throw new JFail({
         title: "Invalid token",
+        description: "Token does not match email",
       });
     }
   } catch (error) {
     throw new JFail({
       title: "Invalid token",
     });
+  } finally {
+    // Mark token as used
+    await db.one(
+      `
+      UPDATE tokens
+      SET used = true
+      WHERE token_id = $1
+      RETURNING user_id
+      `,
+      [token]
+    );
   }
 
   if (tokenData.expiry_date < new Date()) {
@@ -101,17 +121,6 @@ export async function verifyEmail(token: string) {
     });
   }
 
-  // Mark token as used
-  let data = await db.one(
-    `
-      UPDATE tokens
-      SET used = true
-      WHERE token_id = $1
-      RETURNING user_id
-      `,
-    [token]
-  );
-
   // Mark email as verified
   await db.none(
     `
@@ -119,7 +128,7 @@ export async function verifyEmail(token: string) {
       SET is_email_verified = true
       WHERE user_id = $1
       `,
-    [data.user_id]
+    [tokenData.user_id]
   );
 }
 
