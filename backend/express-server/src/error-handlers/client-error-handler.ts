@@ -2,11 +2,8 @@ import { ErrorStatus, JError, JFail } from "./custom-errors.js";
 
 export function clientErrorHandler(err, req, res, next) {
   if (err instanceof JError) {
-    console.log("JEror");
-
     res.json(err);
   } else if (err instanceof JFail) {
-    console.log("JFail");
     res.json(err);
   } else if (err instanceof TypeError) {
     res.json({

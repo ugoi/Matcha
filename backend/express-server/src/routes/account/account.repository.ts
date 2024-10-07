@@ -8,7 +8,13 @@ interface FindOneInput {
 }
 
 export const accountRepository = {
-  findOne: async function findOne(input: FindOneInput): Promise<Account> {
+  /**
+   *
+   * @returns  If the account is found, return the account. Otherwise, return null.
+   */
+  findOne: async function findOne(
+    input: FindOneInput
+  ): Promise<Account | null> {
     const { id, username, email } = input;
 
     // Initialize query and values array

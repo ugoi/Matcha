@@ -108,11 +108,9 @@ passport.use(
 
 // These functions are required for getting data To/from JSON returned from Providers
 passport.serializeUser(function (user, done) {
-  console.log("I should have jack ");
   done(null, user);
 });
 passport.deserializeUser(function (obj: any, done) {
-  console.log("I wont have jack shit");
   done(null, obj);
 });
 

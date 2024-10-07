@@ -8,12 +8,6 @@ test("adds 1 + 2 to equal 3", async () => {
     const data = await accountRepository.findOne({
       id: "00689931-c6db-46a0-ae35-158db9c81304",
     });
-
-    if (!data) {
-      console.log("No data found");
-    }
-
-    console.log(data);
   } catch (error) {
     console.log(error);
   }

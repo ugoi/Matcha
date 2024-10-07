@@ -19,7 +19,7 @@
     expiry_date TIMESTAMP,
     used BOOLEAN DEFAULT FALSE,
     value TEXT,
-    FOREIGN KEY (user_id) REFERENCES accounts(user_id)
+    FOREIGN KEY (user_id) REFERENCES accounts(user_id) ON DELETE CASCADE
   );
 
   CREATE TABLE IF NOT EXISTS federated_credentials (
@@ -27,5 +27,5 @@
     provider TEXT,
     subject TEXT,
     PRIMARY KEY (provider, subject),
-    FOREIGN KEY (user_id) REFERENCES accounts(user_id)
+    FOREIGN KEY (user_id) REFERENCES accounts(user_id) ON DELETE CASCADE
   );

@@ -16,7 +16,7 @@ import {
   isEmailVerified,
   isHtmlTagFree,
 } from "../../utils/utils.js";
-import { createAccount } from "../account/account.service.js";
+import { authenticateWithCredentials } from "../auth/auth.service.js";
 import { createToken } from "../token/token.repository.js";
 import { TokenType } from "../token/token.interface.js";
 import { accountRepository } from "../account/account.repository.js";
@@ -51,7 +51,7 @@ router.post(
     }
     // Create new account
     try {
-      const account = await createAccount({
+      const account = await authenticateWithCredentials({
         firstName: req.body.firstName,
         lastName: req.body.lastName,
         username: req.body.username,
@@ -82,13 +82,12 @@ router.post(
       return;
     }
     try {
-      console.log("Before login");
+ 
 
       const result = await login({
         username: req.body.username,
         password: req.body.password,
       });
-      console.log("After login");
 
       // Set token in cookie
       res.cookie("jwt", result.data.token, {

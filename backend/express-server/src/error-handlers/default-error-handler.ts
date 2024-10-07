@@ -1,5 +1,4 @@
 export function defaultErrorHandler (err, req, res, next) {
-  console.log("Default error handler");
   const message =
     req.app.get("env") === "development" ? err.message : "An error occurred";
 

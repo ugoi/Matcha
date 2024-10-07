@@ -4,7 +4,12 @@ import apiInstance from "../../brevo-object.js";
 import brevo from "@getbrevo/brevo";
 import fs from "node:fs";
 import { join } from "path";
-import { LoginInput, LoginOutput } from "./auth.interface.js";
+import {
+  CreateAccountInput,
+  CreateAccountOutput,
+  LoginInput,
+  LoginOutput,
+} from "./auth.interface.js";
 import { accountRepository } from "../account/account.repository.js";
 import bcrypt from "bcrypt";
 const __dirname = import.meta.dirname;
@@ -13,6 +18,7 @@ import { env, exitCode } from "node:process";
 import { TokenType } from "../token/token.interface.js";
 import { Account } from "../account/account.interface.js";
 import { Profile } from "passport";
+import { createToken } from "../token/token.repository.js";
 
 export async function sendVerificationEmail(
   name: string,
@@ -200,6 +206,12 @@ export async function login(input: LoginInput): Promise<LoginOutput> {
     });
   }
 
+  if (!account.hashed_password) {
+    throw new JFail({
+      title: "Invalid credentials",
+    });
+  }
+
   if (!(await bcrypt.compare(password, account.hashed_password))) {
     throw new JFail({
       title: "Invalid credentials",
@@ -246,24 +258,37 @@ export async function authenticatedWithFederatedProvider(
   if (!cred) {
     // The Google account has not logged in to this app before.  Create a
     // new user record and link it to the Google account.
-
-    const firstName = profile.name.givenName;
-    const lastName = profile.name.familyName;
+    const { givenName, familyName } = profile.name;
     const email = profile?.emails?.[0]?.value;
 
-    let accountData = await db.one(
-      "INSERT INTO accounts (first_name, last_name, email, is_email_verified) VALUES ($1, $2, $3, $4) RETURNING user_id",
-      [firstName, lastName, email, true]
-    );
-    var id = accountData.user_id;
-    await db.none(
-      "INSERT INTO federated_credentials (user_id, provider, subject) VALUES ($1, $2, $3)",
-      [id, issuer, profile.id]
-    );
+    // Check if user already exists
+    let userData = await accountRepository.findOne({ email: email });
 
-    const user = await accountRepository.findOne({ id: id });
+    if (userData) {
+      if (!userData.is_email_verified) {
+        // Delete the user record if the email is not verified to prevent security issues
+        await db.none("DELETE FROM accounts WHERE user_id = $1", [
+          userData.user_id,
+        ]);
+        // Create a new user record
+        userData = await db.one(
+          "INSERT INTO accounts (first_name, last_name, email, is_email_verified) VALUES ($1, $2, $3, $4) RETURNING *",
+          [givenName, familyName, email, true]
+        );
+      }
 
-    return user;
+      await db.none(
+        "INSERT INTO federated_credentials (user_id, provider, subject) VALUES ($1, $2, $3)",
+        [userData.user_id, issuer, profile.id]
+      );
+    } else {
+      userData = await db.one(
+        "INSERT INTO accounts (first_name, last_name, email, is_email_verified) VALUES ($1, $2, $3, $4) RETURNING *",
+        [givenName, familyName, email, true]
+      );
+    }
+
+    return userData;
   } else {
     // The Google account has previously logged in to the app.  Get the
     // user record linked to the Google account and log the user in.
@@ -271,4 +296,70 @@ export async function authenticatedWithFederatedProvider(
 
     return user;
   }
+}
+
+export async function authenticateWithCredentials(
+  input: CreateAccountInput
+): Promise<CreateAccountOutput> {
+  let hashedPassword = "";
+
+  hashedPassword = await bcrypt.hash(input.password, 10);
+
+  // Check if user already exists
+  let userData = await accountRepository.findOne({
+    email: input.email,
+  });
+
+  if (userData) {
+    throw new JFail({ data: { email: "Email already in use" } });
+  }
+
+  userData = await db.one(
+    `
+        INSERT INTO accounts(first_name, last_name, username, email, hashed_password, created_at) 
+        VALUES($1, $2, $3, $4, $5, $6)
+        RETURNING user_id, first_name, last_name, username, email
+        `,
+    [
+      input.firstName,
+      input.lastName,
+      input.username,
+      input.email,
+      hashedPassword,
+      new Date(),
+    ]
+  );
+
+  const nextMonth = new Date();
+  nextMonth.setDate(new Date().getDate() + 30);
+
+  let tokenData = await createToken({
+    user_id: userData.user_id,
+    token_type: TokenType.EmailVerification,
+    expiry_date: nextMonth,
+    value: userData.email,
+  });
+
+  // On successful account creation, send verification email and return user data
+  sendVerificationEmail(
+    `${userData.first_name} ${userData.last_name}`,
+    userData.email,
+    `http://localhost:3000/verify-email?token=${tokenData.token_id}`
+  );
+
+  const title = "Account created. Verification email sent";
+
+  return {
+    status: "success",
+    data: {
+      user: {
+        id: userData.user_id,
+        firstName: userData.first_name,
+        lastName: userData.last_name,
+        username: userData.username,
+        email: userData.email,
+      },
+      title: title,
+    },
+  };
 }
