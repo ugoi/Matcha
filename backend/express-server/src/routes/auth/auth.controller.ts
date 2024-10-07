@@ -77,7 +77,7 @@ router.patch(
       // Verify email
 
       try {
-        await verifyEmail(req.query.token);
+        await verifyEmail(req.body.token);
       } catch (error) {
         next(error);
         return;
