@@ -1,9 +1,9 @@
 .navbar {
-    background-color: blue;
-    border-radius: 10px;
+    background-color: #3B5F95;
+    border-radius: 30px;
     padding: 10px;
     position: fixed;
-    top: 0;
+    top: 20px;
     left: 50%;
     transform: translateX(-50%);
     width: 90%;
