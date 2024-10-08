@@ -13,7 +13,7 @@ export function isHtmlTagFree(value) {
   return true;
 }
 
-export async function isEmailVerified(value) {
+export async function isEmailVerified(value: string) {
   const account = await accountRepository.findOne({
     username: value,
     email: value,
@@ -30,10 +30,13 @@ export async function isEmailVerified(value) {
   return true;
 }
 
-
 export function escapeErrors(errors) {
   return errors.map((error) => {
-    if (error.type === "field" && "value" in error) {
+    if (
+      error.type === "field" &&
+      "value" in error &&
+      typeof error.value === "string"
+    ) {
       error.value = escape(error.value);
     }
     return error;

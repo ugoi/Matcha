@@ -1,4 +1,4 @@
-import db from "../../db-object.js";
+import db from "../../config/db-config.js";
 import { Account } from "./account.interface.js";
 
 interface FindOneInput {

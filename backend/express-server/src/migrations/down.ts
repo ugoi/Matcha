@@ -1,5 +1,5 @@
 import fs from "node:fs";
-import db from "../db-object.js";
+import db from "../config/db-config.js";
 import { join } from "path";
 const __dirname = import.meta.dirname;
 

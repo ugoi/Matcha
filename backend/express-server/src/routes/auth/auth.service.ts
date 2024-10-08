@@ -1,4 +1,4 @@
-import db from "../../db-object.js";
+import db from "../../config/db-config.js";
 import { JFail } from "../../error-handlers/custom-errors.js";
 import apiInstance from "../../brevo-object.js";
 import brevo from "@getbrevo/brevo";
