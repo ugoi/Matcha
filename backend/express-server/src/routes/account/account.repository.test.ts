@@ -1,22 +1,94 @@
 // sum.test.js
-import { test } from "vitest";
-import db from "../../config/db-config.js";
+import { beforeEach, expect, test, vi } from "vitest";
+// use:
 import { newDb } from "pg-mem";
-import { log } from "console";
+const db = newDb();
+const pg = await db.adapters.createPgPromise();
 
-// @ts-ignore
-// const pg = newDb.adapters.createPgPromise();
+// then use it like you would with pg-promise
+await pg.connect();
 
-test("adds 1 + 2 to equal 3", async () => {
-  // const sql = `
-  // CREATE TABLE accounts (user_id SERIAL PRIMARY KEY, username VARCHAR(255), email VARCHAR(255), is_email_verified BOOLEAN);
-  // INSERT INTO accounts (username, email, is_email_verified) VALUES ('test', 'test', true), ('unverified', 'unverified', false
-  // `;
-  // await pg.none(sql);
+const sql = `
+CREATE TABLE IF NOT EXISTS accounts (
+user_id UUID PRIMARY KEY,
+first_name TEXT,
+last_name TEXT,
+email TEXT UNIQUE,
+phone TEXT UNIQUE, 
+username TEXT UNIQUE, 
+hashed_password TEXT,
+is_email_verified BOOLEAN DEFAULT FALSE,
+is_phone_verified BOOLEAN DEFAULT FALSE,
+created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, 
+last_login TIMESTAMP
+);
 
-  // const sql2 = `SELECT * FROM accounts WHERE username = 'test' AND email = 'test'`;
+CREATE TABLE IF NOT EXISTS tokens (
+token_id UUID PRIMARY KEY,
+user_id UUID,
+token_type TEXT,
+expiry_date TIMESTAMP,
+used BOOLEAN DEFAULT FALSE,
+value TEXT,
+FOREIGN KEY (user_id) REFERENCES accounts(user_id) ON DELETE CASCADE
+);
 
-  // const result = await db.manyOrNone(sql2);
+CREATE TABLE IF NOT EXISTS federated_credentials (
+user_id UUID,
+provider TEXT,
+subject TEXT,
+PRIMARY KEY (provider, subject),
+FOREIGN KEY (user_id) REFERENCES accounts(user_id) ON DELETE CASCADE
+);
+`;
 
-  // log(result);
+await pg.none(sql);
+
+const backup = await db.backup();
+
+beforeEach(() => {
+  backup.restore();
+  // you can access variables inside a factory
+  vi.doMock("../../config/db-config.js", () => ({
+    default: pg,
+    db: pg,
+  }));
 });
+
+test("finds account", async () => {
+  const { db } = await import("../../config/db-config.js");
+  const { accountRepository } = await import("./account.repository.js");
+
+  await db.none(
+    `INSERT INTO accounts (user_id, first_name, last_name, email, phone, username, hashed_password) VALUES ($1, $2, $3, $4, $5, $6, $7)`,
+    [
+      crypto.randomUUID(),
+      "test",
+      "test",
+      "test@gmail.com",
+      "123456789",
+      "test",
+      "123456",
+    ]
+  );
+  await db.one(`SELECT * FROM accounts WHERE username = 'test'`);
+  const result = await accountRepository.findOne({ username: "stefan10" });
+  expect(result).toBe(null);
+  const result2 = await accountRepository.findOne({ username: "test" });
+  expect(result2).not.toBe(null);
+
+  const result3 = await accountRepository.findOne({ email: "test" });
+  expect(result3).toBe(null);
+
+  const result4 = await accountRepository.findOne({ email: "test@gmail.com" });
+  expect(result4).not.toBe(null);
+
+  const result5 = await accountRepository.findOne({ id: crypto.randomUUID(), email: "test@gmail.com"});
+  expect(result5).not.toBe(null);
+
+  const result6 = await accountRepository.findOne({ id: crypto.randomUUID(), email: "testnot@gmail.com"});
+  expect(result6).toBe(null);
+
+});
+
+

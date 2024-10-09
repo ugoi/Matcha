@@ -17,5 +17,10 @@ const cn: IConnectionParameters = {
 // Creating a new database instance from the connection details:
 const db = pgp(cn);
 
+// Normal export
+export { db };
+
 // Exporting the database object for shared use:
 export default db;
+
+
