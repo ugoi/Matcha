@@ -2,7 +2,7 @@ import { Router } from "express";
 var router = Router();
 import passport from "passport";
 
-/* Get account details*/
+/* Get user details*/
 router.get(
   "/",
   passport.authenticate("jwt", { session: false }),

@@ -10,7 +10,7 @@ interface FindOneInput {
 export const accountRepository = {
   /**
    *
-   * @returns  If the account is found, return the account. Otherwise, return null.
+   * @returns  If the user is found, return the user. Otherwise, return null.
    */
   findOne: async function findOne(
     input: FindOneInput
@@ -53,8 +53,8 @@ export const accountRepository = {
       return null;
     }
 
-    let account: Account = data[0];
+    let user: Account = data[0];
 
-    return account;
+    return user;
   },
 };

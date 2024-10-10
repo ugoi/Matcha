@@ -59,7 +59,7 @@ describe("utils", () => {
       .spyOn(accountRepository, "findOne")
       .mockImplementation(async (value) => {
         if (value.username === "test" && value.email === "test") {
-          const account: Account = {
+          const user: Account = {
             user_id: "1",
             first_name: "test",
             last_name: "test",
@@ -73,12 +73,12 @@ describe("utils", () => {
             last_login: new Date(),
           };
 
-          return account;
+          return user;
         } else if (
           value.username === "unverified" &&
           value.email === "unverified"
         ) {
-          const account: Account = {
+          const user: Account = {
             user_id: "2",
             first_name: "unverified",
             last_name: "unverified",
@@ -92,7 +92,7 @@ describe("utils", () => {
             last_login: new Date(),
           };
 
-          return account;
+          return user;
         }
         return null;
       });

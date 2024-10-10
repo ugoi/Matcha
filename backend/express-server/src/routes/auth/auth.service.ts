@@ -90,15 +90,15 @@ export async function verifyEmail(token: string) {
       [token]
     );
 
-    const account = await accountRepository.findOne({ id: tokenData.user_id });
+    const user = await accountRepository.findOne({ id: tokenData.user_id });
 
-    if (account.is_email_verified) {
+    if (user.is_email_verified) {
       throw new JFail({
         title: "Email already verified",
       });
     }
 
-    if (account.email !== tokenData.value) {
+    if (user.email !== tokenData.value) {
       throw new JFail({
         title: "Invalid token",
         description: "Token does not match email",
@@ -195,34 +195,34 @@ export async function resetPassword(token: string, newPassword: string) {
 export async function login(input: LoginInput): Promise<LoginOutput> {
   // Login user
   const { username, password } = input;
-  let account = await accountRepository.findOne({
+  let user = await accountRepository.findOne({
     username: username,
     email: username,
   });
 
-  if (!account) {
+  if (!user) {
     throw new JFail({
       title: "Invalid credentials",
     });
   }
 
-  if (!account.password_hash) {
+  if (!user.password_hash) {
     throw new JFail({
       title: "Invalid credentials",
     });
   }
 
-  if (!(await bcrypt.compare(password, account.password_hash))) {
+  if (!(await bcrypt.compare(password, user.password_hash))) {
     throw new JFail({
       title: "Invalid credentials",
     });
   }
 
-  return await createJwtToken(account);
+  return await createJwtToken(user);
 }
 
-export async function createJwtToken(account: Account): Promise<LoginOutput> {
-  if (!account) {
+export async function createJwtToken(user: Account): Promise<LoginOutput> {
+  if (!user) {
     throw new JFail({
       title: "Invalid credentials",
     });
@@ -230,7 +230,7 @@ export async function createJwtToken(account: Account): Promise<LoginOutput> {
 
   var token = jwt.sign(
     {
-      sub: account.user_id,
+      sub: user.user_id,
       iss: process.env.JWT_ISSUER,
       aud: process.env.JWT_AUDIENCE,
     },
@@ -256,8 +256,8 @@ export async function authenticatedWithFederatedProvider(
     [issuer, profile.id]
   );
   if (!cred) {
-    // The Google account has not logged in to this app before.  Create a
-    // new user record and link it to the Google account.
+    // The Google user has not logged in to this app before.  Create a
+    // new user record and link it to the Google user.
     const { givenName, familyName } = profile.name;
     const email = profile?.emails?.[0]?.value;
 
@@ -290,8 +290,8 @@ export async function authenticatedWithFederatedProvider(
 
     return userData;
   } else {
-    // The Google account has previously logged in to the app.  Get the
-    // user record linked to the Google account and log the user in.
+    // The Google user has previously logged in to the app.  Get the
+    // user record linked to the Google user and log the user in.
     const user = await accountRepository.findOne({ id: cred.user_id });
 
     return user;
@@ -340,7 +340,7 @@ export async function authenticateWithCredentials(
     value: userData.email,
   });
 
-  // On successful account creation, send verification email and return user data
+  // On successful user creation, send verification email and return user data
   sendVerificationEmail(
     `${userData.first_name} ${userData.last_name}`,
     userData.email,

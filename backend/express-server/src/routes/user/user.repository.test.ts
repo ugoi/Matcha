@@ -55,7 +55,7 @@ beforeEach(() => {
   }));
 });
 
-test("finds account", async () => {
+test("finds user", async () => {
   const { db } = await import("../../config/db-config.js");
   const { accountRepository } = await import("./user.repository.js");
 

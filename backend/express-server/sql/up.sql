@@ -1,4 +1,4 @@
-  CREATE TABLE IF NOT EXISTS accounts (
+  CREATE TABLE IF NOT EXISTS users (
     user_id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
     first_name TEXT,
     last_name TEXT,
@@ -19,7 +19,7 @@
     expiry_date TIMESTAMP,
     used BOOLEAN DEFAULT FALSE,
     value TEXT,
-    FOREIGN KEY (user_id) REFERENCES accounts(user_id) ON DELETE CASCADE
+    FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE
   );
 
   CREATE TABLE IF NOT EXISTS federated_credentials (
@@ -27,5 +27,5 @@
     provider TEXT,
     subject TEXT,
     PRIMARY KEY (provider, subject),
-    FOREIGN KEY (user_id) REFERENCES accounts(user_id) ON DELETE CASCADE
+    FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE
   );

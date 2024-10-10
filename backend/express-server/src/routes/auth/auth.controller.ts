@@ -32,7 +32,7 @@ router.get(
   }
 );
 
-/* Create new account */
+/* Create new user */
 router.post(
   "/signup",
   body("firstName").notEmpty().escape(),
@@ -49,16 +49,16 @@ router.post(
       next(new JFail({ title: "invalid input", errors: errors }));
       return;
     }
-    // Create new account
+    // Create new user
     try {
-      const account = await authenticateWithCredentials({
+      const user = await authenticateWithCredentials({
         firstName: req.body.firstName,
         lastName: req.body.lastName,
         username: req.body.username,
         email: req.body.email,
         password: req.body.password,
       });
-      res.json(account);
+      res.json(user);
       return;
     } catch (error) {
       next(error);
@@ -67,7 +67,7 @@ router.post(
   }
 );
 
-/* Signs user in with existing account */
+/* Signs user in with existing user */
 router.post(
   "/login",
   body("username").notEmpty().custom(isEmailVerified),

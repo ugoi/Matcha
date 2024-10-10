@@ -14,16 +14,16 @@ export function isHtmlTagFree(value) {
 }
 
 export async function isEmailVerified(value: string) {
-  const account = await accountRepository.findOne({
+  const user = await accountRepository.findOne({
     username: value,
     email: value,
   });
 
-  if (!account) {
-    throw new Error("account not found");
+  if (!user) {
+    throw new Error("user not found");
   }
 
-  if (!account.is_email_verified) {
+  if (!user.is_email_verified) {
     throw new Error("email not verified");
   }
 
