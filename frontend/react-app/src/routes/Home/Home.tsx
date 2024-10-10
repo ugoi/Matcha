@@ -1,9 +1,9 @@
-// src/routes/Root/Root.tsx
+// src/routes/Home/Home.tsx
 import { Link } from 'react-router-dom';
 import Navbar from '../../components/Navbar/Navbar';
-import './Root.css';
+import './home.css';
 
-function App() {
+function Home() {
   return (
     <>
       <Navbar />
@@ -17,4 +17,4 @@ function App() {
   );
 }
 
-export default App;
+export default Home;

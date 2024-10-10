@@ -1,5 +1,6 @@
 import { useState } from "react";
-import "../Root/Root.css";
+import "./Signup.css";
+import Navbar from '../../components/Navbar/Navbar';
 
 function Signup() {
   const [errorTitle, setErrorTitle] = useState("");
@@ -50,6 +51,7 @@ function Signup() {
 
   return (
     <>
+      <Navbar />
       <h1>Signup</h1>
       <div>
         <form onSubmit={handleSubmit}>

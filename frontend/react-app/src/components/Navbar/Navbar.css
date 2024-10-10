@@ -1,0 +1,26 @@
+.navbar {
+    border-radius: 30px;
+    padding-left: 90px;
+    padding: 5px 0; /* Reducir el padding del navbar */
+}
+
+.navbar-nav .nav-link {
+    margin: 0 15px; /* Separación entre elementos de navegación */
+}
+
+.login-container {
+    text-align: center; /* Centrar el botón de login */
+    margin-top: 10px; /* Espaciado superior */
+}
+
+.login-button {
+    background-color: #ffa500; /* Cambiar color de fondo */
+    color: white; /* Cambiar color de texto */
+    border-radius: 5px; /* Bordes redondeados del botón */
+    padding: 5px 10px; /* Reducir espaciado interno */
+    text-decoration: none; /* Sin subrayado */
+}
+
+.login-button:hover {
+    background-color: #ff8c00; /* Cambiar color al pasar el ratón */
+}

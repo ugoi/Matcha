@@ -1,0 +1,7 @@
+{
+  "dependencies": {
+    "bootstrap": "^5.3.3",
+    "mdb-react-ui-kit": "^9.0.0",
+    "react-bootstrap": "^2.10.5"
+  }
+}
