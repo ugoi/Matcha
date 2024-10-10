@@ -1,99 +1,26 @@
 .navbar {
-    background-color: #3B5F95;
     border-radius: 30px;
-    padding: 10px;
-    position: fixed;
-    top: 20px;
-    left: 50%;
-    transform: translateX(-50%);
-    width: 90%;
-    z-index: 1000;
-  }
-  
-  .navbar-container {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-  }
-  
-  .nav-links {
-    list-style: none;
-    display: flex;
-    gap: 15px;
-  }
-  
-  .nav-links a {
-    color: white;
-    text-decoration: none;
-    transition: color 0.3s ease;
-  }
-  
-  .nav-links a:hover {
-    color: #ffa500;
-  }
-  
-  .dropdown {
-    position: relative;
-  }
-  
-  .dropdown-button {
-    background: none;
-    color: white;
-    border: none;
-    cursor: pointer;
-  }
-  
-  .dropdown-content {
-    position: absolute;
-    background-color: #444;
-    border-radius: 5px;
-    z-index: 1;
-    display: flex;
-    flex-direction: column;
-  }
-  
-  .dropdown-content a {
-    padding: 10px;
-    color: white;
-    text-decoration: none;
-    transition: background 0.3s ease;
-  }
-  
-  .dropdown-content a:hover {
-    background-color: #555;
-  }
-  
-  .login-button {
-    background-color: #ffa500;
-    color: white;
-    border: none;
-    border-radius: 5px;
-    padding: 10px 15px;
-    cursor: pointer;
-    position: absolute;
-    right: 20px;
-    top: 15px;
-  }
-  
-  .login-button:hover {
-    background-color: #ff8c00;
-  }
-  
-  
-  @media (max-width: 768px) {
-    .nav-links {
-      flex-direction: column;
-      position: absolute;
-      background-color: #333;
-      top: 50px;
-      left: 0;
-      right: 0;
-      display: none;
-      border-radius: 0 0 10px 10px;
-    }
-  
-    .navbar-container:hover .nav-links {
-      display: flex;
-    }
-  }
-  
+    padding-left: 90px;
+    padding: 5px 0; /* Reducir el padding del navbar */
+}
+
+.navbar-nav .nav-link {
+    margin: 0 15px; /* Separación entre elementos de navegación */
+}
+
+.login-container {
+    text-align: center; /* Centrar el botón de login */
+    margin-top: 10px; /* Espaciado superior */
+}
+
+.login-button {
+    background-color: #ffa500; /* Cambiar color de fondo */
+    color: white; /* Cambiar color de texto */
+    border-radius: 5px; /* Bordes redondeados del botón */
+    padding: 5px 10px; /* Reducir espaciado interno */
+    text-decoration: none; /* Sin subrayado */
+}
+
+.login-button:hover {
+    background-color: #ff8c00; /* Cambiar color al pasar el ratón */
+}

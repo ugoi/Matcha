@@ -2,11 +2,7 @@ body {
   font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
   line-height: 1.5;
   font-weight: 400;
-
-  text-align: center;
-  margin: 0;
-  place-items: center;
-
+  
   color-scheme: light dark;
   background-color: #1F2C3A;
   color: #ffffffcc;
