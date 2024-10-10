@@ -10,13 +10,13 @@ import {
   LoginInput,
   LoginOutput,
 } from "./auth.interface.js";
-import { accountRepository } from "../account/account.repository.js";
+import { accountRepository } from "../user/user.repository.js";
 import bcrypt from "bcrypt";
 const __dirname = import.meta.dirname;
 import jwt from "jsonwebtoken";
 import { env, exitCode } from "node:process";
 import { TokenType } from "../token/token.interface.js";
-import { Account } from "../account/account.interface.js";
+import { Account } from "../user/user.interface.js";
 import { Profile } from "passport";
 import { createToken } from "../token/token.repository.js";
 
@@ -130,7 +130,7 @@ export async function verifyEmail(token: string) {
   // Mark email as verified
   await db.none(
     `
-      UPDATE accounts
+      UPDATE users
       SET is_email_verified = true
       WHERE user_id = $1
       `,
@@ -184,8 +184,8 @@ export async function resetPassword(token: string, newPassword: string) {
   // Update password
   await db.none(
     `
-      UPDATE accounts
-      SET hashed_password = $1
+      UPDATE users
+      SET password_hash = $1
       WHERE user_id = $2
       `,
     [hashedPassword, data.user_id]
@@ -206,13 +206,13 @@ export async function login(input: LoginInput): Promise<LoginOutput> {
     });
   }
 
-  if (!account.hashed_password) {
+  if (!account.password_hash) {
     throw new JFail({
       title: "Invalid credentials",
     });
   }
 
-  if (!(await bcrypt.compare(password, account.hashed_password))) {
+  if (!(await bcrypt.compare(password, account.password_hash))) {
     throw new JFail({
       title: "Invalid credentials",
     });
@@ -267,12 +267,12 @@ export async function authenticatedWithFederatedProvider(
     if (userData) {
       if (!userData.is_email_verified) {
         // Delete the user record if the email is not verified to prevent security issues
-        await db.none("DELETE FROM accounts WHERE user_id = $1", [
+        await db.none("DELETE FROM users WHERE user_id = $1", [
           userData.user_id,
         ]);
         // Create a new user record
         userData = await db.one(
-          "INSERT INTO accounts (first_name, last_name, email, is_email_verified) VALUES ($1, $2, $3, $4) RETURNING *",
+          "INSERT INTO users (first_name, last_name, email, is_email_verified) VALUES ($1, $2, $3, $4) RETURNING *",
           [givenName, familyName, email, true]
         );
       }
@@ -283,7 +283,7 @@ export async function authenticatedWithFederatedProvider(
       );
     } else {
       userData = await db.one(
-        "INSERT INTO accounts (first_name, last_name, email, is_email_verified) VALUES ($1, $2, $3, $4) RETURNING *",
+        "INSERT INTO users (first_name, last_name, email, is_email_verified) VALUES ($1, $2, $3, $4) RETURNING *",
         [givenName, familyName, email, true]
       );
     }
@@ -316,7 +316,7 @@ export async function authenticateWithCredentials(
 
   userData = await db.one(
     `
-        INSERT INTO accounts(first_name, last_name, username, email, hashed_password, created_at) 
+        INSERT INTO users(first_name, last_name, username, email, password_hash, created_at) 
         VALUES($1, $2, $3, $4, $5, $6)
         RETURNING user_id, first_name, last_name, username, email
         `,

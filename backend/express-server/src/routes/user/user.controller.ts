@@ -9,7 +9,7 @@ router.get(
   async function (req, res, next) {
     try {
       const user = await req.user;
-      delete user.hashed_password;
+      delete user.password_hash;
       res.json({ message: "success", data: user });
     } catch (error) {
       next(error);

@@ -1,5 +1,3 @@
-
-
 export interface Account {
   user_id: string;
   first_name: string;
@@ -7,7 +5,7 @@ export interface Account {
   email: string;
   phone: string;
   username: string;
-  hashed_password: string;
+  password_hash: string;
   is_email_verified: boolean;
   is_phone_verified: boolean;
   created_at: Date;

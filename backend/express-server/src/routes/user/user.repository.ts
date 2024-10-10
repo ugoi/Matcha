@@ -1,5 +1,5 @@
 import db from "../../config/db-config.js";
-import { Account } from "./account.interface.js";
+import { Account } from "./user.interface.js";
 
 interface FindOneInput {
   id?: string;
@@ -42,7 +42,7 @@ export const accountRepository = {
     const data = await db.manyOrNone(
       `
       SELECT *
-      FROM accounts
+      FROM users
       WHERE ${query}
       LIMIT 1
       `,

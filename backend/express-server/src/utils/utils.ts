@@ -1,5 +1,5 @@
 import lodash from "lodash";
-import { accountRepository } from "../routes/account/account.repository.js";
+import { accountRepository } from "../routes/user/user.repository.js";
 const { unescape, escape } = lodash;
 
 export function isHtmlTagFree(value) {

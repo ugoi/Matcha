@@ -19,7 +19,7 @@ import {
 import { authenticateWithCredentials } from "../auth/auth.service.js";
 import { createToken } from "../token/token.repository.js";
 import { TokenType } from "../token/token.interface.js";
-import { accountRepository } from "../account/account.repository.js";
+import { accountRepository } from "../user/user.repository.js";
 import passport from "passport";
 const { unescape, escape } = lodash;
 
@@ -82,8 +82,6 @@ router.post(
       return;
     }
     try {
- 
-
       const result = await login({
         username: req.body.username,
         password: req.body.password,

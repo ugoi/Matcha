@@ -2,7 +2,7 @@ import passport from "passport";
 import { Strategy as JwtStrategy } from "passport-jwt";
 import { Strategy as GoogleStrategy } from "passport-google-oauth20";
 import { Strategy as FacebookStrategy } from "passport-facebook";
-import { accountRepository } from "../routes/account/account.repository.js";
+import { accountRepository } from "../routes/user/user.repository.js";
 import { authenticatedWithFederatedProvider } from "../routes/auth/auth.service.js";
 
 export function initPassport() {

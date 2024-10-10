@@ -2,8 +2,8 @@
 import { describe, expect, test, vi } from "vitest";
 import { escapeErrors, isEmailVerified, isHtmlTagFree } from "./utils.js";
 import exp from "node:constants";
-import { accountRepository } from "../routes/account/account.repository.js";
-import { Account } from "../routes/account/account.interface.js";
+import { accountRepository } from "../routes/user/user.repository.js";
+import { Account } from "../routes/user/user.interface.js";
 
 describe("utils", () => {
   test("isHtmlTagFree", () => {
@@ -66,7 +66,7 @@ describe("utils", () => {
             email: "test",
             phone: "test",
             username: "test",
-            hashed_password: "test",
+            password_hash: "test",
             is_email_verified: true,
             is_phone_verified: true,
             created_at: new Date(),
@@ -85,7 +85,7 @@ describe("utils", () => {
             email: "unverified",
             phone: "unverified",
             username: "unverified",
-            hashed_password: "unverified",
+            password_hash: "unverified",
             is_email_verified: false,
             is_phone_verified: false,
             created_at: new Date(),

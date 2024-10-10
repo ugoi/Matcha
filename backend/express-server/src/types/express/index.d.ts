@@ -1,7 +1,7 @@
 // src/types/express/index.d.ts
 import * as express from "express";
 
-import { Account } from "../../routes/account/account.interface.ts";
+import { Account } from "../../routes/user/user.interface.ts";
 
 declare global {
   namespace Express {
