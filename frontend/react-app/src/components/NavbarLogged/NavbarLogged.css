@@ -26,14 +26,3 @@
     margin-right: 0px;
 }
 
-.login-button {
-    background-color: #ffa500;
-    color: white;
-    border-radius: 30px;
-    padding: 7px 20px;
-    text-decoration: none;
-}
-
-.login-button:hover {
-    background-color: #ff8c00;
-}

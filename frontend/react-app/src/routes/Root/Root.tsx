@@ -16,7 +16,7 @@ function App() {
               Join our community and find your perfect match. Sign up now to start your journey!
             </p>
             <Link to="/signup">
-              <Button variant="primary" size="lg">
+              <Button variant="dark" size="lg">
                 Create Account
               </Button>
             </Link>
