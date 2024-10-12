@@ -1,26 +1,39 @@
-.navbar {
-    border-radius: 30px;
-    padding-left: 90px;
-    padding: 5px 0; /* Reducir el padding del navbar */
+/* Navbar.css */
+.navbar-container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 90%;
+    min-width: 300px;
+    margin: 20px auto;
 }
 
-.navbar-nav .nav-link {
-    margin: 0 15px; /* Separación entre elementos de navegación */
+.custom-navbar {
+    background-color: #F5F0E8;
+    flex-grow: 1;
+    border-radius: 30px;
+    padding: 5px 20px;
+}
+
+.navbar-nav {
+    flex-grow: 1;
+    display: flex;
+    justify-content: space-around;
 }
 
 .login-container {
-    text-align: center; /* Centrar el botón de login */
-    margin-top: 10px; /* Espaciado superior */
+    margin-left: 40px;
+    margin-right: 0px;
 }
 
 .login-button {
-    background-color: #ffa500; /* Cambiar color de fondo */
-    color: white; /* Cambiar color de texto */
-    border-radius: 5px; /* Bordes redondeados del botón */
-    padding: 5px 10px; /* Reducir espaciado interno */
-    text-decoration: none; /* Sin subrayado */
+    background-color: #ffa500;
+    color: white;
+    border-radius: 30px;
+    padding: 7px 20px;
+    text-decoration: none;
 }
 
 .login-button:hover {
-    background-color: #ff8c00; /* Cambiar color al pasar el ratón */
+    background-color: #ff8c00;
 }
