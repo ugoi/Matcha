@@ -4,9 +4,12 @@ import { createBrowserRouter, RouterProvider } from "react-router-dom";
 import 'bootstrap/dist/css/bootstrap.min.css';
 import Root from "./routes/Root/Root.tsx";
 import Signup from "./routes/Signup/Signup.tsx";
+import Login from "./routes/Login/Login.tsx";
 import About from "./routes/About/About.tsx";
 import Home from "./routes/Home/Home.tsx";
-import Login from "./routes/Login/Login.tsx";
+import Profile from "./routes/Profile/Profile.tsx";
+import Chat from "./routes/Chat/Chat.tsx";
+import Settings from "./routes/Settings/Settings.tsx";
 
 
 const router = createBrowserRouter([
@@ -29,6 +32,18 @@ const router = createBrowserRouter([
   {
     path: "/home",
     element: <Home />
+  },
+  {
+    path: "/profile",
+    element: <Profile />
+  },
+  {
+    path: "/chat",
+    element: <Chat />
+  },
+  {
+    path: "/settings",
+    element: <Settings />
   }
 ]);
 

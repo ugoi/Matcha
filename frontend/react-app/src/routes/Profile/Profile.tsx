@@ -1,17 +1,17 @@
-// src/routes/Home/Home.tsx
+// src/routes/Profile/Profile.tsx
 import { Link } from 'react-router-dom';
 import NavbarLogged from '../../components/NavbarLogged/NavbarLogged';
-import './home.css';
+import './Profile.css';
 
-function Home() {
+function Profile() {
   return (
     <>
       <NavbarLogged />
+      <h1 className="display-4 text-center mb-3">Profile</h1>
       <div className="content d-flex flex-column align-items-center justify-content-center">
-        <h1 className="display-4 text-center mb-3">Home</h1>
       </div>
     </>
   );
 }
 
-export default Home;
+export default Profile;
