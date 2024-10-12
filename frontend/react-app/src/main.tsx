@@ -6,6 +6,7 @@ import Root from "./routes/Root/Root.tsx";
 import Signup from "./routes/Signup/Signup.tsx";
 import About from "./routes/About/About.tsx";
 import Home from "./routes/Home/Home.tsx";
+import Login from "./routes/Login/Login.tsx";
 
 
 const router = createBrowserRouter([
@@ -16,6 +17,10 @@ const router = createBrowserRouter([
   {
     path: "/signup",
     element: <Signup />,
+  },
+  {
+    path: "/login",
+    element: <Login />,
   },
   {
     path: "/about",

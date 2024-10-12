@@ -24,7 +24,7 @@ function CollapsibleExample() {
           </Container>
         </Navbar>
         <Nav className="login-container">
-          <Nav.Link className="login-button" href="#login">Login</Nav.Link>
+          <Nav.Link className="login-button" href="/login">Login</Nav.Link>
         </Nav>
       </div>
     </>
