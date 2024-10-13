@@ -57,7 +57,7 @@ beforeEach(() => {
 
 test("finds user", async () => {
   const { db } = await import("../../config/db-config.js");
-  const { accountRepository } = await import("./user.repository.js");
+  const { userRepository } = await import("./user.repository.js");
 
   await db.none(
     `INSERT INTO users (user_id, first_name, last_name, email, phone, username, password_hash) VALUES ($1, $2, $3, $4, $5, $6, $7)`,
@@ -72,24 +72,24 @@ test("finds user", async () => {
     ]
   );
   await db.one(`SELECT * FROM users WHERE username = 'test'`);
-  const result = await accountRepository.findOne({ username: "stefan10" });
+  const result = await userRepository.findOne({ username: "stefan10" });
   expect(result).toBe(null);
-  const result2 = await accountRepository.findOne({ username: "test" });
+  const result2 = await userRepository.findOne({ username: "test" });
   expect(result2).not.toBe(null);
 
-  const result3 = await accountRepository.findOne({ email: "test" });
+  const result3 = await userRepository.findOne({ email: "test" });
   expect(result3).toBe(null);
 
-  const result4 = await accountRepository.findOne({ email: "test@gmail.com" });
+  const result4 = await userRepository.findOne({ email: "test@gmail.com" });
   expect(result4).not.toBe(null);
 
-  const result5 = await accountRepository.findOne({
+  const result5 = await userRepository.findOne({
     id: crypto.randomUUID(),
     email: "test@gmail.com",
   });
   expect(result5).not.toBe(null);
 
-  const result6 = await accountRepository.findOne({
+  const result6 = await userRepository.findOne({
     id: crypto.randomUUID(),
     email: "testnot@gmail.com",
   });

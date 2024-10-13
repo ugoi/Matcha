@@ -2,7 +2,7 @@ import passport from "passport";
 import { Strategy as JwtStrategy } from "passport-jwt";
 import { Strategy as GoogleStrategy } from "passport-google-oauth20";
 import { Strategy as FacebookStrategy } from "passport-facebook";
-import { accountRepository } from "../routes/user/user.repository.js";
+import { userRepository } from "../routes/user/user.repository.js";
 import { authenticatedWithFederatedProvider } from "../routes/auth/auth.service.js";
 
 export function initPassport() {
@@ -22,7 +22,7 @@ export function initPassport() {
   passport.use(
     new JwtStrategy(opts, async function (jwt_payload, done) {
       try {
-        const user = await accountRepository.findOne({ id: jwt_payload.sub });
+        const user = await userRepository.findOne({ id: jwt_payload.sub });
         if (user) {
           return done(null, user);
         } else {

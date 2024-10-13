@@ -12,14 +12,16 @@ import {
   sendVerificationEmail,
 } from "./auth.service.js";
 import {
+  emailExists,
   escapeErrors,
-  isEmailVerified,
+  emailVerified,
   isHtmlTagFree,
+  usernameExists,
 } from "../../utils/utils.js";
 import { authenticateWithCredentials } from "../auth/auth.service.js";
 import { createToken } from "../token/token.repository.js";
 import { TokenType } from "../token/token.interface.js";
-import { accountRepository } from "../user/user.repository.js";
+import { userRepository } from "../user/user.repository.js";
 import passport from "passport";
 const { unescape, escape } = lodash;
 
@@ -37,8 +39,8 @@ router.post(
   "/signup",
   body("firstName").notEmpty().escape(),
   body("lastName").notEmpty().escape(),
-  body("username").notEmpty().custom(isHtmlTagFree),
-  body("email").isEmail().custom(isHtmlTagFree),
+  body("username").notEmpty().custom(isHtmlTagFree).custom(usernameExists),
+  body("email").isEmail().custom(isHtmlTagFree).custom(emailExists),
   body("password").isStrongPassword(),
 
   async function (req, res, next) {
@@ -70,7 +72,7 @@ router.post(
 /* Signs user in with existing user */
 router.post(
   "/login",
-  body("username").notEmpty().custom(isEmailVerified),
+  body("username").notEmpty().custom(emailVerified),
   body("password").notEmpty(),
 
   async function (req, res, next) {
@@ -109,7 +111,7 @@ router.post(
   async function (req, res, next) {
     try {
       // Resend verification email
-      const user = await accountRepository.findOne({ email: req.body.email });
+      const user = await userRepository.findOne({ email: req.body.email });
 
       if (!user) {
         next(
@@ -188,7 +190,7 @@ router.post(
       // Send reset password email
       const nextMonth = new Date();
       nextMonth.setDate(new Date().getDate() + 30);
-      const user = await accountRepository.findOne({ email: req.body.email });
+      const user = await userRepository.findOne({ email: req.body.email });
       const token = await createToken({
         user_id: user.user_id,
         token_type: TokenType.PasswordReset,

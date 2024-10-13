@@ -9,7 +9,7 @@ CREATE TABLE IF NOT EXISTS users (
     phone TEXT UNIQUE,                                   -- Unique phone number for the user
     is_email_verified BOOLEAN DEFAULT FALSE,             -- Indicates if the email is verified, default is false
     is_phone_verified BOOLEAN DEFAULT FALSE,             -- Indicates if the phone number is verified, default is false
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP       -- Timestamp of when the user account was created, default is current time
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP       -- Timestamp of when the user user was created, default is current time
 );
 
 -- Create the 'tokens' table if it doesn't already exist

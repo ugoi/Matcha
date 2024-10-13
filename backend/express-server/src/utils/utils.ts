@@ -1,6 +1,22 @@
 import lodash from "lodash";
-import { accountRepository } from "../routes/user/user.repository.js";
+import { userRepository } from "../routes/user/user.repository.js";
 const { unescape, escape } = lodash;
+
+export async function usernameExists(value) {
+  const user = await userRepository.findOne({ username: value });
+  if (user) {
+    throw new Error("username already exists");
+  }
+  return true;
+}
+
+export async function emailExists(value) {
+  const user = await userRepository.findOne({ email: value });
+  if (user) {
+    throw new Error("email already exists");
+  }
+  return true;
+}
 
 export function isHtmlTagFree(value) {
   if (!value || typeof value !== "string" || value.length === 0) {
@@ -13,8 +29,8 @@ export function isHtmlTagFree(value) {
   return true;
 }
 
-export async function isEmailVerified(value: string) {
-  const user = await accountRepository.findOne({
+export async function emailVerified(value: string) {
+  const user = await userRepository.findOne({
     username: value,
     email: value,
   });
