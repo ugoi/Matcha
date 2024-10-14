@@ -99,6 +99,7 @@ CREATE TABLE IF NOT EXISTS notifications (
     notification_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id UUID REFERENCES users(user_id) ON DELETE CASCADE, -- Notifications linked to user (not public)
     notification_type TEXT, -- E.g., 'match', 'message', 'visit'
+    notification_text TEXT, -- Text of the notification
     from_profile_id UUID REFERENCES profiles(profile_id),
     is_read BOOLEAN DEFAULT FALSE,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP

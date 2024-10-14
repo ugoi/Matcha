@@ -6,6 +6,7 @@ import { mockUser, ProtectedUser, User } from "./user.interface.js";
 import { emailExists, isHtmlTagFree, usernameExists } from "../../utils/utils.js";
 
 /* Get user details*/
+//TODO: make sure missing fields are inlcuded with null in response
 router.get(
   "/",
   passport.authenticate("jwt", { session: false }),
