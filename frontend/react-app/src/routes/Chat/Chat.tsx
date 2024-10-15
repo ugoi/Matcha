@@ -1,5 +1,4 @@
 // src/routes/Chat/Chat.tsx
-import { Link } from 'react-router-dom';
 import NavbarLogged from '../../components/NavbarLogged/NavbarLogged';
 import './Chat.css';
 
