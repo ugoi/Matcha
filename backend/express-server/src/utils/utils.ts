@@ -1,8 +1,19 @@
 import lodash from "lodash";
 import { userRepository } from "../routes/user/user.repository.js";
+import { profileRepository } from "../routes/profile/profile.repository.js";
+import { JFail } from "../error-handlers/custom-errors.js";
 const { unescape, escape } = lodash;
 
-export async function usernameExists(value) {
+export async function profileNotExists(req, res, next) {
+  const user_id = req.user.user_id;
+  const profile = await profileRepository.findOne(user_id);
+  if (profile) {
+    next(new JFail("profile already exists"));
+  }
+  next();
+}
+
+export async function usernameNotExists(value) {
   const user = await userRepository.findOne({ username: value });
   if (user) {
     throw new Error("username already exists");
@@ -10,7 +21,7 @@ export async function usernameExists(value) {
   return true;
 }
 
-export async function emailExists(value) {
+export async function emailNotExists(value) {
   const user = await userRepository.findOne({ email: value });
   if (user) {
     throw new Error("email already exists");

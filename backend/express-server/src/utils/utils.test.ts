@@ -70,7 +70,6 @@ describe("utils", () => {
             is_email_verified: true,
             is_phone_verified: true,
             created_at: new Date(),
-            last_login: new Date(),
           };
 
           return user;
@@ -89,7 +88,6 @@ describe("utils", () => {
             is_email_verified: false,
             is_phone_verified: false,
             created_at: new Date(),
-            last_login: new Date(),
           };
 
           return user;

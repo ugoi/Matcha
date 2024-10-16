@@ -3,7 +3,11 @@ import { body } from "express-validator";
 var router = Router();
 import passport from "passport";
 import { mockUser, ProtectedUser, User } from "./user.interface.js";
-import { emailExists, isHtmlTagFree, usernameExists } from "../../utils/utils.js";
+import {
+  emailNotExists,
+  isHtmlTagFree,
+  usernameNotExists,
+} from "../../utils/utils.js";
 
 /* Get user details*/
 //TODO: make sure missing fields are inlcuded with null in response
@@ -27,8 +31,8 @@ router.get(
 router.patch(
   "/",
   // passport.authenticate("jwt", { session: false }),
-  body("username").isString().custom(isHtmlTagFree).custom(usernameExists),
-  body("email").escape().isEmail().custom(isHtmlTagFree).custom(emailExists),
+  body("username").isString().custom(isHtmlTagFree).custom(usernameNotExists),
+  body("email").escape().isEmail().custom(isHtmlTagFree).custom(emailNotExists),
   body("first_name").escape().isString(),
   body("last_name").escape().isString(),
   body("phone").escape().isString(),

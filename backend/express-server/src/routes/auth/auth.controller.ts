@@ -12,11 +12,11 @@ import {
   sendVerificationEmail,
 } from "./auth.service.js";
 import {
-  emailExists,
+  emailNotExists,
   escapeErrors,
   emailVerified,
   isHtmlTagFree,
-  usernameExists,
+  usernameNotExists,
 } from "../../utils/utils.js";
 import { authenticateWithCredentials } from "../auth/auth.service.js";
 import { createToken } from "../token/token.repository.js";
@@ -39,8 +39,8 @@ router.post(
   "/signup",
   body("firstName").notEmpty().escape(),
   body("lastName").notEmpty().escape(),
-  body("username").notEmpty().custom(isHtmlTagFree).custom(usernameExists),
-  body("email").isEmail().custom(isHtmlTagFree).custom(emailExists),
+  body("username").notEmpty().custom(isHtmlTagFree).custom(usernameNotExists),
+  body("email").isEmail().custom(isHtmlTagFree).custom(emailNotExists),
   body("password").isStrongPassword(),
 
   async function (req, res, next) {

@@ -18,7 +18,7 @@ const cn: IConnectionParameters = {
 const db = pgp(cn);
 
 // Normal export
-export { db };
+export { db, pgp };
 
 // Exporting the database object for shared use:
 export default db;
