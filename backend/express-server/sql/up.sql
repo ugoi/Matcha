@@ -49,47 +49,46 @@ CREATE TABLE IF NOT EXISTS profiles (
 -- User Interests Table: Stores user interests using tags (part of the public profile)
 CREATE TABLE IF NOT EXISTS user_interests (
     interest_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    user_id UUID REFERENCES profiles(user_id) ON DELETE CASCADE,
+    user_id UUID REFERENCES users(user_id) ON DELETE CASCADE,
     interest_tag TEXT
 );
 
 -- User Pictures Table: Handles additional pictures uploaded by the user (part of the public profile)
 CREATE TABLE IF NOT EXISTS user_pictures (
     picture_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    user_id UUID REFERENCES profiles(user_id) ON DELETE CASCADE,
+    user_id UUID REFERENCES users(user_id) ON DELETE CASCADE,
     picture_url TEXT
 );
 
 -- Visits Table: Stores profile visit history (who visited whom)
 CREATE TABLE IF NOT EXISTS visits (
     visit_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    visitor_profile_id UUID REFERENCES profiles(user_id) ON DELETE CASCADE,
-    visited_profile_id UUID REFERENCES profiles(user_id) ON DELETE CASCADE,
+    visitor_user_id UUID REFERENCES users(user_id) ON DELETE CASCADE,
+    visited_user_id UUID REFERENCES users(user_id) ON DELETE CASCADE,
     visit_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
 -- Matches Table: Handles matches between users (previously called 'likes')
 CREATE TABLE IF NOT EXISTS matches (
-    match_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    matcher_profile_id UUID REFERENCES profiles(user_id) ON DELETE CASCADE,
-    matched_profile_id UUID REFERENCES profiles(user_id) ON DELETE CASCADE,
-    is_connected BOOLEAN DEFAULT FALSE, -- Becomes true if both users match
-    match_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    matcher_user_id UUID REFERENCES users(user_id) ON DELETE CASCADE,
+    matched_user_id UUID REFERENCES users(user_id) ON DELETE CASCADE,
+    match_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (matcher_user_id, matched_user_id) -- Composite primary key to ensure uniqueness
 );
 
 -- Blocked Users Table: Handles blocked users
 CREATE TABLE IF NOT EXISTS blocked_users (
     block_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    blocker_profile_id UUID REFERENCES profiles(user_id) ON DELETE CASCADE,
-    blocked_profile_id UUID REFERENCES profiles(user_id) ON DELETE CASCADE,
+    blocker_user_id UUID REFERENCES users(user_id) ON DELETE CASCADE,
+    blocked_user_id UUID REFERENCES users(user_id) ON DELETE CASCADE,
     block_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
 -- Chat Table: Handles chat messages between matched users
 CREATE TABLE IF NOT EXISTS chats (
     chat_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    sender_profile_id UUID REFERENCES profiles(user_id) ON DELETE CASCADE,
-    receiver_profile_id UUID REFERENCES profiles(user_id) ON DELETE CASCADE,
+    sender_user_id UUID REFERENCES users(user_id) ON DELETE CASCADE,
+    receiver_user_id UUID REFERENCES users(user_id) ON DELETE CASCADE,
     message TEXT NOT NULL,
     sent_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
@@ -100,7 +99,7 @@ CREATE TABLE IF NOT EXISTS notifications (
     user_id UUID REFERENCES users(user_id) ON DELETE CASCADE, -- Notifications linked to user (not public)
     notification_type TEXT, -- E.g., 'match', 'message', 'visit'
     notification_text TEXT, -- Text of the notification
-    from_profile_id UUID REFERENCES profiles(user_id),
+    from_user_id UUID REFERENCES users(user_id),
     is_read BOOLEAN DEFAULT FALSE,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
@@ -120,8 +119,8 @@ CREATE TABLE IF NOT EXISTS search_preferences (
 -- User Reports Table: Handles user reports for inappropriate behavior
 CREATE TABLE IF NOT EXISTS user_reports (
     report_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    reporter_profile_id UUID REFERENCES profiles(user_id) ON DELETE CASCADE,
-    reported_profile_id UUID REFERENCES profiles(user_id) ON DELETE CASCADE,
+    reporter_user_id UUID REFERENCES users(user_id) ON DELETE CASCADE,
+    reported_user_id UUID REFERENCES users(user_id) ON DELETE CASCADE,
     report_reason TEXT,
     report_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );

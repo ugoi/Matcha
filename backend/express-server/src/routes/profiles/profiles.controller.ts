@@ -40,4 +40,117 @@ router.get(
   }
 );
 
+/* Get matches */
+router.get(
+  "/matches",
+  passport.authenticate("jwt", { session: false }),
+  async function (req, res, next) {
+    try {
+      //   const profile = await profileRepository.getProfile(req.params.user_id);
+      res.json({ message: "success", data: { matches: mockPublicProfiles } });
+    } catch (error) {
+      next(error);
+      return;
+    }
+  }
+);
+
+// TODO: Implement profileRepository.getProfile
+/* Get profiles I liked */
+router.get(
+  "/liked",
+  passport.authenticate("jwt", { session: false }),
+  async function (req, res, next) {
+    try {
+      //   const profile = await profileRepository.getProfile(req.params.user_id);
+      res.json({ message: "success", data: { matches: mockPublicProfiles } });
+    } catch (error) {
+      next(error);
+      return;
+    }
+  }
+);
+
+// TODO: Implement profileRepository.getProfile
+/* Get profiles that liked me */
+router.get(
+  "/liked-me",
+  passport.authenticate("jwt", { session: false }),
+  async function (req, res, next) {
+    try {
+      //   const profile = await profileRepository.getProfile(req.params.user_id);
+      res.json({ message: "success", data: { matches: mockPublicProfiles } });
+    } catch (error) {
+      next(error);
+      return;
+    }
+  }
+);
+
+// TODO: Implement profileRepository.getProfile
+/* Get profiles that I blocked */
+router.get(
+  "/blocked",
+  passport.authenticate("jwt", { session: false }),
+  async function (req, res, next) {
+    try {
+      //   const profile = await profileRepository.getProfile(req.params.user_id);
+      res.json({ message: "success", data: { matches: mockPublicProfiles } });
+    } catch (error) {
+      next(error);
+      return;
+    }
+  }
+);
+
+// TODO: Implement profileRepository.getProfile
+/* Get profiles that blocked me */
+router.get(
+  "/blocked-me",
+  passport.authenticate("jwt", { session: false }),
+  async function (req, res, next) {
+    try {
+      //   const profile = await profileRepository.getProfile(req.params.user_id);
+      res.json({ message: "success", data: { matches: mockPublicProfiles } });
+    } catch (error) {
+      next(error);
+      return;
+    }
+  }
+);
+
+// TODO: Implement profileRepository.getProfile
+/* Get profiles that I reported */
+router.get(
+  "/reported",
+  passport.authenticate("jwt", { session: false }),
+  async function (req, res, next) {
+    try {
+      //   const profile = await profileRepository.getProfile(req.params.user_id);
+      res.json({ message: "success", data: { matches: mockPublicProfiles } });
+    } catch (error) {
+      next(error);
+      return;
+    }
+  }
+);
+
+
+// TODO: Implement profileRepository.getProfile
+/* Get profiles that reported me */
+router.get(
+  "/reported-me",
+  passport.authenticate("jwt", { session: false }),
+  async function (req, res, next) {
+    try {
+      //   const profile = await profileRepository.getProfile(req.params.user_id);
+      res.json({ message: "success", data: { matches: mockPublicProfiles } });
+    } catch (error) {
+      next(error);
+      return;
+    }
+  }
+);
+
+
 export default router;

@@ -9,6 +9,8 @@ import {
   usernameNotExists,
 } from "../../utils/utils.js";
 
+// TODO: Move this into profile and rename everything in profile to user
+
 /* Get user details*/
 //TODO: make sure missing fields are inlcuded with null in response
 router.get(

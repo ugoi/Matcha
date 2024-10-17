@@ -3,6 +3,7 @@ import db, { pgp } from "../../config/db-config.js";
 import { Profile, SearchPreferences } from "./profile.interface.js";
 import { Interest } from "./interest.interface.js";
 import { Picture } from "./picture.interface.js";
+import { Match } from "./match.interface.js";
 
 interface FindOneInput {
   user_id?: string;
@@ -369,5 +370,173 @@ export const searchPreferencesRepository = {
     );
 
     return updatedSearchPreferences;
+  },
+};
+
+export const likesRepository = {
+  findOne: async function findOne(
+    matcher_user_id: string,
+    matched_user_id: string
+  ): Promise<Match> {
+    // Check if you are liking yourself
+    if (matcher_user_id === matched_user_id) {
+      throw new Error("You cannot like yourself");
+    }
+
+    // Check if you already liked the user
+    const existingMatch = await db.oneOrNone(
+      `
+        SELECT *
+        FROM matches
+        WHERE matcher_user_id = $1 AND matched_user_id = $2
+      `,
+      [matcher_user_id, matched_user_id]
+    );
+
+    if (existingMatch) {
+      throw new Error("You already liked this user");
+    }
+
+    // Check if the user already liked you
+    const existingMatch2 = await db.oneOrNone(
+      `
+        SELECT *
+        FROM matches
+        WHERE matcher_user_id = $2 AND matched_user_id = $1
+      `,
+      [matcher_user_id, matched_user_id]
+    );
+
+    if (existingMatch2) {
+      return {
+        ...existingMatch,
+        both_matched: true,
+      };
+    } else {
+      return {
+        ...existingMatch,
+        both_matched: false,
+      };
+    }
+  },
+
+  find: async function find(user_id: string): Promise<Match[]> {
+    const matches = await db.manyOrNone(
+      `
+        SELECT *
+        FROM matches
+        WHERE matcher_user_id = $1 OR matched_user_id = $1
+      `,
+      [user_id]
+    );
+
+    return matches;
+  },
+
+  add: async function like(
+    matcher_user_id: string,
+    matched_user_id: string
+  ): Promise<Match> {
+    // Check if you are liking yourself
+    if (matcher_user_id === matched_user_id) {
+      throw new Error("You cannot like yourself");
+    }
+
+    // Check if you already liked the user
+    const existingMatch = await db.oneOrNone(
+      `
+        SELECT *
+        FROM matches
+        WHERE matcher_user_id = $1 AND matched_user_id = $2
+      `,
+      [matcher_user_id, matched_user_id]
+    );
+
+    if (existingMatch) {
+      throw new Error("You already liked this user");
+    }
+
+    // Check if the user already liked you
+    const existingMatch2 = await db.oneOrNone(
+      `
+        SELECT *
+        FROM matches
+        WHERE matcher_user_id = $2 AND matched_user_id = $1
+      `,
+      [matcher_user_id, matched_user_id]
+    );
+
+    const insertedMatch = await db.one(
+      `
+        INSERT INTO matches (matcher_user_id, matched_user_id)
+        VALUES ($1, $2)
+        RETURNING *
+      `,
+      [matcher_user_id, matched_user_id]
+    );
+
+    if (existingMatch2) {
+      return {
+        ...insertedMatch,
+        both_matched: true,
+      };
+    } else {
+      return {
+        ...insertedMatch,
+        both_matched: false,
+      };
+    }
+  },
+
+  remove: async function unlike(
+    matcher_user_id: string,
+    matched_user_id: string
+  ): Promise<Match> {
+    // Check if you are unliking yourself
+    if (matcher_user_id === matched_user_id) {
+      throw new Error("You cannot unlike yourself");
+    }
+
+    // Check if you already liked the user
+    const existingMatch = await db.oneOrNone(
+      `
+        SELECT *
+        FROM matches
+        WHERE matcher_user_id = $1 AND matched_user_id = $2
+      `,
+      [matcher_user_id, matched_user_id]
+    );
+
+    if (!existingMatch) {
+      throw new Error("You haven't liked this user");
+    }
+
+    const deletedMatch = await db.one(
+      `
+        DELETE FROM matches
+        WHERE matcher_user_id = $1 AND matched_user_id = $2
+      `,
+      [matcher_user_id, matched_user_id]
+    );
+
+    return {
+      ...deletedMatch,
+      both_matched: true,
+    };
+  },
+
+  findMatches: async function findMatches(user_id: string): Promise<Match[]> {
+    const matches = await db.manyOrNone(
+      `
+        SELECT *
+        FROM matches m1
+        JOIN matches m2
+          ON m1.matcher_user_id = m2.matched_user_id
+          AND m1.matched_user_id = m2.matcher_user_id
+      `,
+      [user_id]
+    );
+
+    return matches;
   },
 };

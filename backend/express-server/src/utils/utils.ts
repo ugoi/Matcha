@@ -41,6 +41,11 @@ export function isHtmlTagFree(value) {
 }
 
 export async function emailVerified(value: string) {
+  const EmailVerificationDisabled = process.env.EMAIL_VERIFICATION === "false";
+  if (EmailVerificationDisabled) {
+    return true;
+  }
+
   const user = await userRepository.findOne({
     username: value,
     email: value,
