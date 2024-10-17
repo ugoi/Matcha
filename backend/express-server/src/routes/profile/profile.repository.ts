@@ -53,6 +53,10 @@ export const profileRepository = {
       search
     );
 
+    if (data.length == 0) {
+      return null;
+    }
+
     const userInterests = await interestsRepository.find(data[0].user_id);
 
     const userPictures = await picturesRepository.find(data[0].user_id);
@@ -73,6 +77,39 @@ export const profileRepository = {
     };
 
     return profile;
+  },
+
+  find: async function find(): Promise<Profile[]> {
+    const data = await db.manyOrNone(
+      `
+      SELECT profiles.*, users.username, users.first_name, users.last_name
+      FROM profiles
+      INNER JOIN users
+        ON profiles.user_id = users.user_id
+      LIMIT 20
+      `
+    );
+
+    let profiles = data.map(async (profile) => {
+      const userInterests = await interestsRepository.find(profile.user_id);
+
+      const userPictures = await picturesRepository.find(profile.user_id);
+
+      const searchPreferences = await searchPreferencesRepository.find(
+        profile.user_id
+      );
+
+      return {
+        ...profile,
+        interests: userInterests,
+        pictures: userPictures,
+        search_preferences: searchPreferences,
+      };
+    });
+
+    let result = Promise.all(profiles);
+
+    return result;
   },
 
   create: async function create(input: CreateProfileInput): Promise<Profile> {
@@ -533,6 +570,7 @@ export const likesRepository = {
         JOIN matches m2
           ON m1.matcher_user_id = m2.matched_user_id
           AND m1.matched_user_id = m2.matcher_user_id
+        WHERE m1.matcher_user_id = $1
       `,
       [user_id]
     );

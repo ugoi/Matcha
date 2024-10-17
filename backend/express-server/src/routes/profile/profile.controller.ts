@@ -11,21 +11,6 @@ import {
   profileRepository,
 } from "./profile.repository.js";
 
-/* Get user matches */
-router.get(
-  "/matches",
-  passport.authenticate("jwt", { session: false }),
-  async function (req, res, next) {
-    try {
-      const matches = await likesRepository.findMatches(req.user.user_id);
-      res.json({ message: "success", data: { matches: matches } });
-    } catch (error) {
-      next(error);
-      return;
-    }
-  }
-);
-
 /* Get my user details*/
 router.get(
   "/",
@@ -245,31 +230,6 @@ router.delete(
   }
 );
 
-
-
-/* Get user likes */
-router.get(
-  "/likes",
-  passport.authenticate("jwt", { session: false }),
-  async function (req, res, next) {
-    const result = validationResult(req);
-    if (!result.isEmpty()) {
-      // Escape html tags in error messages for security
-      const errors = escapeErrors(result.array());
-      next(new JFail({ title: "invalid input", errors: errors }));
-      return;
-    }
-    try {
-      const match = await likesRepository.find(
-        req.user.user_id,
-      );
-      res.json({ message: "success", data: { match: match } });
-    } catch (error) {
-      next(error);
-      return;
-    }
-  }
-);
 
 /* Like a user*/
 router.post(

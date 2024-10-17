@@ -5,8 +5,11 @@ import passport, { Profile } from "passport";
 import { mockPublicProfiles } from "../profile/profile.interface.js";
 import { escapeErrors } from "../../utils/utils.js";
 import { JFail } from "../../error-handlers/custom-errors.js";
+import {
+  likesRepository,
+  profileRepository,
+} from "../profile/profile.repository.js";
 
-// TODO: Implement profileRepository.getProfile
 /* Get user details*/
 router.get(
   "/",
@@ -18,7 +21,8 @@ router.get(
   query("tags").optional().isArray(),
   query("age_gap").optional().isNumeric(),
   query("fame_rating_gap").optional().isNumeric(),
-  query("sort_by").optional()
+  query("sort_by")
+    .optional()
     .isString()
     .isIn(["age", "location", "fame_rating", "common_tags"]),
   query("order").optional().isString().isIn(["asc", "desc"]),
@@ -31,8 +35,8 @@ router.get(
       return;
     }
     try {
-      //   const profile = await profileRepository.getProfile(req.params.user_id);
-      res.json({ message: "success", data: { matches: mockPublicProfiles } });
+      const profiles = await profileRepository.find();
+      res.json({ message: "success", data: { profiles: profiles } });
     } catch (error) {
       next(error);
       return;
@@ -41,13 +45,14 @@ router.get(
 );
 
 /* Get matches */
+/* Get user matches */
 router.get(
-  "/matches",
+  "/matched",
   passport.authenticate("jwt", { session: false }),
   async function (req, res, next) {
     try {
-      //   const profile = await profileRepository.getProfile(req.params.user_id);
-      res.json({ message: "success", data: { matches: mockPublicProfiles } });
+      const matches = await likesRepository.findMatches(req.user.user_id);
+      res.json({ message: "success", data: { matches: matches } });
     } catch (error) {
       next(error);
       return;
@@ -55,15 +60,21 @@ router.get(
   }
 );
 
-// TODO: Implement profileRepository.getProfile
 /* Get profiles I liked */
 router.get(
   "/liked",
   passport.authenticate("jwt", { session: false }),
   async function (req, res, next) {
+    const result = validationResult(req);
+    if (!result.isEmpty()) {
+      // Escape html tags in error messages for security
+      const errors = escapeErrors(result.array());
+      next(new JFail({ title: "invalid input", errors: errors }));
+      return;
+    }
     try {
-      //   const profile = await profileRepository.getProfile(req.params.user_id);
-      res.json({ message: "success", data: { matches: mockPublicProfiles } });
+      const match = await likesRepository.find(req.user.user_id);
+      res.json({ message: "success", data: { match: match } });
     } catch (error) {
       next(error);
       return;
@@ -135,7 +146,6 @@ router.get(
   }
 );
 
-
 // TODO: Implement profileRepository.getProfile
 /* Get profiles that reported me */
 router.get(
@@ -151,6 +161,5 @@ router.get(
     }
   }
 );
-
 
 export default router;
