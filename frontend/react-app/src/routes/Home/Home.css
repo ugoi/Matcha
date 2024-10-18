@@ -1,0 +1,78 @@
+/* home.css */
+.card {
+    width: 22rem;
+    border-radius: 15px;
+    position: relative;
+  }
+  
+  .card-img-top {
+    aspect-ratio: 4 / 5;
+    object-fit: cover;
+    border-radius: 15px;
+  }
+  
+  .like-button,
+  .dislike-button {
+    width: 60px;
+    height: 60px;
+    font-size: 1.5rem;
+    border: none;
+  }
+  
+  .dislike-button {
+    background-color: red;
+    color: rgb(252, 126, 126);
+  }
+  
+  .like-button {
+    background-color: green;
+    color: rgb(84, 130, 84);
+  }
+  
+  .like-button:hover,
+  .dislike-button:hover {
+    background-color: green;
+    color: rgb(84, 130, 84);
+  }
+  
+  .dislike-button:hover {
+    background-color: red;
+    color: rgb(252, 126, 126);
+  }
+  
+  .shadow-sm {
+    box-shadow: 0 0.125rem 0.25rem rgb(235, 173, 14);
+  }
+  
+  .photo-navigation {
+    position: absolute;
+    top: 50%;
+    left: 0;
+    right: 0;
+    display: flex;
+    justify-content: space-between;
+    transform: translateY(-50%);
+  }
+  
+  .photo-arrow {
+    background-color: transparent;
+    border: none;
+    font-size: 1.5rem;
+    cursor: pointer;
+    color: #000;
+    transition: color 0.3s;
+  }
+  
+  .photo-arrow:hover {
+    color: #1e90ff;
+  }
+  
+  .left-arrow {
+    background-color: #1e90ff;
+    margin-left: -80px;
+  }
+  
+  .right-arrow {
+    background-color: #1e90ff;
+    margin-right: -80px;
+  }

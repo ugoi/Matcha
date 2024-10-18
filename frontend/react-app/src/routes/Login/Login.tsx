@@ -1,10 +1,10 @@
-// src/routes/Signup/Signup.tsx
+// src/routes/Login/Login.tsx
 import { useState } from "react";
-import "./Signup.css";
+import "./Login.css";
 import Navbar from '../../components/Navbar/Navbar';
 import { Form, Button, Container, Row, Col, Alert } from 'react-bootstrap';
 
-function Signup() {
+function Login() {
   const [errorTitle, setErrorTitle] = useState("");
 
   const handleSubmit = async (event: any) => {
@@ -24,7 +24,7 @@ function Signup() {
 
     try {
       const response = await fetch(
-        "http://localhost:3000/api/signup",
+        "http://localhost:3000/api/login",
         requestOptions
       );
       const result = await response.json();
@@ -54,30 +54,12 @@ function Signup() {
   return (
     <>
       <Navbar />
-      <Container className="signup-container mt-5">
+      <Container className="login-container mt-5">
         <Row className="justify-content-center">
           <Col md={6}>
-            <h1 className="text-center mb-4">Sign Up</h1>
+            <h1 className="text-center mb-4">Login</h1>
             {errorTitle && <Alert variant="danger">{errorTitle}</Alert>}
             <Form onSubmit={handleSubmit}>
-              <Form.Group controlId="firstName" className="mb-3">
-                <Form.Label>First Name</Form.Label>
-                <Form.Control 
-                  type="text" 
-                  name="firstName" 
-                  placeholder="Enter your first name" 
-                  required 
-                />
-              </Form.Group>
-              <Form.Group controlId="lastName" className="mb-3">
-                <Form.Label>Last Name</Form.Label>
-                <Form.Control 
-                  type="text" 
-                  name="lastName" 
-                  placeholder="Enter your last name" 
-                  required 
-                />
-              </Form.Group>
               <Form.Group controlId="email" className="mb-3">
                 <Form.Label>Email</Form.Label>
                 <Form.Control 
@@ -92,7 +74,7 @@ function Signup() {
                 <Form.Control 
                   type="password" 
                   name="password" 
-                  placeholder="Create a password" 
+                  placeholder="Enter your password" 
                   required 
                 />
               </Form.Group>
@@ -101,7 +83,7 @@ function Signup() {
                 type="submit" 
                 className="w-100 mb-3"
               >
-                Register
+                Login
               </Button>
             </Form>
             <p className="text-center">or</p>
@@ -111,15 +93,20 @@ function Signup() {
                 href="/api/login/google" 
                 className="w-45"
               >
-                Sign up with Google
+                Sign in with Google
               </Button>
               <Button 
                 variant="outline-primary" 
                 href="/api/login/facebook" 
                 className="w-45"
               >
-                Sign up with Facebook
+                Sign in with Facebook
               </Button>
+            </div>
+            <div className="mt-4 text-center">
+              <p>
+                Don't have an account? <a href="/signup">Sign up here!</a>
+              </p>
             </div>
           </Col>
         </Row>
@@ -128,4 +115,4 @@ function Signup() {
   );
 }
 
-export default Signup;
+export default Login;
