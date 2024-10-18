@@ -8,6 +8,7 @@ import { JFail } from "../../error-handlers/custom-errors.js";
 import {
   interestsRepository,
   likesRepository,
+  picturesRepository,
   profileRepository,
 } from "./profile.repository.js";
 
@@ -188,7 +189,7 @@ router.post(
       return;
     }
     try {
-      const profile = await interestsRepository.add(
+      const profile = await picturesRepository.add(
         req.user.user_id,
         req.body.pictures
       );
