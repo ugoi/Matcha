@@ -241,7 +241,7 @@ export const interestsRepository = {
 
     await db.none(insert);
 
-    return await this.findOne({ user_id });
+    return await profileRepository.findOne(user_id);
   },
 
   remove: async function remove(
@@ -268,7 +268,7 @@ export const interestsRepository = {
       [values]
     );
 
-    return await this.findOne({ user_id });
+    return await profileRepository.findOne(user_id);
   },
 };
 
@@ -338,7 +338,7 @@ export const picturesRepository = {
 
     await db.none(insert);
 
-    return await this.findOne({ user_id });
+    return await profileRepository.findOne(user_id);
   },
 
   remove: async function remove(
@@ -365,7 +365,7 @@ export const picturesRepository = {
       [values]
     );
 
-    return await this.findOne({ user_id });
+    return await profileRepository.findOne(user_id);
   },
 };
 
