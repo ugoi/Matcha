@@ -10,13 +10,13 @@ import {
   LoginInput,
   LoginOutput,
 } from "./auth.interface.js";
-import { accountRepository } from "../user/user.repository.js";
+import { userRepository } from "../user/user.repository.js";
 import bcrypt from "bcrypt";
 const __dirname = import.meta.dirname;
 import jwt from "jsonwebtoken";
 import { env, exitCode } from "node:process";
 import { TokenType } from "../token/token.interface.js";
-import { Account } from "../user/user.interface.js";
+import { User } from "../user/user.interface.js";
 import { Profile } from "passport";
 import { createToken } from "../token/token.repository.js";
 
@@ -90,7 +90,7 @@ export async function verifyEmail(token: string) {
       [token]
     );
 
-    const user = await accountRepository.findOne({ id: tokenData.user_id });
+    const user = await userRepository.findOne({ id: tokenData.user_id });
 
     if (user.is_email_verified) {
       throw new JFail({
@@ -195,7 +195,7 @@ export async function resetPassword(token: string, newPassword: string) {
 export async function login(input: LoginInput): Promise<LoginOutput> {
   // Login user
   const { username, password } = input;
-  let user = await accountRepository.findOne({
+  let user = await userRepository.findOne({
     username: username,
     email: username,
   });
@@ -221,7 +221,7 @@ export async function login(input: LoginInput): Promise<LoginOutput> {
   return await createJwtToken(user);
 }
 
-export async function createJwtToken(user: Account): Promise<LoginOutput> {
+export async function createJwtToken(user: User): Promise<LoginOutput> {
   if (!user) {
     throw new JFail({
       title: "Invalid credentials",
@@ -249,7 +249,7 @@ export async function createJwtToken(user: Account): Promise<LoginOutput> {
 
 export async function authenticatedWithFederatedProvider(
   profile: Profile
-): Promise<Account> {
+): Promise<User> {
   const issuer = profile.provider;
   let cred = await db.oneOrNone(
     "SELECT * FROM federated_credentials WHERE provider = $1 AND subject = $2",
@@ -262,7 +262,7 @@ export async function authenticatedWithFederatedProvider(
     const email = profile?.emails?.[0]?.value;
 
     // Check if user already exists
-    let userData = await accountRepository.findOne({ email: email });
+    let userData = await userRepository.findOne({ email: email });
 
     if (userData) {
       if (!userData.is_email_verified) {
@@ -292,7 +292,7 @@ export async function authenticatedWithFederatedProvider(
   } else {
     // The Google user has previously logged in to the app.  Get the
     // user record linked to the Google user and log the user in.
-    const user = await accountRepository.findOne({ id: cred.user_id });
+    const user = await userRepository.findOne({ id: cred.user_id });
 
     return user;
   }
@@ -306,7 +306,7 @@ export async function authenticateWithCredentials(
   hashedPassword = await bcrypt.hash(input.password, 10);
 
   // Check if user already exists
-  let userData = await accountRepository.findOne({
+  let userData = await userRepository.findOne({
     email: input.email,
   });
 
@@ -347,7 +347,7 @@ export async function authenticateWithCredentials(
     `http://localhost:3000/verify-email?token=${tokenData.token_id}`
   );
 
-  const title = "Account created. Verification email sent";
+  const title = "User created. Verification email sent";
 
   return {
     status: "success",

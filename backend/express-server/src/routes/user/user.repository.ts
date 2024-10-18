@@ -1,5 +1,5 @@
 import db from "../../config/db-config.js";
-import { Account } from "./user.interface.js";
+import { User } from "./user.interface.js";
 
 interface FindOneInput {
   id?: string;
@@ -7,14 +7,12 @@ interface FindOneInput {
   email?: string;
 }
 
-export const accountRepository = {
+export const userRepository = {
   /**
    *
    * @returns  If the user is found, return the user. Otherwise, return null.
    */
-  findOne: async function findOne(
-    input: FindOneInput
-  ): Promise<Account | null> {
+  findOne: async function findOne(input: FindOneInput): Promise<User | null> {
     const { id, username, email } = input;
 
     // Initialize query and values array
@@ -53,7 +51,7 @@ export const accountRepository = {
       return null;
     }
 
-    let user: Account = data[0];
+    let user: User = data[0];
 
     return user;
   },

@@ -5,7 +5,6 @@ import cookieParser from "cookie-parser";
 import logger from "morgan";
 import apiRouter from "./routes/api.js";
 const __dirname = import.meta.dirname;
-import db from "./config/db-config.js";
 import cors from "cors";
 import { clientErrorHandler } from "./error-handlers/client-error-handler.js";
 import { defaultErrorHandler } from "./error-handlers/default-error-handler.js";

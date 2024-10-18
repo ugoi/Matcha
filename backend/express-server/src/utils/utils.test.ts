@@ -1,9 +1,9 @@
 // sum.test.js
 import { describe, expect, test, vi } from "vitest";
-import { escapeErrors, isEmailVerified, isHtmlTagFree } from "./utils.js";
+import { escapeErrors, emailVerified, isHtmlTagFree } from "./utils.js";
 import exp from "node:constants";
-import { accountRepository } from "../routes/user/user.repository.js";
-import { Account } from "../routes/user/user.interface.js";
+import { userRepository } from "../routes/user/user.repository.js";
+import { User } from "../routes/user/user.interface.js";
 
 describe("utils", () => {
   test("isHtmlTagFree", () => {
@@ -54,12 +54,12 @@ describe("utils", () => {
     ]);
   });
 
-  test("isEmailVerified", async () => {
+  test("emailVerified", async () => {
     const findOneSpy = vi
-      .spyOn(accountRepository, "findOne")
+      .spyOn(userRepository, "findOne")
       .mockImplementation(async (value) => {
         if (value.username === "test" && value.email === "test") {
-          const user: Account = {
+          const user: User = {
             user_id: "1",
             first_name: "test",
             last_name: "test",
@@ -70,7 +70,6 @@ describe("utils", () => {
             is_email_verified: true,
             is_phone_verified: true,
             created_at: new Date(),
-            last_login: new Date(),
           };
 
           return user;
@@ -78,7 +77,7 @@ describe("utils", () => {
           value.username === "unverified" &&
           value.email === "unverified"
         ) {
-          const user: Account = {
+          const user: User = {
             user_id: "2",
             first_name: "unverified",
             last_name: "unverified",
@@ -89,7 +88,6 @@ describe("utils", () => {
             is_email_verified: false,
             is_phone_verified: false,
             created_at: new Date(),
-            last_login: new Date(),
           };
 
           return user;
@@ -97,9 +95,9 @@ describe("utils", () => {
         return null;
       });
 
-    expect(() => isEmailVerified("test")).not.toThrowError();
+    expect(() => emailVerified("test")).not.toThrowError();
     expect(
-      async () => await isEmailVerified("unverified")
+      async () => await emailVerified("unverified")
     ).rejects.toThrowError();
   });
 });

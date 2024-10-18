@@ -1,6 +1,33 @@
 import lodash from "lodash";
-import { accountRepository } from "../routes/user/user.repository.js";
+import { userRepository } from "../routes/user/user.repository.js";
+import { profileRepository } from "../routes/profile/profile.repository.js";
+import { JFail } from "../error-handlers/custom-errors.js";
 const { unescape, escape } = lodash;
+
+export async function profileNotExists(req, res, next) {
+  const user_id = req.user.user_id;
+  const profile = await profileRepository.findOne(user_id);
+  if (profile) {
+    next(new JFail("profile already exists"));
+  }
+  next();
+}
+
+export async function usernameNotExists(value) {
+  const user = await userRepository.findOne({ username: value });
+  if (user) {
+    throw new Error("username already exists");
+  }
+  return true;
+}
+
+export async function emailNotExists(value) {
+  const user = await userRepository.findOne({ email: value });
+  if (user) {
+    throw new Error("email already exists");
+  }
+  return true;
+}
 
 export function isHtmlTagFree(value) {
   if (!value || typeof value !== "string" || value.length === 0) {
@@ -13,8 +40,13 @@ export function isHtmlTagFree(value) {
   return true;
 }
 
-export async function isEmailVerified(value: string) {
-  const user = await accountRepository.findOne({
+export async function emailVerified(value: string) {
+  const EmailVerificationDisabled = process.env.EMAIL_VERIFICATION === "false";
+  if (EmailVerificationDisabled) {
+    return true;
+  }
+
+  const user = await userRepository.findOne({
     username: value,
     email: value,
   });
