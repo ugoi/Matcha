@@ -6,8 +6,10 @@ import { mockPublicProfiles } from "../profile/profile.interface.js";
 import { escapeErrors } from "../../utils/utils.js";
 import { JFail } from "../../error-handlers/custom-errors.js";
 import {
+  blockedUsersRepository,
   likesRepository,
   profileRepository,
+  userReportsRepository,
 } from "../profile/profile.repository.js";
 
 /* Get user details*/
@@ -60,9 +62,9 @@ router.get(
   }
 );
 
-/* Get profiles I liked */
+/* Get likes */
 router.get(
-  "/liked",
+  "/likes",
   passport.authenticate("jwt", { session: false }),
   async function (req, res, next) {
     const result = validationResult(req);
@@ -74,23 +76,7 @@ router.get(
     }
     try {
       const match = await likesRepository.find(req.user.user_id);
-      res.json({ message: "success", data: { match: match } });
-    } catch (error) {
-      next(error);
-      return;
-    }
-  }
-);
-
-// TODO: Implement profileRepository.getProfile
-/* Get profiles that liked me */
-router.get(
-  "/liked-me",
-  passport.authenticate("jwt", { session: false }),
-  async function (req, res, next) {
-    try {
-      //   const profile = await profileRepository.getProfile(req.params.user_id);
-      res.json({ message: "success", data: { matches: mockPublicProfiles } });
+      res.json({ message: "success", data: { likes: match } });
     } catch (error) {
       next(error);
       return;
@@ -101,28 +87,12 @@ router.get(
 // TODO: Implement profileRepository.getProfile
 /* Get profiles that I blocked */
 router.get(
-  "/blocked",
+  "/blocks",
   passport.authenticate("jwt", { session: false }),
   async function (req, res, next) {
     try {
-      //   const profile = await profileRepository.getProfile(req.params.user_id);
-      res.json({ message: "success", data: { matches: mockPublicProfiles } });
-    } catch (error) {
-      next(error);
-      return;
-    }
-  }
-);
-
-// TODO: Implement profileRepository.getProfile
-/* Get profiles that blocked me */
-router.get(
-  "/blocked-me",
-  passport.authenticate("jwt", { session: false }),
-  async function (req, res, next) {
-    try {
-      //   const profile = await profileRepository.getProfile(req.params.user_id);
-      res.json({ message: "success", data: { matches: mockPublicProfiles } });
+      const profile = await blockedUsersRepository.find(req.user.user_id);
+      res.json({ message: "success", data: { blocks: profile } });
     } catch (error) {
       next(error);
       return;
@@ -133,28 +103,13 @@ router.get(
 // TODO: Implement profileRepository.getProfile
 /* Get profiles that I reported */
 router.get(
-  "/reported",
+  "/reports",
   passport.authenticate("jwt", { session: false }),
   async function (req, res, next) {
     try {
-      //   const profile = await profileRepository.getProfile(req.params.user_id);
-      res.json({ message: "success", data: { matches: mockPublicProfiles } });
-    } catch (error) {
-      next(error);
-      return;
-    }
-  }
-);
+      const profile = await userReportsRepository.find(req.user.user_id);
 
-// TODO: Implement profileRepository.getProfile
-/* Get profiles that reported me */
-router.get(
-  "/reported-me",
-  passport.authenticate("jwt", { session: false }),
-  async function (req, res, next) {
-    try {
-      //   const profile = await profileRepository.getProfile(req.params.user_id);
-      res.json({ message: "success", data: { matches: mockPublicProfiles } });
+      res.json({ message: "success", data: { reports: profile } });
     } catch (error) {
       next(error);
       return;

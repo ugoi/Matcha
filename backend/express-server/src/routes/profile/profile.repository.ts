@@ -1,9 +1,8 @@
-import { find, update } from "lodash";
 import db, { pgp } from "../../config/db-config.js";
 import { Profile, SearchPreferences } from "./profile.interface.js";
 import { Interest } from "./interest.interface.js";
 import { Picture } from "./picture.interface.js";
-import { Match } from "./match.interface.js";
+import { BlockedUser, Match, UserReport } from "./match.interface.js";
 
 interface FindOneInput {
   user_id?: string;
@@ -82,49 +81,28 @@ export const profileRepository = {
   find: async function find(): Promise<Profile[]> {
     const data = await db.manyOrNone(
       `
-  SELECT row_to_json(t)
-  FROM (
-    SELECT profiles.*, users.username, users.first_name, users.last_name, (SELECT json_agg (i)
-    FROM (
-    SELECT *
-    FROM
-    user_interests
-    WHERE user_interests.user_id = profiles.user_id
-    ) i) as interests, (SELECT json_agg (i)
-    FROM (
-    SELECT *
-    FROM
-    user_pictures
-    WHERE user_pictures.user_id = user_pictures.user_id
-    ) i) as pictures
-    FROM profiles
-    INNER JOIN users
-      ON profiles.user_id = users.user_id
-    LIMIT 20
-  ) t;
+        SELECT profiles.*, users.username, users.first_name, users.last_name, (SELECT json_agg (i)
+        FROM (
+        SELECT *
+        FROM
+        user_interests
+        WHERE user_interests.user_id = profiles.user_id
+        ) i) as interests, (SELECT json_agg (i)
+        FROM (
+        SELECT *
+        FROM
+        user_pictures
+        WHERE user_pictures.user_id = user_pictures.user_id
+        ) i) as pictures
+        FROM profiles
+        INNER JOIN users
+          ON profiles.user_id = users.user_id
+        LIMIT 20
       `
     );
 
-    let profiles = data.map(async (profile) => {
-      const userInterests = await interestsRepository.find(profile.user_id);
 
-      const userPictures = await picturesRepository.find(profile.user_id);
-
-      const searchPreferences = await searchPreferencesRepository.find(
-        profile.user_id
-      );
-
-      return {
-        ...profile,
-        interests: userInterests,
-        pictures: userPictures,
-        search_preferences: searchPreferences,
-      };
-    });
-
-    let result = Promise.all(profiles);
-
-    return result;
+    return data;
   },
 
   create: async function create(input: CreateProfileInput): Promise<Profile> {
@@ -540,7 +518,7 @@ export const likesRepository = {
     }
   },
 
-  remove: async function unlike(
+  remove: async function remove(
     matcher_user_id: string,
     matched_user_id: string
   ): Promise<Match> {
@@ -593,3 +571,285 @@ export const likesRepository = {
     return matches;
   },
 };
+
+export const blockedUsersRepository = {
+  findOne: async function findOne(
+    blocker_user_id: string,
+    blocked_user_id: string
+  ): Promise<BlockedUser> {
+    // Check if you are liking yourself
+    if (blocker_user_id === blocked_user_id) {
+      throw new Error("You cannot block yourself");
+    }
+
+    // Check if you already blocked the user
+    const existingBlockedUser = await db.oneOrNone(
+      `
+        SELECT *
+        FROM blocked_users
+        WHERE blocker_user_id = $1 AND blocked_user_id = $2
+      `,
+      [blocker_user_id, blocked_user_id]
+    );
+
+    if (existingBlockedUser) {
+      throw new Error("You already blocked this user");
+    }
+
+    // Check if the user already blocked you
+    const existingBlockedUser2 = await db.oneOrNone(
+      `
+        SELECT *
+        FROM blocked_users
+        WHERE blocker_user_id = $2 AND blocked_user_id = $1
+      `,
+      [blocker_user_id, blocked_user_id]
+    );
+
+    if (existingBlockedUser2) {
+      return {
+        ...existingBlockedUser,
+        both_blocked: true,
+      };
+    } else {
+      return {
+        ...existingBlockedUser,
+        both_blocked: false,
+      };
+    }
+  },
+
+  find: async function find(user_id: string): Promise<BlockedUser[]> {
+    const blocked_users = await db.manyOrNone(
+      `
+        SELECT *
+        FROM blocked_users
+        WHERE blocker_user_id = $1 OR blocked_user_id = $1
+      `,
+      [user_id]
+    );
+
+    return blocked_users;
+  },
+
+  add: async function add(
+    blocker_user_id: string,
+    blocked_user_id: string
+  ): Promise<BlockedUser> {
+    // Check if you are liking yourself
+    if (blocker_user_id === blocked_user_id) {
+      throw new Error("You cannot block yourself");
+    }
+
+    // Check if you already blocked the user
+    const existingBlockedUser = await db.oneOrNone(
+      `
+        SELECT *
+        FROM blocked_users
+        WHERE blocker_user_id = $1 AND blocked_user_id = $2
+      `,
+      [blocker_user_id, blocked_user_id]
+    );
+
+    if (existingBlockedUser) {
+      throw new Error("You already blocked this user");
+    }
+
+    // Check if the user already blocked you
+    const existingBlockedUser2 = await db.oneOrNone(
+      `
+        SELECT *
+        FROM blocked_users
+        WHERE blocker_user_id = $2 AND blocked_user_id = $1
+      `,
+      [blocker_user_id, blocked_user_id]
+    );
+
+    const insertedBlockedUser = await db.one(
+      `
+        INSERT INTO blocked_users (blocker_user_id, blocked_user_id)
+        VALUES ($1, $2)
+        RETURNING *
+      `,
+      [blocker_user_id, blocked_user_id]
+    );
+
+    if (existingBlockedUser2) {
+      return {
+        ...insertedBlockedUser,
+        both_blocked: true,
+      };
+    } else {
+      return {
+        ...insertedBlockedUser,
+        both_blocked: false,
+      };
+    }
+  },
+
+  remove: async function remove(
+    blocker_user_id: string,
+    blocked_user_id: string
+  ): Promise<BlockedUser> {
+    // Check if you are unliking yourself
+    if (blocker_user_id === blocked_user_id) {
+      throw new Error("You cannot unblock yourself");
+    }
+
+    // Check if you already blocked the user
+    const existingBlockedUser = await db.oneOrNone(
+      `
+        SELECT *
+        FROM blocked_users
+        WHERE blocker_user_id = $1 AND blocked_user_id = $2
+      `,
+      [blocker_user_id, blocked_user_id]
+    );
+
+    if (!existingBlockedUser) {
+      throw new Error("You haven't blocked this user");
+    }
+
+    const deletedBlockedUser = await db.one(
+      `
+        DELETE FROM blocked_users
+        WHERE blocker_user_id = $1 AND blocked_user_id = $2
+      `,
+      [blocker_user_id, blocked_user_id]
+    );
+
+    return {
+      ...deletedBlockedUser,
+      both_blocked: true,
+    };
+  },
+};
+
+export const userReportsRepository = {
+  findOne: async function findOne(
+    reporter_user_id: string,
+    reported_user_id: string
+  ): Promise<UserReport> {
+    // Check if you are reporting yourself
+    if (reporter_user_id === reported_user_id) {
+      throw new Error("You cannot report yourself");
+    }
+
+    // Check if you already reported the user
+    const existingReport = await db.oneOrNone(
+      `
+        SELECT *
+        FROM user_reports
+        WHERE reporter_user_id = $1 AND reported_user_id = $2
+      `,
+      [reporter_user_id, reported_user_id]
+    );
+
+    if (existingReport) {
+      throw new Error("You already reported this user");
+    }
+
+    const insertedReport = await db.one(
+      `
+        INSERT INTO user_reports (reporter_user_id, reported_user_id)
+        VALUES ($1, $2)
+        RETURNING *
+      `,
+      [reporter_user_id, reported_user_id]
+    );
+
+    return insertedReport;
+  },
+
+  find: async function find(user_id: string): Promise<UserReport[]> {
+    const user_reports = await db.manyOrNone(
+      `
+        SELECT *
+        FROM user_reports
+        WHERE reporter_user_id = $1 OR reported_user_id = $1
+      `,
+      [user_id]
+    );
+
+    return user_reports;
+  },
+
+  add: async function add(
+    reporter_user_id: string,
+    reported_user_id: string,
+    report_reason: string
+  ): Promise<UserReport> {
+    // Check if you are reporting yourself
+    if (reporter_user_id === reported_user_id) {
+      throw new Error("You cannot report yourself");
+    }
+
+    // Check if you already reported the user
+    const existingReport = await db.oneOrNone(
+      `
+        SELECT *
+        FROM user_reports
+        WHERE reporter_user_id = $1 AND reported_user_id = $2
+      `,
+      [reporter_user_id, reported_user_id]
+    );
+
+    if (existingReport) {
+      throw new Error("You already reported this user");
+    }
+
+    const insertedReport = await db.one(
+      `
+        INSERT INTO user_reports (reporter_user_id, reported_user_id, report_reason)
+        VALUES ($1, $2, $3)
+        RETURNING *
+      `,
+      [reporter_user_id, reported_user_id, report_reason]
+    );
+
+    return insertedReport;
+  },
+
+  remove: async function remove(
+    reporter_user_id: string,
+    reported_user_id: string
+  ): Promise<UserReport> {
+    // Check if you are unliking yourself
+    if (reporter_user_id === reported_user_id) {
+      throw new Error("You cannot unreport yourself");
+    }
+
+    // Check if you already reported the user
+    const existingReport = await db.oneOrNone(
+      `
+        SELECT *
+        FROM user_reports
+        WHERE reporter_user_id = $1 AND reported_user_id = $2
+      `,
+      [reporter_user_id, reported_user_id]
+    );
+
+    if (!existingReport) {
+      throw new Error("You haven't reported this user");
+    }
+
+    const deletedReport = await db.one(
+      `
+        DELETE FROM user_reports
+        WHERE reporter_user_id = $1 AND reported_user_id = $2
+      `,
+      [reporter_user_id, reported_user_id]
+    );
+
+    return deletedReport;
+  },
+};
+
+// -- User Reports Table: Handles user reports for inappropriate behavior
+// CREATE TABLE IF NOT EXISTS user_reports (
+//     report_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+//     reporter_user_id UUID REFERENCES users(user_id) ON DELETE CASCADE,
+//     reported_user_id UUID REFERENCES users(user_id) ON DELETE CASCADE,
+//     report_reason TEXT,
+//     report_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+// );

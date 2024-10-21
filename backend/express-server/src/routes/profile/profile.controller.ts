@@ -6,10 +6,12 @@ import { mockProfile, mockPublicProfile } from "./profile.interface.js";
 import { escapeErrors, profileNotExists } from "../../utils/utils.js";
 import { JFail } from "../../error-handlers/custom-errors.js";
 import {
+  blockedUsersRepository,
   interestsRepository,
   likesRepository,
   picturesRepository,
   profileRepository,
+  userReportsRepository,
 } from "./profile.repository.js";
 
 /* Get my user details*/
@@ -231,7 +233,6 @@ router.delete(
   }
 );
 
-
 /* Like a user*/
 router.post(
   "/:user_id/like",
@@ -258,11 +259,11 @@ router.post(
   }
 );
 
-// TODO: Implement profileRepository.unlikeProfile
+// TODO: Test endpoint with postman
 /* Unlike a user*/
 router.delete(
   "/:user_id/like",
-  // passport.authenticate("jwt", { session: false }),
+  passport.authenticate("jwt", { session: false }),
   param("user_id").isUUID(),
   async function (req, res, next) {
     const result = validationResult(req);
@@ -273,7 +274,7 @@ router.delete(
       return;
     }
     try {
-      //   await profileRepository.unlikeProfile(req.params.user_id);
+      await likesRepository.remove(req.user.user_id, req.params.user_id);
       res.json({ message: "success" });
     } catch (error) {
       next(error);
@@ -282,11 +283,11 @@ router.delete(
   }
 );
 
-// TODO: Implement profileRepository.blockProfile
+// TODO: Test with postman
 /* Block a user*/
 router.post(
   "/:user_id/block",
-  // passport.authenticate("jwt", { session: false }),
+  passport.authenticate("jwt", { session: false }),
   param("user_id").isUUID(),
   async function (req, res, next) {
     const result = validationResult(req);
@@ -297,7 +298,8 @@ router.post(
       return;
     }
     try {
-      //   await profileRepository.blockProfile(req.params.user_id);
+      await blockedUsersRepository.add(req.user.user_id, req.params.user_id);
+
       res.json({ message: "success" });
     } catch (error) {
       next(error);
@@ -306,11 +308,11 @@ router.post(
   }
 );
 
-// TODO: Implement profileRepository.unblockProfile
+// TODO: Test with postman
 /* Unblock a user*/
 router.delete(
   "/:user_id/block",
-  // passport.authenticate("jwt", { session: false }),
+  passport.authenticate("jwt", { session: false }),
   param("user_id").isUUID(),
   async function (req, res, next) {
     const result = validationResult(req);
@@ -321,7 +323,7 @@ router.delete(
       return;
     }
     try {
-      //   await profileRepository.unblockProfile(req.params.user_id);
+      await blockedUsersRepository.remove(req.user.user_id, req.params.user_id);
       res.json({ message: "success" });
     } catch (error) {
       next(error);
@@ -330,11 +332,11 @@ router.delete(
   }
 );
 
-// TODO: Implement profileRepository.reportProfile
+// TODO: Test with postman
 /* Report a user*/
 router.post(
   "/:user_id/report",
-  // passport.authenticate("jwt", { session: false }),
+  passport.authenticate("jwt", { session: false }),
   param("user_id").isUUID(),
   body("reason").isString(),
   async function (req, res, next) {
@@ -346,7 +348,11 @@ router.post(
       return;
     }
     try {
-      //   await profileRepository.reportProfile(req.params.user_id);
+      await userReportsRepository.add(
+        req.user.user_id,
+        req.params.user_id,
+        req.body.reason
+      );
       res.json({ message: "success" });
     } catch (error) {
       next(error);
