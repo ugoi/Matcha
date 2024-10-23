@@ -101,7 +101,6 @@ export const profileRepository = {
       `
     );
 
-
     return data;
   },
 
@@ -416,7 +415,23 @@ export const likesRepository = {
     // Check if you already liked the user
     const existingMatch = await db.oneOrNone(
       `
-        SELECT *
+        SELECT matches.*, (SELECT json_agg (i)
+        FROM (
+        SELECT profiles.*, users.username, users.first_name, users.last_name
+        FROM
+        profiles
+        INNER JOIN users
+          ON profiles.user_id = users.user_id
+        WHERE matches.matcher_user_id = profiles.user_id
+        ) i) as matcher, (SELECT json_agg (i)
+        FROM (
+        SELECT profiles.*, users.username, users.first_name, users.last_name
+        FROM
+        profiles
+        INNER JOIN users
+          ON profiles.user_id = users.user_id
+        WHERE matches.matched_user_id = profiles.user_id
+        ) i) as matched
         FROM matches
         WHERE matcher_user_id = $1 AND matched_user_id = $2
       `,
@@ -453,7 +468,23 @@ export const likesRepository = {
   find: async function find(user_id: string): Promise<Match[]> {
     const matches = await db.manyOrNone(
       `
-        SELECT *
+        SELECT matches.*, (SELECT json_agg (i)
+        FROM (
+        SELECT profiles.*, users.username, users.first_name, users.last_name
+        FROM
+        profiles
+        INNER JOIN users
+          ON profiles.user_id = users.user_id
+        WHERE matches.matcher_user_id = profiles.user_id
+        ) i) as matcher, (SELECT json_agg (i)
+        FROM (
+        SELECT profiles.*, users.username, users.first_name, users.last_name
+        FROM
+        profiles
+        INNER JOIN users
+          ON profiles.user_id = users.user_id
+        WHERE matches.matched_user_id = profiles.user_id
+        ) i) as matched
         FROM matches
         WHERE matcher_user_id = $1 OR matched_user_id = $1
       `,
@@ -558,7 +589,23 @@ export const likesRepository = {
   findMatches: async function findMatches(user_id: string): Promise<Match[]> {
     const matches = await db.manyOrNone(
       `
-        SELECT *
+        SELECT m1.*, (SELECT json_agg (i)
+        FROM (
+        SELECT profiles.*, users.username, users.first_name, users.last_name
+        FROM
+        profiles
+        INNER JOIN users
+          ON profiles.user_id = users.user_id
+        WHERE m1.matcher_user_id = profiles.user_id
+        ) i) as matcher, (SELECT json_agg (i)
+        FROM (
+        SELECT profiles.*, users.username, users.first_name, users.last_name
+        FROM
+        profiles
+        INNER JOIN users
+          ON profiles.user_id = users.user_id
+        WHERE m1.matched_user_id = profiles.user_id
+        ) i) as matched
         FROM matches m1
         JOIN matches m2
           ON m1.matcher_user_id = m2.matched_user_id
@@ -585,9 +632,26 @@ export const blockedUsersRepository = {
     // Check if you already blocked the user
     const existingBlockedUser = await db.oneOrNone(
       `
-        SELECT *
+        SELECT blocked_users.*, (SELECT json_agg (i)
+        FROM (
+        SELECT profiles.*, users.username, users.first_name, users.last_name
+        FROM
+        profiles
+        INNER JOIN users
+          ON profiles.user_id = users.user_id
+        WHERE blocked_users.blocker_user_id = profiles.user_id
+        ) i) as blocker, (SELECT json_agg (i)
+        FROM (
+        SELECT profiles.*, users.username, users.first_name, users.last_name
+        FROM
+        profiles
+        INNER JOIN users
+          ON profiles.user_id = users.user_id
+        WHERE blocked_users.blocked_user_id = profiles.user_id
+        ) i) as blocked
         FROM blocked_users
         WHERE blocker_user_id = $1 AND blocked_user_id = $2
+
       `,
       [blocker_user_id, blocked_user_id]
     );
@@ -622,7 +686,23 @@ export const blockedUsersRepository = {
   find: async function find(user_id: string): Promise<BlockedUser[]> {
     const blocked_users = await db.manyOrNone(
       `
-        SELECT *
+        SELECT blocked_users.*, (SELECT json_agg (i)
+        FROM (
+        SELECT profiles.*, users.username, users.first_name, users.last_name
+        FROM
+        profiles
+        INNER JOIN users
+          ON profiles.user_id = users.user_id
+        WHERE blocked_users.blocker_user_id = profiles.user_id
+        ) i) as blocker, (SELECT json_agg (i)
+        FROM (
+        SELECT profiles.*, users.username, users.first_name, users.last_name
+        FROM
+        profiles
+        INNER JOIN users
+          ON profiles.user_id = users.user_id
+        WHERE blocked_users.blocked_user_id = profiles.user_id
+        ) i) as blocked
         FROM blocked_users
         WHERE blocker_user_id = $1 OR blocked_user_id = $1
       `,
