@@ -21,7 +21,7 @@ import {
 import { authenticateWithCredentials } from "../auth/auth.service.js";
 import { createToken } from "../token/token.repository.js";
 import { TokenType } from "../token/token.interface.js";
-import { userRepository } from "../user/user.repository.js";
+import { userRepository } from "../users/users.repository.js";
 import passport from "passport";
 const { unescape, escape } = lodash;
 

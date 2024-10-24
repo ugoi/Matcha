@@ -57,7 +57,7 @@ beforeEach(() => {
 
 test("finds user", async () => {
   const { db } = await import("../../config/db-config.js");
-  const { userRepository } = await import("./user.repository.js");
+  const { userRepository } = await import("./users.repository.js");
 
   await db.none(
     `INSERT INTO users (user_id, first_name, last_name, email, phone, username, password_hash) VALUES ($1, $2, $3, $4, $5, $6, $7)`,

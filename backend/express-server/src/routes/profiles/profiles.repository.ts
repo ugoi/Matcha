@@ -1,40 +1,17 @@
 import db, { pgp } from "../../config/db-config.js";
-import { Profile, SearchPreferences } from "./profile.interface.js";
-import { Interest } from "./interest.interface.js";
-import { Picture } from "./picture.interface.js";
-import { BlockedUser, Match, UserReport } from "./match.interface.js";
+import {
+  CreateProfileInput,
+  Profile,
+  SearchPreferences,
+  UpdateProfileInput,
+} from "./profiles.interface.js";
+import { Interest } from "./interests.interface.js";
+import { Picture } from "./pictures.interface.js";
+import { BlockedUser, Match, UserReport } from "./matchs.interface.js";
+import { interestsRepository } from "./interests.repository.js";
+import { picturesRepository } from "./pictures.repository.js";
 
-interface FindOneInput {
-  user_id?: string;
-  username?: string;
-  email?: string;
-}
-
-interface UpdateProfileInput {
-  user_id: string;
-  data: {
-    gender?: string;
-    age?: number;
-    sexual_preference?: string;
-    biography?: string;
-    profile_picture?: string;
-    gps_latitude?: number;
-    gps_longitude?: number;
-  };
-}
-
-interface CreateProfileInput {
-  user_id: string;
-  data: {
-    gender: string;
-    age: number;
-    sexual_preference: string;
-    biography: string;
-    profile_picture: string;
-  };
-}
-
-export const profileRepository = {
+export const profilesRepository = {
   /**
    *
    * @returns  If the profile is found, return the profile. Otherwise, return null.
@@ -78,7 +55,7 @@ export const profileRepository = {
     return profile;
   },
 
-  find: async function find(): Promise<Profile[]> {
+  find: async function find(username: string | number): Promise<Profile[]> {
     const data = await db.manyOrNone(
       `
         SELECT profiles.*, users.username, users.first_name, users.last_name, (SELECT json_agg (i)
@@ -92,13 +69,15 @@ export const profileRepository = {
         SELECT *
         FROM
         user_pictures
-        WHERE user_pictures.user_id = user_pictures.user_id
+        WHERE user_pictures.user_id = profiles.user_id
         ) i) as pictures
         FROM profiles
         INNER JOIN users
           ON profiles.user_id = users.user_id
+        WHERE users.username = $1
         LIMIT 20
-      `
+      `,
+      [username.toString()]
     );
 
     return data;
@@ -164,200 +143,6 @@ export const profileRepository = {
     );
 
     return deletedProfile;
-  },
-};
-
-export const interestsRepository = {
-  find: async function find(user_id: string): Promise<Interest[]> {
-    const interests = await db.manyOrNone(
-      `
-            SELECT *
-            FROM user_interests
-            WHERE user_id = $1
-        `,
-      [user_id]
-    );
-
-    return interests;
-  },
-
-  add: async function add(
-    user_id: string,
-    interests: string[]
-  ): Promise<Profile> {
-    // Check number of interests is less than 5
-    const interestsCountResult = await db.one(
-      `
-            SELECT COUNT(*)
-            FROM user_interests
-            WHERE user_id = $1
-        `,
-      [user_id]
-    );
-
-    const interestsCount = parseInt(interestsCountResult.count);
-
-    if (interestsCount + interests.length > 30) {
-      throw new Error("Cannot have more than 30 interests");
-    }
-
-    // Check if interests already exist
-    let existingInterests = await db.manyOrNone(
-      `
-            SELECT interest_tag
-            FROM user_interests
-            WHERE user_id = $1
-        `,
-      [user_id]
-    );
-
-    if (
-      existingInterests.some((interest) =>
-        interests.includes(interest.interest_tag)
-      )
-    ) {
-      throw new Error("At least one of the interests already exists");
-    }
-
-    // Creating a reusable/static ColumnSet for generating INSERT queries:
-    const cs = new pgp.helpers.ColumnSet(["user_id", "interest_tag"], {
-      table: "user_interests",
-    });
-
-    const data = interests.map((interest) => ({
-      user_id: user_id,
-      interest_tag: interest,
-    }));
-
-    const insert = pgp.helpers.insert(data, cs);
-
-    await db.none(insert);
-
-    return await profileRepository.findOne(user_id);
-  },
-
-  remove: async function remove(
-    user_id: string,
-    interests: string[]
-  ): Promise<Profile> {
-    // Creating a reusable/static ColumnSet for generating INSERT queries:
-    const cs = new pgp.helpers.ColumnSet(["user_id", "interest_tag"], {
-      table: "user_interests",
-    });
-
-    const data = interests.map((interest) => ({
-      user_id: user_id,
-      interest_tag: interest,
-    }));
-
-    const values = pgp.helpers.values(data, cs);
-
-    await db.none(
-      `
-            DELETE FROM user_interests
-            WHERE (user_id, interest_tag) IN ($1:raw)
-        `,
-      [values]
-    );
-
-    return await profileRepository.findOne(user_id);
-  },
-};
-
-export const picturesRepository = {
-  find: async function find(user_id: string): Promise<Picture[]> {
-    const pictures = await db.manyOrNone(
-      `
-            SELECT *
-            FROM user_pictures
-            WHERE user_id = $1
-        `,
-      [user_id]
-    );
-
-    return pictures;
-  },
-
-  add: async function add(
-    user_id: string,
-    pictures: string[]
-  ): Promise<Profile> {
-    // Check number of pictures is less than 5
-    const picturesCountResult = await db.one(
-      `
-            SELECT COUNT(*)
-            FROM user_pictures
-            WHERE user_id = $1
-        `,
-      [user_id]
-    );
-
-    const picturesCount = parseInt(picturesCountResult.count);
-
-    if (picturesCount + pictures.length > 5) {
-      throw new Error("Cannot have more than 5 pictures");
-    }
-
-    // Check if pictures already exist
-    let existingInterests = await db.manyOrNone(
-      `
-            SELECT picture_url
-            FROM user_pictures
-            WHERE user_id = $1
-        `,
-      [user_id]
-    );
-
-    if (
-      existingInterests.some((picture) =>
-        pictures.includes(picture.picture_url)
-      )
-    ) {
-      throw new Error("At least one of the pictures already exists");
-    }
-
-    // Creating a reusable/static ColumnSet for generating INSERT queries:
-    const cs = new pgp.helpers.ColumnSet(["user_id", "picture_url"], {
-      table: "user_pictures",
-    });
-
-    const data = pictures.map((picture) => ({
-      user_id: user_id,
-      picture_url: picture,
-    }));
-
-    const insert = pgp.helpers.insert(data, cs);
-
-    await db.none(insert);
-
-    return await profileRepository.findOne(user_id);
-  },
-
-  remove: async function remove(
-    user_id: string,
-    pictures: string[]
-  ): Promise<Profile> {
-    // Creating a reusable/static ColumnSet for generating INSERT queries:
-    const cs = new pgp.helpers.ColumnSet(["user_id", "picture_url"], {
-      table: "user_pictures",
-    });
-
-    const data = pictures.map((picture) => ({
-      user_id: user_id,
-      picture_url: picture,
-    }));
-
-    const values = pgp.helpers.values(data, cs);
-
-    await db.none(
-      `
-            DELETE FROM user_pictures
-            WHERE (user_id, picture_url) IN ($1:raw)
-        `,
-      [values]
-    );
-
-    return await profileRepository.findOne(user_id);
   },
 };
 
@@ -924,12 +709,3 @@ export const userReportsRepository = {
     return deletedReport;
   },
 };
-
-// -- User Reports Table: Handles user reports for inappropriate behavior
-// CREATE TABLE IF NOT EXISTS user_reports (
-//     report_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-//     reporter_user_id UUID REFERENCES users(user_id) ON DELETE CASCADE,
-//     reported_user_id UUID REFERENCES users(user_id) ON DELETE CASCADE,
-//     report_reason TEXT,
-//     report_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-// );

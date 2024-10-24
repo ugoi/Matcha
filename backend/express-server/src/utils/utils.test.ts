@@ -2,8 +2,8 @@
 import { describe, expect, test, vi } from "vitest";
 import { escapeErrors, emailVerified, isHtmlTagFree } from "./utils.js";
 import exp from "node:constants";
-import { userRepository } from "../routes/user/user.repository.js";
-import { User } from "../routes/user/user.interface.js";
+import { userRepository } from "../routes/users/users.repository.js";
+import { User } from "../routes/users/users.interface.js";
 
 describe("utils", () => {
   test("isHtmlTagFree", () => {

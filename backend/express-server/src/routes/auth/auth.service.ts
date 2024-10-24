@@ -10,13 +10,13 @@ import {
   LoginInput,
   LoginOutput,
 } from "./auth.interface.js";
-import { userRepository } from "../user/user.repository.js";
+import { userRepository } from "../users/users.repository.js";
 import bcrypt from "bcrypt";
 const __dirname = import.meta.dirname;
 import jwt from "jsonwebtoken";
 import { env, exitCode } from "node:process";
 import { TokenType } from "../token/token.interface.js";
-import { User } from "../user/user.interface.js";
+import { User } from "../users/users.interface.js";
 import { Profile } from "passport";
 import { createToken } from "../token/token.repository.js";
 

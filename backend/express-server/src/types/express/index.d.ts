@@ -1,7 +1,7 @@
 // src/types/express/index.d.ts
 import * as express from "express";
 
-import { User as AppUser } from "../../routes/user/user.interface.ts";
+import { User as AppUser } from "../../routes/users/users.interface.ts";
 
 declare global {
   namespace Express {

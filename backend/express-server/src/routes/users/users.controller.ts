@@ -2,7 +2,7 @@ import { Router } from "express";
 import { body } from "express-validator";
 var router = Router();
 import passport from "passport";
-import { mockUser, ProtectedUser, User } from "./user.interface.js";
+import { mockUser, ProtectedUser, User } from "./users.interface.js";
 import {
   emailNotExists,
   isHtmlTagFree,
@@ -14,7 +14,7 @@ import {
 /* Get user details*/
 //TODO: make sure missing fields are inlcuded with null in response
 router.get(
-  "/",
+  "/me",
   passport.authenticate("jwt", { session: false }),
   async function (req, res, next) {
     try {
@@ -31,7 +31,7 @@ router.get(
 // TODO: Implement userRepository.updateUser
 /* Update user details*/
 router.patch(
-  "/",
+  "/me",
   // passport.authenticate("jwt", { session: false }),
   body("username").isString().custom(isHtmlTagFree).custom(usernameNotExists),
   body("email").escape().isEmail().custom(isHtmlTagFree).custom(emailNotExists),

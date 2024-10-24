@@ -1,5 +1,5 @@
 import db from "../../config/db-config.js";
-import { User } from "./user.interface.js";
+import { User } from "./users.interface.js";
 
 interface FindOneInput {
   id?: string;
