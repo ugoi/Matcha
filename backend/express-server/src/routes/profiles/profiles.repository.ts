@@ -55,7 +55,7 @@ export const profilesRepository = {
     return profile;
   },
 
-  find: async function find(username: string | number): Promise<Profile[]> {
+  find: async function find(where: string): Promise<Profile[]> {
     const data = await db.manyOrNone(
       `
         SELECT profiles.*, users.username, users.first_name, users.last_name, (SELECT json_agg (i)
@@ -74,10 +74,10 @@ export const profilesRepository = {
         FROM profiles
         INNER JOIN users
           ON profiles.user_id = users.user_id
-        WHERE users.username = $1
+        $1:raw
         LIMIT 20
       `,
-      [username.toString()]
+      [where]
     );
 
     return data;

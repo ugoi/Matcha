@@ -24,6 +24,7 @@
     "http-errors": "~1.6.3",
     "jsonwebtoken": "^9.0.2",
     "lodash": "^4.17.21",
+    "mongo-sql": "^6.2.0",
     "morgan": "~1.9.1",
     "passport": "^0.7.0",
     "passport-facebook": "^3.0.0",

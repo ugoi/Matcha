@@ -85,8 +85,8 @@ export interface SortBy {
 
 
 export interface FilterItem {
-  eq?: string;
-  not_eq?: string;
+  $eq?: string;
+  $not_eq?: string;
 }
 
 export interface FilterBy {

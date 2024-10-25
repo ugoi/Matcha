@@ -49,11 +49,9 @@ router.get(
       return;
     }
     try {
-      console.log(req.query.id);
 
       let username = JSON.parse(req.query.username);
 
-      console.log(username);
       
 
       const search: SearchPreferences = { filter_by: {usename: username }};
