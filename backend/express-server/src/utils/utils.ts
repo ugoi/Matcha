@@ -114,21 +114,63 @@ export class FilterSet {
 
     let valuesList = [];
     const keys = Object.keys(this.filters);
+    let sqlCount = 0;
     const s = keys
       .map((k, index) => {
-        const placeholder = "$" + (index + 1);
         const filterObject = this.filters[k];
 
         const keys = Object.keys(filterObject);
 
-        const s = keys.map((k1, index1) => {
-          const value = filterObject[k1];
-          valuesList.push(value);
-          const operator = this.filtersMap[k1];
-          return pgp.as.name(k) + ` ${operator} ${placeholder}`;
-        });
+        if (k === "$and") {
+          const s = filterObject
+            .map((v2, index2) => {
 
-        return s;
+              const keys = Object.keys(v2);
+
+              const s = keys
+                .map((k3, index3) => {
+
+                  const v3 = v2[k3];
+                  const keys = Object.keys(v3);
+
+                  const s = keys.map((k4, index4) => { 
+
+                    sqlCount++;
+                    const placeholder = "$" + sqlCount;
+                    const value = v3[k4];
+                    valuesList.push(value);
+                    const operator = this.filtersMap[k4];
+                    return pgp.as.name(k3) + ` ${operator} ${placeholder}`;
+                  })
+                  .join(" AND ");
+
+                  const result = `(${s})`;
+                  return result;
+                })
+                .join(" AND ");
+
+              const result = `(${s})`;
+              return result;
+            })
+            .join(" AND ");
+          const result = `(${s})`;
+          return result;
+        } else if (k === "$or") {
+        } else {
+          const s = keys
+            .map((k1, index1) => {
+              sqlCount++;
+              const placeholder = "$" + sqlCount;
+              const value = filterObject[k1];
+              valuesList.push(value);
+              const operator = this.filtersMap[k1];
+              return pgp.as.name(k) + ` ${operator} ${placeholder}`;
+            })
+            .join(" AND ");
+
+          const result = `(${s})`;
+          return result;
+        }
       })
       .join(" AND ");
     return pgp.as.format(s, valuesList);

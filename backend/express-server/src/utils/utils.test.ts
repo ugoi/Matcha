@@ -1,9 +1,18 @@
 // sum.test.js
 import { describe, expect, test, vi } from "vitest";
-import { escapeErrors, emailVerified, isHtmlTagFree } from "./utils.js";
+import {
+  escapeErrors,
+  emailVerified,
+  isHtmlTagFree,
+  FilterSet,
+} from "./utils.js";
 import exp from "node:constants";
 import { userRepository } from "../routes/users/users.repository.js";
 import { User } from "../routes/users/users.interface.js";
+import pgPromise from "pg-promise";
+const pgp = pgPromise({
+  /* Initialization Options */
+});
 
 describe("utils", () => {
   test("isHtmlTagFree", () => {
@@ -99,5 +108,47 @@ describe("utils", () => {
     expect(
       async () => await emailVerified("unverified")
     ).rejects.toThrowError();
+  });
+
+  describe("FilterSet create correct where clauses", () => {
+    test("with simple set", () => {
+      var filterSet = new FilterSet({
+        username: { $neq: "stefan12" },
+        age: { $gte: 18 },
+      });
+
+      var where = pgp.as.format("WHERE $1", filterSet);
+
+      console.log(where);
+
+      expect(where).toEqual(`WHERE "username" != 'stefan12' AND "age" >= 18`);
+    });
+
+    test("with intermediate set", () => {
+      var filterSet = new FilterSet({
+        username: { $neq: "stefan12" },
+        age: { $gte: 18, $lte: 30 },
+        fame_rating: { $gt: 20, $lte: 100 },
+      });
+
+      var where = pgp.as.format("WHERE $1", filterSet);
+
+      console.log(where);
+
+      expect(where).toEqual(`WHERE ("username" != 'stefan12') AND ("age" >= 18 AND "age" <= 30) AND ("fame_rating" > 20 AND "fame_rating" <= 100)`);
+    });
+
+    test("with simple with and set", () => {
+      var filterSet = new FilterSet({
+        username: { $neq: "stefan12" },
+        $and: [ {fame_rating: { $gt: 20 }}, {fame_rating: { $lte: 100 }}, ],
+      });
+
+      var where = pgp.as.format("WHERE $1", filterSet);
+
+      console.log(where);
+
+      expect(where).toEqual(`WHERE ("username" != 'stefan12') AND ((("fame_rating" > 20)) AND (("fame_rating" <= 100)))`);
+    });
   });
 });
