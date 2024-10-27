@@ -1,4 +1,3 @@
-// src/routes/Chat/Chat.tsx
 import NavbarLogged from '../../components/NavbarLogged/NavbarLogged';
 import './chat.css';
 import { useState } from 'react';
@@ -16,7 +15,7 @@ const chats = [
 ];
 
 function Chat() {
-  const [selectedChat, setSelectedChat] = useState(null);
+  const [selectedChat, setSelectedChat] = useState<number | null>(null);
 
   return (
     <>
@@ -41,6 +40,7 @@ function Chat() {
               .filter((chat) => selectedChat === null || chat.matchId === selectedChat)
               .map((chat) => {
                 const match = matches.find((m) => m.id === chat.matchId);
+                if (!match) return null;
                 return (
                   <div key={chat.id} className="chat-item p-3 shadow-sm d-flex align-items-center">
                     <img src={match.image} alt={match.name} className="chat-avatar rounded-circle" />

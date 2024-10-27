@@ -78,6 +78,15 @@ function Signup() {
                   required 
                 />
               </Form.Group>
+              <Form.Group controlId="username" className="mb-3">
+                <Form.Label>Username</Form.Label>
+                <Form.Control 
+                  type="text" 
+                  name="username" 
+                  placeholder="Choose a username" 
+                  required 
+                />
+              </Form.Group>
               <Form.Group controlId="email" className="mb-3">
                 <Form.Label>Email</Form.Label>
                 <Form.Control 
