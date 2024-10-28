@@ -109,9 +109,7 @@ export class FilterSet {
     };
   }
 
-  toPostgres(/*self*/) {
-    // self = this
-
+  toPostgres() {
     let valuesList = [];
     const keys = Object.keys(this.filters);
     let sqlCount = 0;
@@ -121,41 +119,8 @@ export class FilterSet {
 
         const keys = Object.keys(filterObject);
 
-        if (k === "$and") {
-          const s = filterObject
-            .map((v2, index2) => {
-
-              const keys = Object.keys(v2);
-
-              const s = keys
-                .map((k3, index3) => {
-
-                  const v3 = v2[k3];
-                  const keys = Object.keys(v3);
-
-                  const s = keys.map((k4, index4) => { 
-
-                    sqlCount++;
-                    const placeholder = "$" + sqlCount;
-                    const value = v3[k4];
-                    valuesList.push(value);
-                    const operator = this.filtersMap[k4];
-                    return pgp.as.name(k3) + ` ${operator} ${placeholder}`;
-                  })
-                  .join(" AND ");
-
-                  const result = `(${s})`;
-                  return result;
-                })
-                .join(" AND ");
-
-              const result = `(${s})`;
-              return result;
-            })
-            .join(" AND ");
-          const result = `(${s})`;
-          return result;
-        } else if (k === "$or") {
+        if (k === "$order_by") {
+          // TODO: implement order by
         } else {
           const s = keys
             .map((k1, index1) => {
@@ -168,8 +133,12 @@ export class FilterSet {
             })
             .join(" AND ");
 
-          const result = `(${s})`;
-          return result;
+          if (keys.length > 1) {
+            const result = `(${s})`;
+            return result;
+          } else {
+            return s;
+          }
         }
       })
       .join(" AND ");

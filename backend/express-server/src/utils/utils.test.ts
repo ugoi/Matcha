@@ -135,20 +135,7 @@ describe("utils", () => {
 
       console.log(where);
 
-      expect(where).toEqual(`WHERE ("username" != 'stefan12') AND ("age" >= 18 AND "age" <= 30) AND ("fame_rating" > 20 AND "fame_rating" <= 100)`);
-    });
-
-    test("with simple with and set", () => {
-      var filterSet = new FilterSet({
-        username: { $neq: "stefan12" },
-        $and: [ {fame_rating: { $gt: 20 }}, {fame_rating: { $lte: 100 }}, ],
-      });
-
-      var where = pgp.as.format("WHERE $1", filterSet);
-
-      console.log(where);
-
-      expect(where).toEqual(`WHERE ("username" != 'stefan12') AND ((("fame_rating" > 20)) AND (("fame_rating" <= 100)))`);
+      expect(where).toEqual(`WHERE "username" != 'stefan12' AND ("age" >= 18 AND "age" <= 30) AND ("fame_rating" > 20 AND "fame_rating" <= 100)`);
     });
   });
 });
