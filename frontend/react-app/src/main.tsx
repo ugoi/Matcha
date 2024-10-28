@@ -10,6 +10,10 @@ import Home from "./routes/Home/Home.tsx";
 import Profile from "./routes/Profile/Profile.tsx";
 import Chat from "./routes/Chat/Chat.tsx";
 import Settings from "./routes/Settings/Settings.tsx";
+import CreateProfile from "./routes/CreateProfile/CreateProfile.tsx";
+import VerifyEmail from './routes/VerifyEmail/VerifyEmail';
+import ConfirmEmail from './routes/ConfirmEmail/ConfirmEmail';
+
 
 const App = () => {
   const [isLoggedIn, setIsLoggedIn] = useState<boolean | null>(null);
@@ -19,24 +23,14 @@ const App = () => {
       method: "GET",
       credentials: "include",
     })
-      .then((response) => {
-        if (!response.ok) {
-          throw new Error("Not authenticated");
-        }
-        return response.json();
-      })
+      .then((response) => response.json())
       .then((data) => {
-        console.log(data);
-        if (data.status === "success") {
-          setIsLoggedIn(true);
-        } else {
-          setIsLoggedIn(false);
-        }
+        console.log("Auth response:", data); // Log the response to inspect
+        setIsLoggedIn(data.status === "success");
       })
       .catch((error) => {
         console.error(error);
         setIsLoggedIn(false);
-        setIsLoggedIn(true); //comment this for make the check-auth work
       });
   }, []);
   
@@ -56,6 +50,18 @@ const App = () => {
     {
       path: "/about",
       element: <About />,
+    },
+    {
+      path: "/confirmemail",
+      element: isLoggedIn ? <ConfirmEmail /> : <Navigate to="/" />,
+    },
+    {
+      path: "/createprofile",
+      element: isLoggedIn ? <CreateProfile /> : <Navigate to="/" />,
+    },
+    {
+      path: "/verifyemail",
+      element: isLoggedIn ? <VerifyEmail /> : <Navigate to="/" />,
     },
     {
       path: "/home",

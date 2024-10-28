@@ -14,11 +14,11 @@ function Login() {
     const formData = new FormData(event.currentTarget);
     const myHeaders = new Headers();
     myHeaders.append("Content-Type", "application/x-www-form-urlencoded");
-
+  
     const urlencoded = new URLSearchParams();
     urlencoded.append("username", formData.get("username") as string);
     urlencoded.append("password", formData.get("password") as string);
-
+  
     const requestOptions: RequestInit = {
       method: "POST",
       headers: myHeaders,
@@ -26,19 +26,15 @@ function Login() {
       credentials: 'include',
       redirect: "follow",
     };
-
+  
     try {
-      const response = await fetch(
-        "http://localhost:3000/api/login",
-        requestOptions
-      );
+      const response = await fetch("http://localhost:3000/api/login", requestOptions);
       const result = await response.json();
-
-      if (response.ok) {
-        setErrorTitle("Success");
+  
+      if (response.ok && result.status === 'success' && result.data.token) {
         navigate("/home");
       } else {
-        let errorMessage = result?.errors?.[0]?.msg || "Login failed";
+        let errorMessage = result?.message || "Login failed";
         setErrorTitle(errorMessage);
       }
     } catch (error) {
@@ -46,6 +42,7 @@ function Login() {
       console.error(error);
     }
   };
+  
 
   return (
     <>
