@@ -101,6 +101,7 @@ dist
 .vuepress/dist
 
 # vuepress v2.x temp and cache directory
+.DS_Store
 .temp
 .cache
 
