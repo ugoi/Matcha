@@ -12,7 +12,7 @@ import {
 } from "./profiles.repository.js";
 import { interestsRepository } from "./interests.repository.js";
 import { picturesRepository } from "./pictures.repository.js";
-import { SearchPreferences } from "./profiles.interface.js";
+import { FilterBy, SearchPreferences, SortBy } from "./profiles.interface.js";
 import { profileService } from "./profiles.service.js";
 
 /* 
@@ -32,14 +32,9 @@ router.get(
   query("tags").optional().isArray(),
   query("age_gap").optional().isNumeric(),
   query("fame_rating_gap").optional().isNumeric(),
-  query("sort_by")
-    .optional()
-    .isString()
-    .isIn(["age", "location", "fame_rating", "common_tags"]),
-  query("filter_by")
-    .optional()
-    .isString()
-    .isIn(["age", "location", "fame_rating", "common_tags"]),
+  query("sort_by").optional(),
+
+  query("filter_by").optional(),
   async function (req, res, next) {
     const result = validationResult(req);
     if (!result.isEmpty()) {
@@ -49,12 +44,27 @@ router.get(
       return;
     }
     try {
+      let filter: FilterBy = {};
 
-      let username = JSON.parse(req.query.username);
+      let sort_by: SortBy = {};
 
-      
+      if (req.query.sort_by) {
+        sort_by = JSON.parse(req.query.sort_by);
+      }
 
-      const search: SearchPreferences = { filter_by: {usename: username }};
+      if (req.query.username) filter.username = JSON.parse(req.query.username);
+      if (req.query.email) filter.email = JSON.parse(req.query.email);
+      if (req.query.id) filter.id = JSON.parse(req.query.id);
+      if (req.query.age) filter.age = JSON.parse(req.query.age);
+      if (req.query.location) filter.location = JSON.parse(req.query.location);
+      if (req.query.fame_rating)
+        filter.fame_rating = JSON.parse(req.query.fame_rating);
+      if (req.query.tags) filter.tags = JSON.parse(req.query.tags);
+      if (req.query.age_gap) filter.age_gap = JSON.parse(req.query.age_gap);
+      if (req.query.fame_rating_gap)
+        filter.fame_rating_gap = JSON.parse(req.query.fame_rating_gap);
+
+      const search: SearchPreferences = { filter_by: filter, sort_by: sort_by };
 
       const profiles = await profileService.searchProfiles(search);
       res.json({ message: "success", data: { profiles: profiles } });
@@ -64,7 +74,6 @@ router.get(
     }
   }
 );
-
 
 /* Get matches */
 /* Get user matches */

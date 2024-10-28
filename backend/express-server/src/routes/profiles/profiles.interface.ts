@@ -74,13 +74,13 @@ export interface SortItem {
 }
 
 export interface SortBy {
-  age: SortItem;
-  age_gap: SortItem;
-  location: SortItem;
-  fame_rating: SortItem;
-  fame_rating_gap: SortItem;
-  common_tags: SortItem;
-  tags: SortItem;
+  age?: SortItem;
+  age_gap?: SortItem;
+  location?: SortItem;
+  fame_rating?: SortItem;
+  fame_rating_gap?: SortItem;
+  common_tags?: SortItem;
+  tags?: SortItem;
 }
 
 
@@ -91,7 +91,7 @@ export interface FilterItem {
 
 export interface FilterBy {
   id?: FilterItem;
-  usename?: FilterItem;
+  username?: FilterItem;
   email?: FilterItem;
   age?: FilterItem;
   age_gap?: FilterItem;

@@ -82,6 +82,7 @@ export function escapeErrors(errors) {
 
 export class FilterSet {
   filtersMap: Object;
+  sortMap: Object;
   filters: Object;
   rawType: boolean;
   constructor(filters: Object) {
@@ -112,36 +113,94 @@ export class FilterSet {
   toPostgres() {
     let valuesList = [];
     const keys = Object.keys(this.filters);
+
+    if (keys.length === 0) {
+      throw new Error("Invalid filter");
+    }
     let sqlCount = 0;
+
     const s = keys
       .map((k, index) => {
         const filterObject = this.filters[k];
 
+        if (typeof filterObject !== "object") {
+          throw new Error("Invalid filter");
+        }
+
         const keys = Object.keys(filterObject);
 
-        if (k === "$order_by") {
-          // TODO: implement order by
-        } else {
-          const s = keys
-            .map((k1, index1) => {
-              sqlCount++;
-              const placeholder = "$" + sqlCount;
-              const value = filterObject[k1];
-              valuesList.push(value);
-              const operator = this.filtersMap[k1];
-              return pgp.as.name(k) + ` ${operator} ${placeholder}`;
-            })
-            .join(" AND ");
+        if (keys.length === 0) {
+          throw new Error("Invalid filter");
+        }
+        const s = keys
+          .map((k1, index1) => {
+            sqlCount++;
+            const placeholder = "$" + sqlCount;
+            const value = filterObject[k1];
+            valuesList.push(value);
+            const operator = this.filtersMap[k1];
+            if (!operator) {
+              throw new Error("Invalid filter");
+            }
+            return pgp.as.name(k) + ` ${operator} ${placeholder}`;
+          })
+          .join(" AND ");
 
-          if (keys.length > 1) {
-            const result = `(${s})`;
-            return result;
-          } else {
-            return s;
-          }
+        if (keys.length > 1) {
+          const result = `(${s})`;
+          return result;
+        } else {
+          return s;
         }
       })
       .join(" AND ");
     return pgp.as.format(s, valuesList);
+  }
+}
+
+export class SortSet {
+  sortMap: Object;
+  sorts: Object;
+  rawType: boolean;
+  constructor(sorts: Object) {
+    if (!sorts || typeof sorts !== "object") {
+      throw new TypeError("Parameter 'sorts' must be an object.");
+    }
+    this.sorts = sorts;
+    this.rawType = true; // do not escape the result from toPostgres()
+
+    this.sortMap = {
+      asc: "ASC",
+      desc: "DESC",
+    };
+  }
+
+  toPostgres() {
+    let sqlCount = 0;
+
+    const sort_by = this.sorts;
+    if (sort_by) {
+      const keys = Object.keys(sort_by);
+
+      if (keys.length === 0) {
+        throw new Error("Invalid sort order");
+      }
+      const s = keys
+        .map((k, index) => {
+          sqlCount++;
+          const filterObject = sort_by[k];
+          const order: "asc" | "desc" = filterObject.$order;
+          const sqlKeyword = this.sortMap[order];
+          if (!sqlKeyword) {
+            throw new Error("Invalid sort order");
+          }
+          return pgp.as.name(k) + ` ${sqlKeyword}`;
+        })
+        .join(", ");
+
+      return pgp.as.format(s);
+    } else {
+      throw new Error("Invalid sort order");
+    }
   }
 }

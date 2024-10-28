@@ -5,6 +5,7 @@ import {
   emailVerified,
   isHtmlTagFree,
   FilterSet,
+  SortSet,
 } from "./utils.js";
 import exp from "node:constants";
 import { userRepository } from "../routes/users/users.repository.js";
@@ -104,13 +105,18 @@ describe("utils", () => {
         return null;
       });
 
-    expect(() => emailVerified("test")).not.toThrowError();
-    expect(
-      async () => await emailVerified("unverified")
-    ).rejects.toThrowError();
+    if (process.env.EMAIL_VERIFICATION === "false") {
+      expect(() => emailVerified("test")).not.toThrowError();
+      expect(() => emailVerified("unverified")).not.toThrowError();
+    } else {
+      expect(() => emailVerified("test")).not.toThrowError();
+      expect(
+        async () => await emailVerified("unverified")
+      ).rejects.toThrowError();
+    }
   });
 
-  describe("FilterSet create correct where clauses", () => {
+  describe("FilterSet - filtering", () => {
     test("with simple set", () => {
       var filterSet = new FilterSet({
         username: { $neq: "stefan12" },
@@ -135,7 +141,134 @@ describe("utils", () => {
 
       console.log(where);
 
-      expect(where).toEqual(`WHERE "username" != 'stefan12' AND ("age" >= 18 AND "age" <= 30) AND ("fame_rating" > 20 AND "fame_rating" <= 100)`);
+      expect(where).toEqual(
+        `WHERE "username" != 'stefan12' AND ("age" >= 18 AND "age" <= 30) AND ("fame_rating" > 20 AND "fame_rating" <= 100)`
+      );
+    });
+
+    test("with wrong set", () => {
+      var filterSet = new FilterSet({
+        username: { $gg: "stefan12" },
+        age: { $gte: 18 },
+      });
+
+      var where = () => pgp.as.format("WHERE $1", filterSet);
+
+      expect(where).toThrowError();
+    });
+
+    test("with wrong set", () => {
+      var filterSet = new FilterSet({
+        username: {},
+        age: { $gte: 18 },
+      });
+
+      var where = () => pgp.as.format("WHERE $1", filterSet);
+
+      expect(where).toThrowError();
+    });
+
+    test("with wrong set", () => {
+      var filterSet = new FilterSet({
+        username: "stefan12",
+        age: { $gte: 18 },
+      });
+
+      var where = () => pgp.as.format("WHERE $1", filterSet);
+
+      expect(where).toThrowError();
+    });
+
+    test("with wrong set", () => {
+      var filterSet = new FilterSet({
+        username: null,
+        age: { $gte: 18 },
+      });
+
+      var where = () => pgp.as.format("WHERE $1", filterSet);
+
+      expect(where).toThrowError();
+    });
+
+    test("with wrong set", () => {
+      var filterSet = new FilterSet({});
+
+      var where = () => pgp.as.format("WHERE $1", filterSet);
+
+      expect(where).toThrowError();
+    });
+  });
+
+  describe("SortSet", () => {
+    test("with simple set", () => {
+      var filterSet = new SortSet({
+        email: { $order: "asc" }, age: { $order: "asc" },
+      });
+
+      var where = pgp.as.format("ORDER BY $1", filterSet);
+
+      console.log(where);
+
+      expect(where).toEqual(`ORDER BY "email" ASC, "age" ASC`);
+    });
+
+    test("with wrong set", () => {
+      var filterSet = new SortSet({
+        lolsort_by: { email: { $order: "asc" }, age: { $order: "asc" } },
+      });
+
+      var where = () => pgp.as.format("ORDER BY $1", filterSet);
+
+      expect(where).toThrowError();
+    });
+
+    test("with wrong set", () => {
+      var filterSet = new SortSet({
+        email: { $order: "lol" }, age: { $order: "asc" },
+      });
+
+      var where = () => pgp.as.format("ORDER BY $1", filterSet);
+
+      expect(where).toThrowError();
+    });
+
+    test("with wrong set", () => {
+      var filterSet = new SortSet({
+        email: {}, age: { $order: "asc" },
+      });
+
+      var where = () => pgp.as.format("ORDER BY $1", filterSet);
+
+      expect(where).toThrowError();
+    });
+
+    test("with wrong set", () => {
+      var filterSet = new SortSet({
+       email: "asc", age: { $order: "asc" } ,
+      });
+
+      var where = () => pgp.as.format("ORDER BY $1", filterSet);
+
+      expect(where).toThrowError();
+    });
+
+    test("with wrong set", () => {
+      var filterSet = new SortSet({
+       email: null, age: { $order: "asc" } ,
+      });
+
+      var where = () => pgp.as.format("ORDER BY $1", filterSet);
+
+      expect(where).toThrowError();
+    });
+
+    test("with wrong set", () => {
+      var filterSet = new SortSet({
+      });
+
+      var where = () => pgp.as.format("ORDER BY $1", filterSet);
+
+      expect(where).toThrowError();
     });
   });
 });
