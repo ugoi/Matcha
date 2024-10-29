@@ -14,6 +14,7 @@ import { interestsRepository } from "./interests.repository.js";
 import { picturesRepository } from "./pictures.repository.js";
 import { FilterBy, SearchPreferences, SortBy, SortOrder } from "./profiles.interface.js";
 import { profileService } from "./profiles.service.js";
+import { userRepository } from "../users/users.repository.js";
 
 /* 
 Profiles - All users

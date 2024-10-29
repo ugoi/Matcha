@@ -70,4 +70,17 @@ export const userRepository = {
 
     return updatedProfile;
   },
+
+  delete: async function deleteProfile(user_id: string): Promise<User> {
+    let deletedProfile = await db.one(
+      `
+        DELETE FROM users
+        WHERE user_id = $1
+        RETURNING *
+      `,
+      [user_id]
+    );
+
+    return deletedProfile;
+  },
 };

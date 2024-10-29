@@ -66,4 +66,20 @@ router.patch(
   }
 );
 
+/* Delete my user profile */
+
+router.delete(
+  "/me",
+  passport.authenticate("jwt", { session: false }),
+  async function (req, res, next) {
+    try {
+      await userRepository.delete(req.user.user_id);
+      res.json({ message: "success" });
+    } catch (error) {
+      next(error);
+      return;
+    }
+  }
+);
+
 export default router;
