@@ -11,7 +11,6 @@ export interface User {
   created_at: Date;
 }
 
-
 export class ProtectedUser {
   user_id: string;
   username: string;
@@ -34,6 +33,17 @@ export class ProtectedUser {
     this.is_phone_verified = user.is_phone_verified;
     this.created_at = user.created_at;
   }
+}
+
+export interface UpdateUserInput {
+  user_id: string;
+  data: {
+    username: string;
+    email: string;
+    first_name: string;
+    last_name: string;
+    phone: string;
+  };
 }
 
 export const mockUser: User = {

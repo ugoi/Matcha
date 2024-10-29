@@ -12,7 +12,7 @@ import {
 } from "./profiles.repository.js";
 import { interestsRepository } from "./interests.repository.js";
 import { picturesRepository } from "./pictures.repository.js";
-import { FilterBy, SearchPreferences, SortBy } from "./profiles.interface.js";
+import { FilterBy, SearchPreferences, SortBy, SortOrder } from "./profiles.interface.js";
 import { profileService } from "./profiles.service.js";
 
 /* 
@@ -63,6 +63,18 @@ router.get(
       if (req.query.age_gap) filter.age_gap = JSON.parse(req.query.age_gap);
       if (req.query.fame_rating_gap)
         filter.fame_rating_gap = JSON.parse(req.query.fame_rating_gap);
+
+      const current_user = await profilesRepository.findOne(req.user.user_id);
+
+      const longitude = current_user.gps_longitude;
+
+      const latitude = current_user.gps_latitude;
+
+      // Ensure sort_by.location is defined and set the location with longitude and latitude
+      sort_by.location = {
+        value: { longitude, latitude },
+        $order: SortOrder.Asc,
+      };
 
       const search: SearchPreferences = { filter_by: filter, sort_by: sort_by };
 
@@ -217,7 +229,7 @@ router.post(
         data: req.body,
       });
       // console.log(req.body["interests[]"]);
-      res.json({ message: "success", data: profile });
+      res.json({ message: "success", data: { title: "Profile created" } });
     } catch (error) {
       next(error);
       return;

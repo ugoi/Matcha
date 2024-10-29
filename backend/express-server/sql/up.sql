@@ -40,11 +40,15 @@ CREATE TABLE IF NOT EXISTS profiles (
     biography TEXT,
     fame_rating INT DEFAULT 0, -- Fame rating of the user
     profile_picture TEXT, -- Path or URL of the profile picture
-    gps_latitude FLOAT, -- GPS position latitude
-    gps_longitude FLOAT, -- GPS position longitude
+    location geography(POINT) not null,
     last_online TIMESTAMP, -- Last online timestamp for the user
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
+
+CREATE INDEX IF NOT EXISTS profiles_geo_index
+  on public.profiles
+  using GIST (location);
+
 
 -- User Interests Table: Stores user interests using tags (part of the public profile)
 CREATE TABLE IF NOT EXISTS user_interests (

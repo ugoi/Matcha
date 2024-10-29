@@ -64,13 +64,13 @@ export class PublicProfile {
 }
 
 export enum SortOrder {
-  Asc = "ASC",
-  Desc = "DESC",
+  Asc = "asc",
+  Desc = "desc",
 }
 
 export interface SortItem {
-  value: string;
-  order: SortOrder;
+  value: Object;
+  $order: SortOrder;
 }
 
 export interface SortBy {
@@ -167,6 +167,8 @@ export interface CreateProfileInput {
     sexual_preference: string;
     biography: string;
     profile_picture: string;
+    gps_latitude: number;
+    gps_longitude: number;
   };
 }
 

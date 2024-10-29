@@ -194,6 +194,13 @@ export class SortSet {
           if (!sqlKeyword) {
             throw new Error("Invalid sort order");
           }
+
+          if (k === "location") {
+            let longitude = filterObject.value.longitude;
+            let latitude = filterObject.value.latitude;
+
+            return `location <-> ST_Point(${longitude}, ${latitude})::geography ${sqlKeyword}`;
+          }
           return pgp.as.name(k) + ` ${sqlKeyword}`;
         })
         .join(", ");

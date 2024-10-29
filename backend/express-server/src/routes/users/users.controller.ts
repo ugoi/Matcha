@@ -1,13 +1,16 @@
 import { Router } from "express";
-import { body } from "express-validator";
+import { body, validationResult } from "express-validator";
 var router = Router();
 import passport from "passport";
 import { mockUser, ProtectedUser, User } from "./users.interface.js";
 import {
   emailNotExists,
+  escapeErrors,
   isHtmlTagFree,
   usernameNotExists,
 } from "../../utils/utils.js";
+import { userRepository } from "./users.repository.js";
+import { JFail } from "../../error-handlers/custom-errors.js";
 
 // TODO: Move this into profile and rename everything in profile to user
 
@@ -32,16 +35,29 @@ router.get(
 /* Update user details*/
 router.patch(
   "/me",
-  // passport.authenticate("jwt", { session: false }),
-  body("username").isString().custom(isHtmlTagFree).custom(usernameNotExists),
-  body("email").escape().isEmail().custom(isHtmlTagFree).custom(emailNotExists),
-  body("first_name").escape().isString(),
-  body("last_name").escape().isString(),
-  body("phone").escape().isString(),
+  passport.authenticate("jwt", { session: false }),
+  body("username").optional().isString().custom(isHtmlTagFree),
+  body("email").optional().isEmail().custom(isHtmlTagFree),
+  body("first_name").optional().escape().isString(),
+  body("last_name").optional().escape().isString(),
+  body("phone").optional().escape().isString(),
   async function (req, res, next) {
+    const result = validationResult(req);
+    if (!result.isEmpty()) {
+      // Escape html tags in error messages for security
+      const errors = escapeErrors(result.array());
+      next(new JFail({ title: "invalid input", errors: errors }));
+      return;
+    }
     try {
-      // const user = await userRepository.updateUser(req.body);
-      const protectedUser = new ProtectedUser(mockUser);
+      const user = await userRepository.update({
+        user_id: req.user.user_id,
+        data: req.body,
+      });
+      // const protectedUser = new ProtectedUser(mockUser)
+
+      const protectedUser = new ProtectedUser(user);
+
       res.json({ message: "success", data: protectedUser });
     } catch (error) {
       next(error);

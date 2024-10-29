@@ -1,5 +1,6 @@
-import db from "../../config/db-config.js";
-import { User } from "./users.interface.js";
+import { update } from "lodash";
+import db, { pgp } from "../../config/db-config.js";
+import { UpdateUserInput, User } from "./users.interface.js";
 
 interface FindOneInput {
   id?: string;
@@ -54,5 +55,19 @@ export const userRepository = {
     let user: User = data[0];
 
     return user;
+  },
+
+  update: async function update(input: UpdateUserInput): Promise<User> {
+    const { update } = pgp.helpers;
+
+    const condition = pgp.as.format("WHERE user_id = ${user_id}", input);
+
+    let query = `${update(input.data, null, "users")}
+    ${condition}
+    RETURNING *`;
+
+    let updatedProfile = await db.one(query);
+
+    return updatedProfile;
   },
 };

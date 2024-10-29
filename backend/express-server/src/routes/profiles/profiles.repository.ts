@@ -19,7 +19,7 @@ export const profilesRepository = {
   findOne: async function findOne(search: string): Promise<Profile | null> {
     const data = await db.manyOrNone(
       `
-      SELECT profiles.*, users.username, users.first_name, users.last_name
+      SELECT profiles.*, users.username, users.first_name, users.last_name, st_y(location::geometry) as gps_latitude, st_x(location::geometry) as gps_longitude
       FROM profiles
       INNER JOIN users
         ON profiles.user_id = users.user_id
@@ -97,12 +97,11 @@ export const profilesRepository = {
   create: async function create(input: CreateProfileInput): Promise<Profile> {
     const { user_id, data } = input;
 
-    let newProfile = await db.one(
+    const statement = pgp.as.format(
       `
-        INSERT INTO profiles (user_id, gender, age, sexual_preference, biography, profile_picture)
-        VALUES ($1, $2, $3, $4, $5, $6)
-        RETURNING *
-      `,
+      INSERT INTO profiles (user_id, gender, age, sexual_preference, biography, profile_picture, location)
+      VALUES ($1, $2, $3, $4, $5, $6, st_point($7, $8))
+    `,
       [
         user_id,
         data.gender,
@@ -110,35 +109,52 @@ export const profilesRepository = {
         data.sexual_preference,
         data.biography,
         data.profile_picture,
+        data.gps_longitude,
+        data.gps_latitude,
       ]
     );
+
+    let newProfile = await db.none(statement);
+
+    // let newProfile = await db.one(
+    //   `
+    //     INSERT INTO profiles (user_id, gender, age, sexual_preference, biography, profile_picture, location)
+    //     VALUES ($1, $2, $3, $4, $5, $6, $7)
+    //     RETURNING *
+    //   `,
+    //   [
+    //     user_id,
+    //     data.gender,
+    //     data.age,
+    //     data.sexual_preference,
+    //     data.biography,
+    //     data.profile_picture,
+    //     "st_point(-73.946823, 40.807416)",
+    //   ]
+    // );
 
     return newProfile;
   },
 
   update: async function update(input: UpdateProfileInput): Promise<Profile> {
-    const { user_id, data } = input;
+    const { update } = pgp.helpers;
 
-    let result: Profile;
+    const { gps_latitude, gps_longitude } = input.data;
 
-    let updatedProfile = await db.one(
-      `
-        UPDATE profiles
-        SET gender = $1, age = $2, sexual_preference = $3, biography = $4, profile_picture = $5, gps_latitude = $6, gps_longitude = $7
-        WHERE user_id = $8
-        RETURNING *
-      `,
-      [
-        data.gender,
-        data.age,
-        data.sexual_preference,
-        data.biography,
-        data.profile_picture,
-        data.gps_latitude,
-        data.gps_longitude,
-        user_id,
-      ]
-    );
+    delete input.data.gps_latitude;
+    delete input.data.gps_longitude;
+
+    const condition = pgp.as.format("WHERE user_id = ${user_id}", input);
+
+    let query = `${update(
+      input.data,
+      null,
+      "profiles"
+    )}, "location" = st_point(-73.946823, 40.807416)
+    ${condition}
+    RETURNING *`;
+
+    let updatedProfile = await db.one(query);
 
     return updatedProfile;
   },
