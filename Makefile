@@ -30,4 +30,4 @@ dev: start-frontend-dev start-backend-dev
 
 # Rule to shut down the database
 del:
-	@cd backend && npm run db:down
+	@cd $(BACKEND_DIR) && npm run db:down
