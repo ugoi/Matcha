@@ -1,53 +1,111 @@
-// src/routes/Signup/Signup.tsx
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import "./Signup.css";
 import Navbar from '../../components/Navbar/Navbar';
-import { Form, Button, Container, Row, Col, Alert } from 'react-bootstrap';
+import { Form, Button, Container, Row, Col } from 'react-bootstrap';
+
+interface FormData {
+  firstName: string;
+  lastName: string;
+  username: string;
+  email: string;
+  password: string;
+}
 
 function Signup() {
-  const [errorTitle, setErrorTitle] = useState("");
+  const [formData, setFormData] = useState<FormData>({
+    firstName: "",
+    lastName: "",
+    username: "",
+    email: "",
+    password: "",
+  });
 
-  const handleSubmit = async (event: any) => {
+  const [errorFields, setErrorFields] = useState<Record<keyof FormData, boolean>>({
+    firstName: false,
+    lastName: false,
+    username: false,
+    email: false,
+    password: false,
+  });
+
+  const [errorMessages, setErrorMessages] = useState<Record<keyof FormData, string | null>>({
+    firstName: null,
+    lastName: null,
+    username: null,
+    email: null,
+    password: null,
+  });
+
+  const navigate = useNavigate();
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target as HTMLInputElement;
+    setFormData((prev) => ({ ...prev, [name]: value }));
+    setErrorFields((prev) => ({ ...prev, [name as keyof FormData]: false })); // Reset error for the field
+    setErrorMessages((prev) => ({ ...prev, [name as keyof FormData]: null })); // Reset message for the field
+  };
+
+  const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
-    const formData = new FormData(event.currentTarget);
-    const myHeaders = new Headers();
-    myHeaders.append("Content-Type", "application/x-www-form-urlencoded");
+    const hasErrors = Object.values(formData).some(value => !value);
 
-    const urlencoded = new URLSearchParams(formData as any);
+    if (hasErrors) {
+      const errors: Record<keyof FormData, boolean> = {
+        firstName: !formData.firstName,
+        lastName: !formData.lastName,
+        username: !formData.username,
+        email: !formData.email,
+        password: !formData.password,
+      };
+      setErrorFields(errors);
+      return;
+    }
 
-    const requestOptions: RequestInit = {
+    const requestOptions = {
       method: "POST",
-      headers: myHeaders,
-      body: urlencoded,
-      redirect: "follow",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(formData),
     };
 
     try {
-      const response = await fetch(
-        "http://localhost:3000/api/signup",
-        requestOptions
-      );
+      const response = await fetch("http://localhost:3000/api/signup", requestOptions);
       const result = await response.json();
 
-      if (result.status === "fail") {
-        let errors = result.data?.errors;
-        let invalid = "";
-        if (errors) {
-          invalid = errors.map((error: any) => error.path).toString();
-        }
+      if (result.status === "success") {
+        navigate("/confirmemail");
+      } else {
+        const errors = result.data?.errors || [];
+        const newErrorFields: Record<keyof FormData, boolean> = {
+          firstName: false,
+          lastName: false,
+          username: false,
+          email: false,
+          password: false,
+        };
+        const newErrorMessages: Record<keyof FormData, string | null> = {
+          firstName: null,
+          lastName: null,
+          username: null,
+          email: null,
+          password: null,
+        };
 
-        setErrorTitle(`${result.data.title} ${invalid}`);
-        return;
-      }
+        errors.forEach((error: { path: keyof FormData }) => {
+          newErrorFields[error.path] = true;
+          
+          if (error.path === "username") {
+            newErrorMessages.username = "This username is already taken.";
+          } else if (error.path === "email") {
+            newErrorMessages.email = "This email is already used.";
+          }
+        });
 
-      if (result.status === "error") {
-        setErrorTitle(result.data.title);
-        return;
+        setErrorFields(newErrorFields);
+        setErrorMessages(newErrorMessages);
       }
-      setErrorTitle("Success");
     } catch (error) {
-      setErrorTitle("Some error");
-      console.error(error);
+      console.error("Signup error:", error);
     }
   };
 
@@ -58,66 +116,34 @@ function Signup() {
         <Row className="justify-content-center">
           <Col md={6}>
             <h1 className="text-center mb-4">Sign Up</h1>
-            {errorTitle && <Alert variant="danger">{errorTitle}</Alert>}
             <Form onSubmit={handleSubmit}>
-              <Form.Group controlId="firstName" className="mb-3">
-                <Form.Label>First Name</Form.Label>
-                <Form.Control 
-                  type="text" 
-                  name="firstName" 
-                  placeholder="Enter your first name" 
-                  required 
-                />
-              </Form.Group>
-              <Form.Group controlId="lastName" className="mb-3">
-                <Form.Label>Last Name</Form.Label>
-                <Form.Control 
-                  type="text" 
-                  name="lastName" 
-                  placeholder="Enter your last name" 
-                  required 
-                />
-              </Form.Group>
-              <Form.Group controlId="email" className="mb-3">
-                <Form.Label>Email</Form.Label>
-                <Form.Control 
-                  type="email" 
-                  name="email" 
-                  placeholder="Enter your email" 
-                  required 
-                />
-              </Form.Group>
-              <Form.Group controlId="password" className="mb-3">
-                <Form.Label>Password</Form.Label>
-                <Form.Control 
-                  type="password" 
-                  name="password" 
-                  placeholder="Create a password" 
-                  required 
-                />
-              </Form.Group>
-              <Button 
-                variant="primary" 
-                type="submit" 
-                className="w-100 mb-3"
-              >
+              {["firstName", "lastName", "username", "email", "password"].map((field) => (
+                <Form.Group controlId={field} className="mb-3" key={field}>
+                  <Form.Label>{field.charAt(0).toUpperCase() + field.slice(1)}</Form.Label>
+                  <Form.Control
+                    type={field === "email" ? "email" : field === "password" ? "password" : "text"}
+                    name={field as keyof FormData}
+                    placeholder={`Enter your ${field}`}
+                    required
+                    isInvalid={errorFields[field as keyof FormData]}
+                    value={formData[field as keyof FormData]}
+                    onChange={handleChange}
+                  />
+                  <Form.Control.Feedback type="invalid">
+                    {errorMessages[field as keyof FormData]}
+                  </Form.Control.Feedback>
+                </Form.Group>
+              ))}
+              <Button variant="primary" type="submit" className="w-100 mb-3">
                 Register
               </Button>
             </Form>
             <p className="text-center">or</p>
             <div className="d-flex justify-content-between">
-              <Button 
-                variant="outline-danger" 
-                href="/api/login/google" 
-                className="w-45"
-              >
+              <Button variant="outline-danger" href="/api/login/google" className="w-45">
                 Sign up with Google
               </Button>
-              <Button 
-                variant="outline-primary" 
-                href="/api/login/facebook" 
-                className="w-45"
-              >
+              <Button variant="outline-primary" href="/api/login/facebook" className="w-45">
                 Sign up with Facebook
               </Button>
             </div>

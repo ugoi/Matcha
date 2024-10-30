@@ -1,18 +1,25 @@
-// src/routes/Settings/Settings.tsx
 import NavbarLogged from '../../components/NavbarLogged/NavbarLogged';
 import './settings.css';
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 function Settings() {
-  const [distance, setDistance] = useState(50);
-  const [ageGap, setAgeGap] = useState(5);
+  const [distance, setDistance] = useState<number>(50);
+  const [ageGap, setAgeGap] = useState<number>(5);
+  const navigate = useNavigate(); // Hook to programmatically navigate
 
-  const handleDistanceChange = (e) => {
-    setDistance(e.target.value);
+  const handleDistanceChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setDistance(Number(e.target.value));
   };
 
-  const handleAgeGapChange = (e) => {
-    setAgeGap(e.target.value);
+  const handleAgeGapChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setAgeGap(Number(e.target.value));
+  };
+
+  const handleLogout = () => {
+    // Implement your logout logic here, e.g., clear tokens, reset state, etc.
+    // After logging out, redirect to the login page
+    navigate('/'); 
   };
 
   return (
@@ -50,6 +57,7 @@ function Settings() {
           </div>
 
           <button className="btn btn-primary mt-3">Save Changes</button>
+          <button className="btn btn-danger mt-3" onClick={handleLogout}>Logout</button>
         </div>
       </div>
     </>

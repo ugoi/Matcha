@@ -3,53 +3,46 @@ import { useState } from "react";
 import "./Login.css";
 import Navbar from '../../components/Navbar/Navbar';
 import { Form, Button, Container, Row, Col, Alert } from 'react-bootstrap';
+import { useNavigate } from "react-router-dom";
 
 function Login() {
   const [errorTitle, setErrorTitle] = useState("");
+  const navigate = useNavigate();
 
-  const handleSubmit = async (event: any) => {
+  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     const formData = new FormData(event.currentTarget);
     const myHeaders = new Headers();
     myHeaders.append("Content-Type", "application/x-www-form-urlencoded");
-
-    const urlencoded = new URLSearchParams(formData as any);
-
+  
+    const urlencoded = new URLSearchParams();
+    urlencoded.append("username", formData.get("username") as string);
+    urlencoded.append("password", formData.get("password") as string);
+  
     const requestOptions: RequestInit = {
       method: "POST",
       headers: myHeaders,
       body: urlencoded,
+      credentials: 'include',
       redirect: "follow",
     };
-
+  
     try {
-      const response = await fetch(
-        "http://localhost:3000/api/login",
-        requestOptions
-      );
+      const response = await fetch("http://localhost:3000/api/login", requestOptions);
       const result = await response.json();
-
-      if (result.status === "fail") {
-        let errors = result.data?.errors;
-        let invalid = "";
-        if (errors) {
-          invalid = errors.map((error: any) => error.path).toString();
-        }
-
-        setErrorTitle(`${result.data.title} ${invalid}`);
-        return;
+  
+      if (response.ok && result.status === 'success' && result.data.token) {
+        navigate("/home");
+      } else {
+        let errorMessage = result?.message || "Login failed";
+        setErrorTitle(errorMessage);
       }
-
-      if (result.status === "error") {
-        setErrorTitle(result.data.title);
-        return;
-      }
-      setErrorTitle("Success");
     } catch (error) {
-      setErrorTitle("Some error");
+      setErrorTitle("An unexpected error occurred. Please try again.");
       console.error(error);
     }
   };
+  
 
   return (
     <>
@@ -60,12 +53,12 @@ function Login() {
             <h1 className="text-center mb-4">Login</h1>
             {errorTitle && <Alert variant="danger">{errorTitle}</Alert>}
             <Form onSubmit={handleSubmit}>
-              <Form.Group controlId="email" className="mb-3">
-                <Form.Label>Email</Form.Label>
+              <Form.Group controlId="username" className="mb-3">
+                <Form.Label>Username</Form.Label>
                 <Form.Control 
-                  type="email" 
-                  name="email" 
-                  placeholder="Enter your email" 
+                  type="text" 
+                  name="username" 
+                  placeholder="Enter your username" 
                   required 
                 />
               </Form.Group>
