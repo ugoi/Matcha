@@ -23,13 +23,20 @@ const App = () => {
       method: "GET",
       credentials: "include",
     })
-      .then((response) => response.json())
-      .then((data) => {
-        console.log("Auth response:", data); // Log the response to inspect
-        setIsLoggedIn(data.status === "success");
+      .then((response) => {
+        if (!response.ok) {
+          setIsLoggedIn(false);
+          return null;
+        }
+        return response.json();
       })
-      .catch((error) => {
-        console.error(error);
+      .then((data) => {
+        if (data) {
+          console.log("Auth response:", data);
+          setIsLoggedIn(data.status === "success");
+        }
+      })
+      .catch(() => {
         setIsLoggedIn(false);
       });
   }, []);

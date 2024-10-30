@@ -6,7 +6,9 @@ function ConfirmEmail() {
   const [message, setMessage] = useState("");
   const [isSending, setIsSending] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [error, setError] = useState("");
   const navigate = useNavigate();
+  const userEmail = "user@example.com"; // replace with dynamic email if available
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -32,17 +34,25 @@ function ConfirmEmail() {
 
   const handleResend = async () => {
     setIsSending(true);
+    setError(""); // Clear previous error messages
+    setMessage(""); // Clear previous success message
     try {
       const response = await fetch("http://localhost:3000/api/resend-verification-email", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: "user@example.com" }),
+        body: JSON.stringify({ email: userEmail }),
       });
       const data = await response.json();
-      setMessage(data.status === "success" ? "Verification email has been resent." : "Failed to resend verification email.");
+      
+      if (data.status === "success") {
+        setMessage("Verification email has been resent.");
+      } else {
+        // Show a more specific message if available from the backend
+        setError(data.data?.message || "Failed to resend verification email.");
+      }
     } catch (error) {
       console.error("Resend email error:", error);
-      setMessage("An error occurred. Please try again.");
+      setError("An error occurred. Please try again.");
     } finally {
       setIsSending(false);
     }
@@ -54,6 +64,7 @@ function ConfirmEmail() {
         A verification email has been sent. Please check your inbox and follow the instructions to verify your email.
       </Alert>
       {message && <Alert variant="success">{message}</Alert>}
+      {error && <Alert variant="danger">{error}</Alert>}
       <Button onClick={handleResend} disabled={isSending} variant="primary" className="mt-3">
         {isSending ? "Sending..." : "Resend Verification Email"}
       </Button>
