@@ -103,6 +103,12 @@ router.post(
   }
 );
 
+/* Logout */
+router.get("/logout", function (req, res) {
+  res.clearCookie("jwt");
+  res.json({ status: "success", data: { message: "Logged out" } });
+});
+
 /* Resend verification email */
 router.post(
   "/resend-verification-email",
