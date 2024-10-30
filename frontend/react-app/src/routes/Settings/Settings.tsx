@@ -15,7 +15,7 @@ function Settings() {
   };
 
   const handleLogout = () => {
-    // call endpoint /api/logout
+    // call endpoint /api/logouts
     window.location.href = "/";
   };
 
