@@ -3,11 +3,9 @@ import { useState } from "react";
 import "./Login.css";
 import Navbar from '../../components/Navbar/Navbar';
 import { Form, Button, Container, Row, Col, Alert } from 'react-bootstrap';
-import { useNavigate } from "react-router-dom";
 
 function Login() {
   const [errorTitle, setErrorTitle] = useState("");
-  const navigate = useNavigate();
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -32,7 +30,8 @@ function Login() {
       const result = await response.json();
   
       if (response.ok && result.status === 'success' && result.data.token) {
-        navigate("/home");
+        window.location.reload();
+        window.location.href = "/home";
       } else {
         let errorMessage = result?.message || "Login failed";
         setErrorTitle(errorMessage);

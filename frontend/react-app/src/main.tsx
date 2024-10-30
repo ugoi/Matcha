@@ -39,8 +39,8 @@ const App = () => {
       .catch(() => {
         setIsLoggedIn(false);
       });
-  }, []);
-  
+      
+    }, []);
   const router = createBrowserRouter([
     {
       path: "/",
@@ -72,7 +72,7 @@ const App = () => {
     },
     {
       path: "/home",
-      element: <Home />,
+      element: isLoggedIn ? <Home /> : <Navigate to="/" />,
     },
     {
       path: "/profile",
