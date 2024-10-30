@@ -67,12 +67,12 @@ const App = () => {
       element: isLoggedIn ? <CreateProfile /> : <Navigate to="/" />,
     },
     {
-      path: "/verifyemail",
-      element: isLoggedIn ? <VerifyEmail /> : <Navigate to="/" />,
+      path: "/verify-email",
+      element: <VerifyEmail />,
     },
     {
       path: "/home",
-      element: isLoggedIn ? <Home /> : <Navigate to="/" />,
+      element: <Home />,
     },
     {
       path: "/profile",
