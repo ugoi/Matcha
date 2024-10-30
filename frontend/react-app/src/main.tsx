@@ -60,7 +60,7 @@ const App = () => {
     },
     {
       path: "/confirmemail",
-      element: isLoggedIn ? <ConfirmEmail /> : <Navigate to="/" />,
+      element: <ConfirmEmail />,
     },
     {
       path: "/createprofile",

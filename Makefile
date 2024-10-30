@@ -28,4 +28,6 @@ start-backend-dev:
 dev: start-frontend-dev start-backend-dev
 	@echo "App is running in development mode with hot-reloading. Access the frontend at http://localhost:5173 and backend at http://localhost:3000"
 
-
+# Rule to shut down the database
+del:
+	@cd backend && npm run db:down
