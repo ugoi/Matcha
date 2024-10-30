@@ -1,10 +1,14 @@
-import lodash from "lodash";
+import pgPromise from "pg-promise";
+import {
+  FilterBy,
+  FilterItem,
+  SortBy,
+} from "../routes/profiles/profiles.interface.js";
+import { profilesRepository } from "../routes/profiles/profiles.repository.js";
 import { userRepository } from "../routes/users/users.repository.js";
 import { JFail } from "../error-handlers/custom-errors.js";
-import { profilesRepository } from "../routes/profiles/profiles.repository.js";
-const { unescape, escape } = lodash;
-
-import pgPromise from "pg-promise";
+import lodash from "lodash";
+const { unescape, escape, pickBy } = lodash;
 const pgp = pgPromise({
   /* Initialization Options */
 });
@@ -83,13 +87,14 @@ export function escapeErrors(errors) {
 export class FilterSet {
   filtersMap: Object;
   sortMap: Object;
-  filters: Object;
+  filters: FilterBy;
   rawType: boolean;
-  constructor(filters: Object) {
+  constructor(filters: FilterBy) {
     if (!filters || typeof filters !== "object") {
       throw new TypeError("Parameter 'filters' must be an object.");
     }
-    this.filters = filters;
+    const cleanedObject = pickBy(filters);
+    this.filters = cleanedObject;
     this.rawType = true; // do not escape the result from toPostgres()
     this.filtersMap = {
       $eq: "=",
@@ -111,38 +116,57 @@ export class FilterSet {
   }
 
   toPostgres() {
-    let valuesList = [];
+    // let valuesList = [];
     const keys = Object.keys(this.filters);
 
     if (keys.length === 0) {
       throw new Error("Invalid filter");
     }
-    let sqlCount = 0;
 
     const s = keys
       .map((k, index) => {
-        const filterObject = this.filters[k];
+        const filterObject: FilterItem = this.filters[k];
 
         if (typeof filterObject !== "object") {
-          throw new Error("Invalid filter");
+          throw new Error("Filter object must be an object");
         }
 
         const keys = Object.keys(filterObject);
+
+        // Remove value key from keys
+        const valueIndex = keys.indexOf("value");
+        if (valueIndex > -1) {
+          keys.splice(valueIndex, 1);
+        }
 
         if (keys.length === 0) {
           throw new Error("Invalid filter");
         }
         const s = keys
           .map((k1, index1) => {
-            sqlCount++;
-            const placeholder = "$" + sqlCount;
             const value = filterObject[k1];
-            valuesList.push(value);
+            const val = pgp.as.value(value);
+
+            // valuesList.push(value);
             const operator = this.filtersMap[k1];
             if (!operator) {
               throw new Error("Invalid filter");
             }
-            return pgp.as.name(k) + ` ${operator} ${placeholder}`;
+
+            if (k === "location") {
+              let longitude = filterObject.value.longitude;
+              let latitude = filterObject.value.latitude;
+              let radius = value;
+
+              // Use pg-promise for value formatting to prevent injection
+              const lon = pgp.as.value(longitude);
+              const lat = pgp.as.value(latitude);
+              const rad = pgp.as.value(radius);
+
+              return `location <-> ST_Point(${lon}, ${lat})::geography ${operator} ${rad}`;
+            }
+
+            return pgp.as.name(k) + ` ${operator} ${val}`;
           })
           .join(" AND ");
 
@@ -154,19 +178,20 @@ export class FilterSet {
         }
       })
       .join(" AND ");
-    return pgp.as.format(s, valuesList);
+    return pgp.as.format(s);
   }
 }
 
 export class SortSet {
   sortMap: Object;
-  sorts: Object;
+  sorts: SortBy;
   rawType: boolean;
-  constructor(sorts: Object) {
+  constructor(sorts: SortBy) {
     if (!sorts || typeof sorts !== "object") {
       throw new TypeError("Parameter 'sorts' must be an object.");
     }
-    this.sorts = sorts;
+    const cleanedObject = pickBy(sorts);
+    this.sorts = cleanedObject;
     this.rawType = true; // do not escape the result from toPostgres()
 
     this.sortMap = {
@@ -187,8 +212,11 @@ export class SortSet {
       }
       const s = keys
         .map((k, index) => {
-          sqlCount++;
           const filterObject = sort_by[k];
+          if (typeof filterObject !== "object") {
+            throw new Error("Filter object must be an object");
+          }
+          sqlCount++;
           const order: "asc" | "desc" = filterObject.$order;
           const sqlKeyword = this.sortMap[order];
           if (!sqlKeyword) {

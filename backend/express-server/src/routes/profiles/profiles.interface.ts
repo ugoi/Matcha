@@ -68,12 +68,17 @@ export enum SortOrder {
   Desc = "desc",
 }
 
-export interface SortItem {
+export class SortItem {
   value: Object;
   $order: SortOrder;
+
+  constructor(sortItem: SortItem) {
+    this.value = sortItem.value;
+    this.$order = sortItem.$order;
+  }
 }
 
-export interface SortBy {
+export class SortBy {
   age?: SortItem;
   age_gap?: SortItem;
   location?: SortItem;
@@ -81,15 +86,36 @@ export interface SortBy {
   fame_rating_gap?: SortItem;
   common_tags?: SortItem;
   tags?: SortItem;
+
+  constructor(sortBy: SortBy) {
+    this.age = sortBy.age;
+    this.age_gap = sortBy.age_gap;
+    this.location = sortBy.location;
+    this.fame_rating = sortBy.fame_rating;
+    this.fame_rating_gap = sortBy.fame_rating_gap;
+    this.common_tags = sortBy.common_tags;
+    this.tags = sortBy.tags;
+  }
 }
 
+export interface FilterValue {
+  longitude: number;
+  latitude: number;
+}
 
 export interface FilterItem {
   $eq?: string;
   $not_eq?: string;
+  $lt?: number;
+  $lte?: number;
+  $gt?: number;
+  $gte?: number;
+  $in?: string[];
+  $not_in?: string[];
+  value?: FilterValue;
 }
 
-export interface FilterBy {
+export class FilterBy {
   id?: FilterItem;
   username?: FilterItem;
   email?: FilterItem;
@@ -101,6 +127,19 @@ export interface FilterBy {
   // common tags is number of tags in common
   common_tags?: FilterItem;
   tags?: FilterItem;
+
+  constructor(filterBy: FilterBy) {
+    this.id = filterBy.id;
+    this.username = filterBy.username;
+    this.email = filterBy.email;
+    this.age = filterBy.age;
+    this.age_gap = filterBy.age_gap;
+    this.location = filterBy.location;
+    this.fame_rating = filterBy.fame_rating;
+    this.fame_rating_gap = filterBy.fame_rating_gap;
+    this.common_tags = filterBy.common_tags;
+    this.tags = filterBy.tags;
+  }
 }
 
 export interface SearchPreferences {

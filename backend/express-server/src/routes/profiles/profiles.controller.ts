@@ -24,17 +24,7 @@ Profiles - All users
 router.get(
   "/",
   passport.authenticate("jwt", { session: false }),
-  query("username").optional().isString(),
-  query("email").optional().isString(),
-  query("id").optional().isArray(),
-  query("age").optional().isNumeric(),
-  query("location").optional().isString(),
-  query("fame_rating").optional().isNumeric(),
-  query("tags").optional().isArray(),
-  query("age_gap").optional().isNumeric(),
-  query("fame_rating_gap").optional().isNumeric(),
   query("sort_by").optional(),
-
   query("filter_by").optional(),
   async function (req, res, next) {
     const result = validationResult(req);
@@ -45,36 +35,33 @@ router.get(
       return;
     }
     try {
+      
       let filter: FilterBy = {};
 
       let sort_by: SortBy = {};
 
       if (req.query.sort_by) {
-        sort_by = JSON.parse(req.query.sort_by);
+        sort_by = new SortBy(JSON.parse(req.query.sort_by));
+        
       }
 
-      if (req.query.username) filter.username = JSON.parse(req.query.username);
-      if (req.query.email) filter.email = JSON.parse(req.query.email);
-      if (req.query.id) filter.id = JSON.parse(req.query.id);
-      if (req.query.age) filter.age = JSON.parse(req.query.age);
-      if (req.query.location) filter.location = JSON.parse(req.query.location);
-      if (req.query.fame_rating)
-        filter.fame_rating = JSON.parse(req.query.fame_rating);
-      if (req.query.tags) filter.tags = JSON.parse(req.query.tags);
-      if (req.query.age_gap) filter.age_gap = JSON.parse(req.query.age_gap);
-      if (req.query.fame_rating_gap)
-        filter.fame_rating_gap = JSON.parse(req.query.fame_rating_gap);
+      if (req.query.filter_by) {
+        filter = new FilterBy(JSON.parse(req.query.filter_by));
+      }
 
       const current_user = await profilesRepository.findOne(req.user.user_id);
-
       const longitude = current_user.gps_longitude;
-
       const latitude = current_user.gps_latitude;
 
       // Ensure sort_by.location is defined and set the location with longitude and latitude
       sort_by.location = {
         value: { longitude, latitude },
-        $order: SortOrder.Asc,
+        $order: sort_by.location?.$order || SortOrder.Asc,
+      };
+
+      filter.location = {
+        value: { longitude, latitude },
+        $lt: filter.location?.$lt || 100,
       };
 
       const search: SearchPreferences = { filter_by: filter, sort_by: sort_by };
