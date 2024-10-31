@@ -3,12 +3,13 @@ import {
   FilterBy,
   FilterItem,
   SortBy,
+  SortItem,
 } from "../routes/profiles/profiles.interface.js";
 import { profilesRepository } from "../routes/profiles/profiles.repository.js";
 import { userRepository } from "../routes/users/users.repository.js";
 import { JFail } from "../error-handlers/custom-errors.js";
-import lodash from "lodash";
-const { unescape, escape, pickBy } = lodash;
+import _, { pick } from "lodash";
+const { unescape, escape, pickBy } = _;
 const pgp = pgPromise({
   /* Initialization Options */
 });
@@ -84,158 +85,136 @@ export function escapeErrors(errors) {
   });
 }
 
+
+
 export class FilterSet {
-  filtersMap: Object;
-  sortMap: Object;
+  private readonly filtersMap: Record<string, string> = {
+    $eq: "=",
+    $neq: "!=",
+    $gt: ">",
+    $gte: ">=",
+    $lt: "<",
+    $lte: "<=",
+    $like: "LIKE",
+    $ilike: "ILIKE",
+    $in: "IN",
+    $nin: "NOT IN",
+    $contains: "@>",
+    $contained: "<@",
+    $overlap: "&&",
+    $exists: "IS NOT NULL",
+    $nexists: "IS NULL",
+  };
+
   filters: FilterBy;
-  rawType: boolean;
+  rawType = true;
+
   constructor(filters: FilterBy) {
     if (!filters || typeof filters !== "object") {
       throw new TypeError("Parameter 'filters' must be an object.");
     }
-    const cleanedObject = pickBy(filters);
-    this.filters = cleanedObject;
-    this.rawType = true; // do not escape the result from toPostgres()
-    this.filtersMap = {
-      $eq: "=",
-      $neq: "!=",
-      $gt: ">",
-      $gte: ">=",
-      $lt: "<",
-      $lte: "<=",
-      $like: "LIKE",
-      $ilike: "ILIKE",
-      $in: "IN",
-      $nin: "NOT IN",
-      $contains: "@>",
-      $contained: "<@",
-      $overlap: "&&",
-      $exists: "IS NOT NULL",
-      $nexists: "IS NULL",
-    };
-  }
 
-  toPostgres() {
-    // let valuesList = [];
-    const keys = Object.keys(this.filters);
-
-    if (keys.length === 0) {
+    // Clean and validate filters
+    this.filters = _.omitBy(pickBy(filters), _.isEmpty);
+    if (_.isEmpty(this.filters)) {
       throw new Error("Invalid filter");
     }
 
-    const s = keys
-      .map((k, index) => {
-        const filterObject: FilterItem = this.filters[k];
+    // Validate each filter item
+    if (
+      !Object.values(this.filters).every((item) => typeof item === "object")
+    ) {
+      throw new Error("Each filter item must be an object");
+    }
+  }
 
-        if (typeof filterObject !== "object") {
-          throw new Error("Filter object must be an object");
+  private formatLocation(
+    filterItem: FilterItem,
+    operator: string,
+    radius: number
+  ) {
+    const { longitude, latitude } = filterItem.value;
+    return `location <-> ST_Point(${pgp.as.value(longitude)}, ${pgp.as.value(
+      latitude
+    )})::geography ${operator} ${pgp.as.value(radius)}`;
+  }
+
+  toPostgres() {
+    return _.map(this.filters, (filterItem: FilterItem, filterKey: string) => {
+      const formattedFilters = _.map(
+        _.omit(filterItem, "value"),
+        (value, operatorKey) => {
+          const operator = this.filtersMap[operatorKey];
+          if (!operator) {
+            throw new Error("Invalid filter operator");
+          }
+
+          if (filterKey === "location") {
+            return this.formatLocation(filterItem, operator, 1000);
+          }
+
+          return `${pgp.as.name(filterKey)} ${operator} ${pgp.as.format(
+            "$1",
+            value
+          )}`;
         }
+      ).join(" AND ");
 
-        const keys = Object.keys(filterObject);
-
-        // Remove value key from keys
-        const valueIndex = keys.indexOf("value");
-        if (valueIndex > -1) {
-          keys.splice(valueIndex, 1);
-        }
-
-        if (keys.length === 0) {
-          throw new Error("Invalid filter");
-        }
-        const s = keys
-          .map((k1, index1) => {
-            const value = filterObject[k1];
-            const val = pgp.as.value(value);
-
-            // valuesList.push(value);
-            const operator = this.filtersMap[k1];
-            if (!operator) {
-              throw new Error("Invalid filter");
-            }
-
-            if (k === "location") {
-              let longitude = filterObject.value.longitude;
-              let latitude = filterObject.value.latitude;
-              let radius = value;
-
-              // Use pg-promise for value formatting to prevent injection
-              const lon = pgp.as.value(longitude);
-              const lat = pgp.as.value(latitude);
-              const rad = pgp.as.value(radius);
-
-              return `location <-> ST_Point(${lon}, ${lat})::geography ${operator} ${rad}`;
-            }
-
-            return pgp.as.name(k) + ` ${operator} ${val}`;
-          })
-          .join(" AND ");
-
-        if (keys.length > 1) {
-          const result = `(${s})`;
-          return result;
-        } else {
-          return s;
-        }
-      })
-      .join(" AND ");
-    return pgp.as.format(s);
+      return _.size(filterItem) > 1
+        ? `(${formattedFilters})`
+        : formattedFilters;
+    }).join(" AND ");
   }
 }
 
 export class SortSet {
-  sortMap: Object;
+  private readonly sortMap: Record<string, string> = {
+    asc: "ASC",
+    desc: "DESC",
+  };
+
   sorts: SortBy;
-  rawType: boolean;
+  rawType = true;
+
   constructor(sorts: SortBy) {
     if (!sorts || typeof sorts !== "object") {
       throw new TypeError("Parameter 'sorts' must be an object.");
     }
-    const cleanedObject = pickBy(sorts);
-    this.sorts = cleanedObject;
-    this.rawType = true; // do not escape the result from toPostgres()
 
-    this.sortMap = {
-      asc: "ASC",
-      desc: "DESC",
-    };
+    // Clean and validate sorts
+    this.sorts = _.omitBy(pickBy(sorts), _.isEmpty);
+    if (_.isEmpty(this.sorts)) {
+      throw new Error("Invalid sort configuration");
+    }
+
+    // Validate each filter item
+    if (!Object.values(this.sorts).every((item) => typeof item === "object")) {
+      throw new Error("Each filter item must be an object");
+    }
+  }
+
+  private formatLocation(sortItem: SortItem, sqlKeyword: string) {
+    const { longitude, latitude } = sortItem.value;
+    return `location <-> ST_Point(${pgp.as.value(longitude)}, ${pgp.as.value(
+      latitude
+    )})::geography ${sqlKeyword}`;
   }
 
   toPostgres() {
-    let sqlCount = 0;
+    return _.map(this.sorts, (sortItem: SortItem, key: string) => {
+      if (typeof sortItem !== "object") {
+        throw new Error("Sort item must be an object");
+      }
 
-    const sort_by = this.sorts;
-    if (sort_by) {
-      const keys = Object.keys(sort_by);
-
-      if (keys.length === 0) {
+      const order = sortItem.$order;
+      const sqlKeyword = this.sortMap[order];
+      if (!sqlKeyword) {
         throw new Error("Invalid sort order");
       }
-      const s = keys
-        .map((k, index) => {
-          const filterObject = sort_by[k];
-          if (typeof filterObject !== "object") {
-            throw new Error("Filter object must be an object");
-          }
-          sqlCount++;
-          const order: "asc" | "desc" = filterObject.$order;
-          const sqlKeyword = this.sortMap[order];
-          if (!sqlKeyword) {
-            throw new Error("Invalid sort order");
-          }
 
-          if (k === "location") {
-            let longitude = filterObject.value.longitude;
-            let latitude = filterObject.value.latitude;
-
-            return `location <-> ST_Point(${longitude}, ${latitude})::geography ${sqlKeyword}`;
-          }
-          return pgp.as.name(k) + ` ${sqlKeyword}`;
-        })
-        .join(", ");
-
-      return pgp.as.format(s);
-    } else {
-      throw new Error("Invalid sort order");
-    }
+      return key === "location"
+        ? this.formatLocation(sortItem, sqlKeyword)
+        : `${pgp.as.name(key)} ${sqlKeyword}`;
+    }).join(", ");
   }
 }

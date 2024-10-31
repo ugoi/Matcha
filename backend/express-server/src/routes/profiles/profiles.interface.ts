@@ -69,13 +69,18 @@ export enum SortOrder {
 }
 
 export class SortItem {
-  value: Object;
+  value?: SortValue;
   $order: SortOrder;
 
   constructor(sortItem: SortItem) {
     this.value = sortItem.value;
     this.$order = sortItem.$order;
   }
+}
+
+export interface SortValue {
+  longitude: number;
+  latitude: number;
 }
 
 export class SortBy {
@@ -105,7 +110,7 @@ export interface FilterValue {
 
 export interface FilterItem {
   $eq?: string;
-  $not_eq?: string;
+  $neq?: string;
   $lt?: number;
   $lte?: number;
   $gt?: number;
