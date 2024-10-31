@@ -129,6 +129,7 @@ export class FilterBy {
   location?: FilterItem;
   fame_rating?: FilterItem;
   fame_rating_gap?: FilterItem;
+  gender?: FilterItem;
   // common tags is number of tags in common
   common_tags?: FilterItem;
   tags?: FilterItem;

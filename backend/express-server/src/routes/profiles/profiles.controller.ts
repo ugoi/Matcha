@@ -2,7 +2,7 @@ import { Router } from "express";
 import { body, param, query, validationResult } from "express-validator";
 var router = Router();
 import passport, { Profile } from "passport";
-import { escapeErrors, profileNotExists } from "../../utils/utils.js";
+import { escapeErrors, profileExists, profileNotExists } from "../../utils/utils.js";
 import { JFail } from "../../error-handlers/custom-errors.js";
 import {
   blockedUsersRepository,
@@ -12,7 +12,12 @@ import {
 } from "./profiles.repository.js";
 import { interestsRepository } from "./interests.repository.js";
 import { picturesRepository } from "./pictures.repository.js";
-import { FilterBy, SearchPreferences, SortBy, SortOrder } from "./profiles.interface.js";
+import {
+  FilterBy,
+  SearchPreferences,
+  SortBy,
+  SortOrder,
+} from "./profiles.interface.js";
 import { profileService } from "./profiles.service.js";
 import { userRepository } from "../users/users.repository.js";
 
@@ -24,6 +29,7 @@ Profiles - All users
 router.get(
   "/",
   passport.authenticate("jwt", { session: false }),
+  profileExists,
   query("sort_by").optional(),
   query("filter_by").optional(),
   async function (req, res, next) {
@@ -35,36 +41,59 @@ router.get(
       return;
     }
     try {
-      
+      const current_user = await profilesRepository.findOne(req.user.user_id);
+
       let filter: FilterBy = {};
-
-      let sort_by: SortBy = {};
-
-      if (req.query.sort_by) {
-        sort_by = new SortBy(JSON.parse(req.query.sort_by));
-        
-      }
 
       if (req.query.filter_by) {
         filter = new FilterBy(JSON.parse(req.query.filter_by));
       }
 
-      const current_user = await profilesRepository.findOne(req.user.user_id);
-      const longitude = current_user.gps_longitude;
-      const latitude = current_user.gps_latitude;
-
-      // Ensure sort_by.location is defined and set the location with longitude and latitude
-      sort_by.location = {
-        value: { longitude, latitude },
-        $order: sort_by.location?.$order || SortOrder.Asc,
+      const defaultFilter: FilterBy = {
+        gender: {
+          $eq: current_user.sexual_preference,
+        },
+        location: {
+          $lt: 100,
+          value: {
+            longitude: current_user.gps_longitude,
+            latitude: current_user.gps_latitude,
+          },
+        },
+        fame_rating: { $gte: 0 },
+        common_tags: { $gte: 0 },
       };
 
-      filter.location = {
-        value: { longitude, latitude },
-        $lt: filter.location?.$lt || 100,
+      const mergedFilter: FilterBy = {
+        ...defaultFilter,
+        ...filter, // customValues overrides defaultValues
       };
 
-      const search: SearchPreferences = { filter_by: filter, sort_by: sort_by };
+      let sort_by: SortBy = {};
+
+      if (req.query.sort_by) {
+        sort_by = new SortBy(JSON.parse(req.query.sort_by));
+      }
+
+      const defaultSortBy: SortBy = {
+        location: {
+          value: {
+            longitude: current_user.gps_longitude,
+            latitude: current_user.gps_latitude,
+          },
+          $order: SortOrder.Asc,
+        },
+      };
+
+      const mergedSortBy: SortBy = {
+        ...defaultSortBy,
+        ...sort_by, // customValues overrides defaultValues
+      };
+
+      const search: SearchPreferences = {
+        filter_by: mergedFilter,
+        sort_by: mergedSortBy,
+      };
 
       const profiles = await profileService.searchProfiles(search);
       res.json({ message: "success", data: { profiles: profiles } });
@@ -80,6 +109,7 @@ router.get(
 router.get(
   "/matched",
   passport.authenticate("jwt", { session: false }),
+  profileExists,
   async function (req, res, next) {
     try {
       const matches = await likesRepository.findMatches(req.user.user_id);
@@ -95,6 +125,7 @@ router.get(
 router.get(
   "/likes",
   passport.authenticate("jwt", { session: false }),
+  profileExists,
   async function (req, res, next) {
     const result = validationResult(req);
     if (!result.isEmpty()) {
@@ -118,6 +149,7 @@ router.get(
 router.get(
   "/blocks",
   passport.authenticate("jwt", { session: false }),
+  profileExists,
   async function (req, res, next) {
     try {
       const profile = await blockedUsersRepository.find(req.user.user_id);
@@ -134,6 +166,7 @@ router.get(
 router.get(
   "/reports",
   passport.authenticate("jwt", { session: false }),
+  profileExists,
   async function (req, res, next) {
     try {
       const profile = await userReportsRepository.find(req.user.user_id);
@@ -158,6 +191,7 @@ Me - Logged In User
 router.get(
   "/me",
   passport.authenticate("jwt", { session: false }),
+  profileExists,
   async function (req, res, next) {
     try {
       const profile = await profilesRepository.findOne(req.user.user_id);
@@ -173,6 +207,7 @@ router.get(
 router.get(
   "/:user_id",
   passport.authenticate("jwt", { session: false }),
+  profileExists,
   param("user_id").isUUID(),
   async function (req, res, next) {
     const result = validationResult(req);
@@ -229,6 +264,7 @@ router.post(
 router.patch(
   "/me",
   passport.authenticate("jwt", { session: false }),
+  profileExists,
   body("gender").optional().escape().isString(),
   body("age").optional().escape().isNumeric(),
   body("sexual_preference").optional().escape().isString(),
@@ -380,6 +416,7 @@ router.delete(
 router.post(
   "/:user_id/like",
   passport.authenticate("jwt", { session: false }),
+  profileExists,
   param("user_id").isUUID(),
   async function (req, res, next) {
     const result = validationResult(req);
@@ -406,6 +443,7 @@ router.post(
 router.delete(
   "/:user_id/like",
   passport.authenticate("jwt", { session: false }),
+  profileExists,
   param("user_id").isUUID(),
   async function (req, res, next) {
     const result = validationResult(req);
@@ -429,6 +467,7 @@ router.delete(
 router.post(
   "/:user_id/block",
   passport.authenticate("jwt", { session: false }),
+  profileExists,
   param("user_id").isUUID(),
   async function (req, res, next) {
     const result = validationResult(req);
@@ -453,6 +492,7 @@ router.post(
 router.delete(
   "/:user_id/block",
   passport.authenticate("jwt", { session: false }),
+  profileExists,
   param("user_id").isUUID(),
   async function (req, res, next) {
     const result = validationResult(req);
@@ -476,6 +516,7 @@ router.delete(
 router.post(
   "/:user_id/report",
   passport.authenticate("jwt", { session: false }),
+  profileExists,
   param("user_id").isUUID(),
   body("reason").isString(),
   async function (req, res, next) {

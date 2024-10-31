@@ -23,6 +23,15 @@ export async function profileNotExists(req, res, next) {
   next();
 }
 
+export async function profileExists(req, res, next) {
+  const user_id = req.user.user_id;
+  const profile = await profilesRepository.findOne(user_id);
+  if (!profile) {
+    next(new JFail("profile not found"));
+  }
+  next();
+}
+
 export async function usernameNotExists(value) {
   const user = await userRepository.findOne({ username: value });
   if (user) {

@@ -2,14 +2,15 @@ import { Router } from "express";
 import { body, param, validationResult } from "express-validator";
 var router = Router();
 import passport, { Profile } from "passport";
-import { escapeErrors } from "../../utils/utils.js";
+import { escapeErrors, profileExists } from "../../utils/utils.js";
 import { JFail } from "../../error-handlers/custom-errors.js";
 
 // TODO: Implement chatService
 /* Send a message to a user*/
 router.post(
   "/:user_id",
-  //   passport.authenticate("jwt", { session: false }),
+  passport.authenticate("jwt", { session: false }),
+  profileExists,
   param("user_id").isString(),
   body("message").escape().isString(),
   async function (req, res, next) {
