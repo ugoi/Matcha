@@ -1,4 +1,4 @@
-// src/routes/CreateProfile/CreateProfile.tsx
+// src/routes/CrfdeateProfile/CreateProfile.tsx
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import './CreateProfile.css';
