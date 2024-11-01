@@ -2,7 +2,12 @@ import { Router } from "express";
 import { body, param, query, validationResult } from "express-validator";
 var router = Router();
 import passport, { Profile } from "passport";
-import { escapeErrors, profileExists, profileNotExists } from "../../utils/utils.js";
+import {
+  arraySanitizer,
+  escapeErrors,
+  profileExists,
+  profileNotExists,
+} from "../../utils/utils.js";
 import { JFail } from "../../error-handlers/custom-errors.js";
 import {
   blockedUsersRepository,
@@ -299,8 +304,11 @@ router.patch(
 router.post(
   "/me/interests",
   passport.authenticate("jwt", { session: false }),
-  body("interests").escape().isArray({ max: 30 }),
-
+  body("interests")
+    .optional()
+    .escape()
+    .customSanitizer(arraySanitizer)
+    .isArray({ max: 30 }),
   async function (req, res, next) {
     const result = validationResult(req);
     if (!result.isEmpty()) {
@@ -327,7 +335,11 @@ router.post(
 router.delete(
   "/me/interests",
   passport.authenticate("jwt", { session: false }),
-  body("interests").escape().isArray({ max: 30 }),
+  body("interests")
+    .optional()
+    .escape()
+    .customSanitizer(arraySanitizer)
+    .isArray({ max: 30 }),
 
   async function (req, res, next) {
     const result = validationResult(req);
@@ -355,8 +367,7 @@ router.delete(
 router.post(
   "/me/pictures",
   passport.authenticate("jwt", { session: false }),
-  body("pictures").isArray({ max: 5 }),
-  body("pictures.*").isURL(),
+  body("pictures").customSanitizer(arraySanitizer).isArray({ max: 5 }),
 
   async function (req, res, next) {
     const result = validationResult(req);
@@ -384,8 +395,7 @@ router.post(
 router.delete(
   "/me/pictures",
   passport.authenticate("jwt", { session: false }),
-  body("pictures.*").isURL(),
-  body("pictures").isArray({ max: 5 }),
+  body("pictures").customSanitizer(arraySanitizer).isArray({ max: 5 }),
 
   async function (req, res, next) {
     const result = validationResult(req);

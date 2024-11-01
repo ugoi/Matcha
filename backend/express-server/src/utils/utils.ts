@@ -14,6 +14,14 @@ const pgp = pgPromise({
   /* Initialization Options */
 });
 
+export async function arraySanitizer(value) {
+  if (Array.isArray(value)) {
+    return value.map((interest) => interest.toLowerCase());
+  } else {
+    return [value.toLowerCase()];
+  }
+}
+
 export async function profileNotExists(req, res, next) {
   const user_id = req.user.user_id;
   const profile = await profilesRepository.findOne(user_id);
@@ -93,8 +101,6 @@ export function escapeErrors(errors) {
     return error;
   });
 }
-
-
 
 export class FilterSet {
   private readonly filtersMap: Record<string, string> = {
