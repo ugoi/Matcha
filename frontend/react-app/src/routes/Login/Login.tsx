@@ -1,11 +1,10 @@
-// src/routes/Login/Login.tsx
 import { useState } from "react";
 import "./Login.css";
 import Navbar from '../../components/Navbar/Navbar';
-import { Form, Button, Container, Row, Col, Alert } from 'react-bootstrap';
+import { Form, Button, Container, Row, Col } from 'react-bootstrap';
 
 function Login() {
-  const [errorTitle, setErrorTitle] = useState("");
+  const [error, setError] = useState(false);
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -30,18 +29,25 @@ function Login() {
       const result = await response.json();
   
       if (response.ok && result.status === 'success' && result.data.token) {
-        window.location.reload();
-        window.location.href = "/home";
+        const profileResponse = await fetch("http://localhost:3000/api/profiles/me", {
+          headers: { "Authorization": `Bearer ${result.data.token}` },
+          credentials: 'include',
+        });
+        const profileData = await profileResponse.json();
+
+        if (profileResponse.ok && profileData && profileData.isProfileComplete) {
+          window.location.href = "/home";
+        } else {
+          window.location.href = "/createprofile";
+        }
       } else {
-        let errorMessage = result?.message || "Login failed";
-        setErrorTitle(errorMessage);
+        setError(true);
       }
     } catch (error) {
-      setErrorTitle("An unexpected error occurred. Please try again.");
+      setError(true);
       console.error(error);
     }
   };
-  
 
   return (
     <>
@@ -50,7 +56,6 @@ function Login() {
         <Row className="justify-content-center">
           <Col md={6}>
             <h1 className="text-center mb-4">Login</h1>
-            {errorTitle && <Alert variant="danger">{errorTitle}</Alert>}
             <Form onSubmit={handleSubmit}>
               <Form.Group controlId="username" className="mb-3">
                 <Form.Label>Username</Form.Label>
@@ -68,7 +73,9 @@ function Login() {
                   name="password" 
                   placeholder="Enter your password" 
                   required 
+                  className={error ? "error-border" : ""}
                 />
+                {error && <p className="error-text">Incorrect login or password!</p>}
               </Form.Group>
               <Button 
                 variant="primary" 
@@ -83,14 +90,14 @@ function Login() {
               <Button 
                 variant="outline-danger" 
                 href="/api/login/google" 
-                className="w-45"
+                className="w-45 social-button"
               >
                 Sign in with Google
               </Button>
               <Button 
                 variant="outline-primary" 
                 href="/api/login/facebook" 
-                className="w-45"
+                className="w-45 social-button"
               >
                 Sign in with Facebook
               </Button>

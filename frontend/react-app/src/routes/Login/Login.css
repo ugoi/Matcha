@@ -9,3 +9,19 @@
 .w-45 {
     width: 45%;
 }
+
+.error-border {
+  border-color: red !important;
+}
+
+.error-text {
+  color: red;
+  font-size: 0.9rem;
+  margin-top: 5px;
+  animation: fadeIn 0.5s ease-in-out;
+}
+
+@keyframes fadeIn {
+  0% { opacity: 0; }
+  100% { opacity: 1; }
+}

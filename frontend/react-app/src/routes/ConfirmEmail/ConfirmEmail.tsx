@@ -8,7 +8,7 @@ function ConfirmEmail() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [error, setError] = useState("");
   const navigate = useNavigate();
-  const userEmail = "user@example.com"; // replace with dynamic email if available
+  const userEmail = "user@example.com";
 
   useEffect(() => {
     const checkAuth = async () => {

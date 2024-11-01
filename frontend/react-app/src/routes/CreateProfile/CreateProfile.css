@@ -1,0 +1,13 @@
+/* CreateProfile.css */
+.content {
+    padding: 20px;
+    border-radius: 10px;
+  }
+  
+  .settings-card {
+    background-color: white;
+    border-radius: 10px;
+    padding: 20px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  }
+  
