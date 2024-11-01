@@ -1,10 +1,13 @@
 import { useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { Alert, Container } from 'react-bootstrap';
+import { useNavigate } from "react-router-dom";
+
 
 function VerifyEmail() {
   const [searchParams] = useSearchParams();
   const [status, setStatus] = useState("");
+  const navigate = useNavigate();
 
   useEffect(() => {
     const verifyEmail = async () => {
@@ -23,6 +26,7 @@ function VerifyEmail() {
           } else {
               const data = await response.json();
               setStatus(data.status === "success" ? "Email verified! You can now sign in." : "Verification failed.");
+              navigate("/login");
           }
       } catch {
           setStatus("An error occurred.");

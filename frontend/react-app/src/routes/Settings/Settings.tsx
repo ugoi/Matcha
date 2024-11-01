@@ -1,12 +1,10 @@
 import NavbarLogged from '../../components/NavbarLogged/NavbarLogged';
 import './settings.css';
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 
 function Settings() {
   const [distance, setDistance] = useState<number>(50);
   const [ageGap, setAgeGap] = useState<number>(5);
-  const navigate = useNavigate(); // Hook to programmatically navigate
 
   const handleDistanceChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setDistance(Number(e.target.value));
@@ -17,9 +15,8 @@ function Settings() {
   };
 
   const handleLogout = () => {
-    // Implement your logout logic here, e.g., clear tokens, reset state, etc.
-    // After logging out, redirect to the login page
-    navigate('/'); 
+    // call endpoint /api/logoutsdsa
+    window.location.href = "/";
   };
 
   return (

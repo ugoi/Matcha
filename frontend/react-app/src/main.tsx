@@ -39,8 +39,8 @@ const App = () => {
       .catch(() => {
         setIsLoggedIn(false);
       });
-  }, []);
-  
+      
+    }, []);
   const router = createBrowserRouter([
     {
       path: "/",
@@ -60,15 +60,15 @@ const App = () => {
     },
     {
       path: "/confirmemail",
-      element: isLoggedIn ? <ConfirmEmail /> : <Navigate to="/" />,
+      element: <ConfirmEmail />,
     },
     {
       path: "/createprofile",
       element: isLoggedIn ? <CreateProfile /> : <Navigate to="/" />,
     },
     {
-      path: "/verifyemail",
-      element: isLoggedIn ? <VerifyEmail /> : <Navigate to="/" />,
+      path: "/verify-email",
+      element: <VerifyEmail />,
     },
     {
       path: "/home",
