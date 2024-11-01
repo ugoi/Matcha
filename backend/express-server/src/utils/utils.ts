@@ -206,6 +206,7 @@ export class SortSet {
     if (!Object.values(this.sorts).every((item) => typeof item === "object")) {
       throw new Error("Each filter item must be an object");
     }
+
   }
 
   private formatLocation(sortItem: SortItem, sqlKeyword: string) {

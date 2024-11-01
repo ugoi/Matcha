@@ -131,7 +131,7 @@ export class FilterBy {
   fame_rating_gap?: FilterItem;
   gender?: FilterItem;
   // common tags is number of tags in common
-  common_tags?: FilterItem;
+  common_interests?: FilterItem;
   tags?: FilterItem;
 
   constructor(filterBy: FilterBy) {
@@ -143,17 +143,20 @@ export class FilterBy {
     this.location = filterBy.location;
     this.fame_rating = filterBy.fame_rating;
     this.fame_rating_gap = filterBy.fame_rating_gap;
-    this.common_tags = filterBy.common_tags;
+    this.common_interests = filterBy.common_interests;
     this.tags = filterBy.tags;
   }
 }
 
 export interface SearchPreferences {
+  user_id: string;
   sort_by?: SortBy;
   filter_by?: FilterBy;
 }
 
-export const mockSearchPreferences: SearchPreferences = {};
+export const mockSearchPreferences: SearchPreferences = {
+  user_id: "1",
+};
 
 export const mockProfile: Profile = {
   profile_id: "1",

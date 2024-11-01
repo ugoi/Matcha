@@ -56,6 +56,7 @@ export const profilesRepository = {
   },
 
   find: async function find(
+    user_id: string,
     where?: string,
     order_by?: string
   ): Promise<Profile[]> {
@@ -67,8 +68,28 @@ export const profilesRepository = {
       order_by = "";
     }
     const data = await db.manyOrNone(
+      
       `
-        SELECT profiles.*, users.username, users.first_name, users.last_name, (SELECT json_agg (i)
+
+      WITH profile_with_interests AS (
+        SELECT profiles.*, users.username, users.first_name, users.last_name,
+        
+    array_length(
+      ARRAY(
+        SELECT interest_tag 
+        FROM user_interests AS ui 
+        WHERE ui.user_id = profiles.user_id
+        INTERSECT
+        SELECT interest_tag 
+        FROM user_interests AS uime 
+        WHERE uime.user_id = $1
+      ), 1
+    ) AS common_interests,
+          
+        
+        
+        
+        (SELECT json_agg (i)
         FROM (
         SELECT *
         FROM
@@ -84,11 +105,14 @@ export const profilesRepository = {
         FROM profiles
         INNER JOIN users
           ON profiles.user_id = users.user_id
-        $1:raw
-        $2:raw
         LIMIT 20
+      )
+      SELECT *
+      FROM profile_with_interests
+      $2:raw
+      $3:raw
       `,
-      [where, order_by]
+      [user_id, where, order_by]
     );
 
     return data;

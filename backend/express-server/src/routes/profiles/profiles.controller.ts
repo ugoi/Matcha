@@ -30,7 +30,7 @@ import { userRepository } from "../users/users.repository.js";
 Profiles - All users
 -------------------
 */
-/* Get user details*/
+/* Get list of profiles*/
 router.get(
   "/",
   passport.authenticate("jwt", { session: false }),
@@ -54,20 +54,26 @@ router.get(
         filter = new FilterBy(JSON.parse(req.query.filter_by));
       }
 
-      const defaultFilter: FilterBy = {
-        gender: {
-          $eq: current_user.sexual_preference,
-        },
-        location: {
-          $lt: 100,
-          value: {
-            longitude: current_user.gps_longitude,
-            latitude: current_user.gps_latitude,
+      let defaultFilter: FilterBy = {};
+      if (process.env.DEFAULT_FILTER == "true") {
+        defaultFilter = {
+          gender: {
+            $eq: current_user.sexual_preference,
           },
-        },
-        fame_rating: { $gte: 0 },
-        common_tags: { $gte: 0 },
-      };
+          location: {
+            $lt: 100,
+            value: {
+              longitude: current_user.gps_longitude,
+              latitude: current_user.gps_latitude,
+            },
+          },
+          fame_rating: { $gte: 0 },
+          common_interests: { $gte: 2 },
+        };
+      } else {
+        // No default filter
+        defaultFilter = {};
+      }
 
       const mergedFilter: FilterBy = {
         ...defaultFilter,
@@ -80,15 +86,22 @@ router.get(
         sort_by = new SortBy(JSON.parse(req.query.sort_by));
       }
 
-      const defaultSortBy: SortBy = {
-        location: {
-          value: {
-            longitude: current_user.gps_longitude,
-            latitude: current_user.gps_latitude,
+      let defaultSortBy: SortBy = {};
+
+      if (process.env.DEFAULT_SORT == "true") {
+        defaultSortBy = {
+          location: {
+            value: {
+              longitude: current_user.gps_longitude,
+              latitude: current_user.gps_latitude,
+            },
+            $order: SortOrder.Asc,
           },
-          $order: SortOrder.Asc,
-        },
-      };
+        };
+      } else {
+        // No default sort
+        defaultSortBy = {};
+      }
 
       const mergedSortBy: SortBy = {
         ...defaultSortBy,
@@ -96,6 +109,7 @@ router.get(
       };
 
       const search: SearchPreferences = {
+        user_id: req.user.user_id,
         filter_by: mergedFilter,
         sort_by: mergedSortBy,
       };
