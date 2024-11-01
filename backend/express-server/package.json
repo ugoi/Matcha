@@ -7,8 +7,8 @@
     "start": "npx tsc && node ./dist/bin/www.js",
     "dev": "npx tsx --watch ./src/bin/www.ts",
     "build": "tsc",
-    "db:down": "npx tsc && node ./dist/migrations/down.script.js",
-    "db:up": "npx tsc && node ./dist/migrations/up.script.js",
+    "db:down": "node ./dist/migrations/down.script.js",
+    "db:up": "node ./dist/migrations/up.script.js",
     "test": "vitest"
   },
   "dependencies": {
