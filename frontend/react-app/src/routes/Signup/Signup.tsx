@@ -69,7 +69,7 @@ function Signup() {
     };
 
     try {
-      const response = await fetch("http://localhost:3000/api/signup", requestOptions);
+      const response = await fetch(`${window.location.origin}/api/signup`, requestOptions);
       const result = await response.json();
 
       if (result.status === "success") {

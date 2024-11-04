@@ -14,12 +14,13 @@ import CreateProfile from "./routes/CreateProfile/CreateProfile.tsx";
 import VerifyEmail from './routes/VerifyEmail/VerifyEmail';
 import ConfirmEmail from './routes/ConfirmEmail/ConfirmEmail';
 
-
 const App = () => {
   const [isLoggedIn, setIsLoggedIn] = useState<boolean | null>(null);
 
   useEffect(() => {
-    fetch("http://localhost:3000/api/check-auth", {
+    const apiUrl = `${window.location.origin}/api/check-auth`; // Dynamically set the API URL
+
+    fetch(apiUrl, {
       method: "GET",
       credentials: "include",
     })
@@ -40,7 +41,8 @@ const App = () => {
         setIsLoggedIn(false);
       });
       
-    }, []);
+  }, []);
+
   const router = createBrowserRouter([
     {
       path: "/",
@@ -63,7 +65,7 @@ const App = () => {
       element: <ConfirmEmail />,
     },
     {
-      path: "/createprofile",
+      path: "/create-profile",
       element: isLoggedIn ? <CreateProfile /> : <Navigate to="/" />,
     },
     {
@@ -89,7 +91,7 @@ const App = () => {
   ]);
 
   if (isLoggedIn === null) {
-    return <div>Loading...</div>;
+    return null;
   }
 
   return <RouterProvider router={router} />;

@@ -1,19 +1,16 @@
-// src/routes/CrfdeateProfile/CreateProfile.tsx
+// src/routes/CreateProfile/CreateProfile.tsx
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import './CreateProfile.css';
 
 interface CreateProfileInput {
-  user_id: string;
-  data: {
-    gender: string;
-    age: number;
-    sexual_preference: string;
-    biography: string;
-    profile_picture: string;
-    gps_latitude: number;
-    gps_longitude: number;
-  };
+  gender: string;
+  age: string;
+  sexual_preference: string;
+  biography: string;
+  profile_picture: string;
+  gps_latitude: number;
+  gps_longitude: number;
 }
 
 function CreateProfile() {
@@ -26,6 +23,7 @@ function CreateProfile() {
   const [interests, setInterests] = useState('');
   const [pictures, setPictures] = useState<File[]>([]);
   const navigate = useNavigate();
+  const [errors, setErrors] = useState<{[key: string]: string}>({});
 
   const nextStep = () => setStep(step + 1);
   const prevStep = () => setStep(step - 1);
@@ -37,24 +35,21 @@ function CreateProfile() {
   };
 
   const handleSubmit = async () => {
-    const user_id = 'user_123';
+    setErrors({});
     const profilePicture = pictures.length > 0 ? pictures[0].name : '';
 
     const profileData: CreateProfileInput = {
-      user_id,
-      data: {
-        gender,
-        age,
-        sexual_preference: sexualPreference,
-        biography,
-        profile_picture: profilePicture,
-        gps_latitude: 0,
-        gps_longitude: 0,
-      },
+      gender,
+      age: age.toString(),
+      sexual_preference: sexualPreference,
+      biography,
+      profile_picture: profilePicture,
+      gps_latitude: 0,
+      gps_longitude: 0,
     };
 
     try {
-      await fetch('http://localhost:3000/api/profiles/me', {
+      const response = await fetch(`${window.location.origin}/api/profiles/me`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -62,9 +57,23 @@ function CreateProfile() {
         body: JSON.stringify(profileData),
       });
 
-      await fetch('http://localhost:3000/api/profiles/me/interests', {
+      const result = await response.json();
+
+      if (!response.ok) {
+        if (result.status === 'fail' && result.data?.errors) {
+          const newErrors: {[key: string]: string} = {};
+          result.data.errors.forEach((error: any) => {
+            newErrors[error.path] = error.msg;
+          });
+          setErrors(newErrors);
+          return;
+        }
+        throw new Error(result.data?.title || 'Something went wrong');
+      }
+
+      await fetch(`${window.location.origin}/api/profiles/me/interests`, {
         method: 'POST',
-        headers: {
+        headers: { 
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({ interests: interests.split(',').map(tag => tag.trim()) }),
@@ -72,14 +81,17 @@ function CreateProfile() {
 
       const formData = new FormData();
       pictures.forEach((picture) => formData.append('pictures', picture));
-      await fetch('http://localhost:3000/api/profiles/me/pictures', {
+      await fetch(`${window.location.origin}/api/profiles/me/pictures`, {
         method: 'POST',
         body: formData,
       });
 
-      navigate('/home');
+      navigate('/profile');
     } catch (error) {
       console.error('Error creating profile:', error);
+      setErrors({
+        general: error instanceof Error ? error.message : 'An unexpected error occurred'
+      });
     }
   };
 
@@ -126,13 +138,18 @@ function CreateProfile() {
             <input
               type="number"
               id="Age"
-              className="form-control"
+              className={`form-control ${errors.age ? 'is-invalid' : ''}`}
               placeholder="Enter your age"
               min="18"
               max="99"
               value={age}
               onChange={(e) => setAge(parseInt(e.target.value))}
             />
+            {errors.age && (
+              <div className="invalid-feedback">
+                {errors.age}
+              </div>
+            )}
             <div className="d-flex justify-content-between mt-4">
               <button className="btn btn-secondary" onClick={prevStep} disabled={step === 1}>
                 Back

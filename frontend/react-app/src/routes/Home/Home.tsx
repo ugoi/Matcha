@@ -1,7 +1,7 @@
 // src/routes/Home/Home.tsx
 import NavbarLogged from '../../components/NavbarLogged/NavbarLogged';
 import './home.css';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 const users = [
   {
@@ -42,6 +42,24 @@ const users = [
 function Home() {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [photoIndex, setPhotoIndex] = useState(0);
+
+  useEffect(() => {
+    const checkProfile = async () => {
+      try {
+        const response = await fetch(`${window.location.origin}/api/profiles/me`);
+        const result = await response.json();
+        
+        if (result.status === "fail" && result.data === "profile not found") {
+          window.location.href = '/create-profile';
+        }
+      } catch (error) {
+        console.error('Error checking profile:', error);
+        window.location.href = '/create-profile';
+      }
+    };
+
+    checkProfile();
+  }, []);
 
   const handleNextUser = () => {
     setCurrentIndex((prevIndex) => (prevIndex + 1) % users.length);

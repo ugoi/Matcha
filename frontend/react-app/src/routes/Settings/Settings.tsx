@@ -1,10 +1,28 @@
 import NavbarLogged from '../../components/NavbarLogged/NavbarLogged';
 import './settings.css';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 function Settings() {
   const [distance, setDistance] = useState<number>(50);
   const [ageGap, setAgeGap] = useState<number>(5);
+
+  useEffect(() => {
+    const checkProfile = async () => {
+      try {
+        const response = await fetch(`${window.location.origin}/api/profiles/me`);
+        const result = await response.json();
+        
+        if (result.status === "fail" && result.data === "profile not found") {
+          window.location.href = '/create-profile';
+        }
+      } catch (error) {
+        console.error('Error checking profile:', error);
+        window.location.href = '/create-profile';
+      }
+    };
+
+    checkProfile();
+  }, []);
 
   const handleDistanceChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setDistance(Number(e.target.value));
@@ -14,9 +32,21 @@ function Settings() {
     setAgeGap(Number(e.target.value));
   };
 
-  const handleLogout = () => {
-    // call endpoint /api/logoutsdsa
-    window.location.href = "/";
+  const handleLogout = async () => {
+    try {
+      const response = await fetch(`${window.location.origin}/api/logout`, {
+        method: 'POST', // or 'GET', depending on your backend implementation
+        credentials: 'include', // if you need to send cookies with the request
+      });
+  
+      if (response.ok) {
+        window.location.href = '/';
+      } else {
+        console.error('Logout failed:', response.statusText);
+      }
+    } catch (error) {
+      console.error('Error logging out:', error);
+    }
   };
 
   return (
