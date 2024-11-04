@@ -243,6 +243,14 @@ export async function createJwtToken(user: User): Promise<LoginOutput> {
     status: "success",
     data: {
       token: token,
+      user: {
+        id: user.user_id,
+        firstName: user.first_name,
+        lastName: user.last_name,
+        username: user.username,
+        email: user.email
+      },
+      
     },
   };
 }

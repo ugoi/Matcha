@@ -1,4 +1,4 @@
-import { pgp } from "../../config/db-config.js";
+import db, { pgp } from "../../config/db-config.js";
 import { FilterSet, SortSet } from "../../utils/utils.js";
 import { SearchPreferences } from "./profiles.interface.js";
 import { profilesRepository } from "./profiles.repository.js";
@@ -18,5 +18,20 @@ export const profileService = {
     const users = await profilesRepository.find(filter.user_id, where, order);
 
     return users;
+  },
+
+  updateLastOnline: async function updateLastOnline(user_id: string) {
+    let statement = pgp.as.format(
+      `
+      UPDATE profiles
+      SET last_online = NOW()
+      WHERE user_id = $1
+      `,
+      user_id
+    );
+
+    await db.none(statement);
+
+    return;
   },
 };

@@ -68,7 +68,6 @@ export const profilesRepository = {
       order_by = "";
     }
     const data = await db.manyOrNone(
-      
       `
 
       WITH profile_with_interests AS (
@@ -121,6 +120,17 @@ export const profilesRepository = {
   create: async function create(input: CreateProfileInput): Promise<Profile> {
     const { user_id, data } = input;
 
+    // Check if profile_picture is inside user_pictures
+    const userPictures = await picturesRepository.find(user_id);
+
+    if (
+      !userPictures.some(
+        (picture: Picture) => picture.picture_url === data.profile_picture
+      )
+    ) {
+      throw new Error("Profile picture not found in user pictures");
+    }
+
     const statement = pgp.as.format(
       `
       INSERT INTO profiles (user_id, gender, age, sexual_preference, biography, profile_picture, location)
@@ -140,45 +150,60 @@ export const profilesRepository = {
 
     let newProfile = await db.none(statement);
 
-    // let newProfile = await db.one(
-    //   `
-    //     INSERT INTO profiles (user_id, gender, age, sexual_preference, biography, profile_picture, location)
-    //     VALUES ($1, $2, $3, $4, $5, $6, $7)
-    //     RETURNING *
-    //   `,
-    //   [
-    //     user_id,
-    //     data.gender,
-    //     data.age,
-    //     data.sexual_preference,
-    //     data.biography,
-    //     data.profile_picture,
-    //     "st_point(-73.946823, 40.807416)",
-    //   ]
-    // );
-
     return newProfile;
   },
 
-  update: async function update(input: UpdateProfileInput): Promise<Profile> {
-    const { update } = pgp.helpers;
-
+  update: async function update(input) {
     const { gps_latitude, gps_longitude } = input.data;
 
+    // Remove gps fields from input.data as they're being handled separately
     delete input.data.gps_latitude;
     delete input.data.gps_longitude;
 
-    const condition = pgp.as.format("WHERE user_id = ${user_id}", input);
+    // Create a raw SQL expression for the location field using ST_Point
 
-    let query = `${update(
-      input.data,
-      null,
-      "profiles"
-    )}, "location" = st_point(-73.946823, 40.807416)
-    ${condition}
-    RETURNING *`;
+    let locationRawSQL = undefined;
 
-    let updatedProfile = await db.one(query);
+    if (gps_latitude && gps_longitude) {
+      locationRawSQL = pgp.as.format("st_point($1, $2)", [
+        gps_longitude,
+        gps_latitude,
+      ]);
+    }
+
+    input.data.location = locationRawSQL;
+
+    // Filter out undefined fields and add the raw SQL expression for location
+    const transformedData = {
+      ...Object.fromEntries(
+        Object.entries(input.data).filter(([_, v]) => v !== undefined)
+      ),
+    };
+
+    // Define the column set, marking `location` as raw
+    const columns = new pgp.helpers.ColumnSet(
+      Object.keys(transformedData).map((col) =>
+        col === "location"
+          ? {
+              name: col,
+              mod: '^',
+            }
+          : col
+      ),
+      { table: "profiles" }
+    );
+
+    // Generate the SQL update statement
+    const updateStatement = pgp.helpers.update(transformedData, columns);
+
+    // Add the condition for user_id
+    const condition = pgp.as.format("WHERE user_id = $1", [input.user_id]);
+
+    // Full query
+    const query = `${updateStatement} ${condition} RETURNING *`;
+
+    // Execute the query and get the updated profile
+    const updatedProfile = await db.one(query);
 
     return updatedProfile;
   },

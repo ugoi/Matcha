@@ -41,7 +41,7 @@ CREATE TABLE IF NOT EXISTS profiles (
     fame_rating INT DEFAULT 0, -- Fame rating of the user
     profile_picture TEXT, -- Path or URL of the profile picture
     location geography(POINT) not null,
-    last_online TIMESTAMP, -- Last online timestamp for the user
+    last_online TIMESTAMP DEFAULT CURRENT_TIMESTAMP, -- Last online timestamp for the user
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 

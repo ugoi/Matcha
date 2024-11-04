@@ -7,6 +7,13 @@ export interface LoginOutput {
   status: string;
   data: {
     token: string;
+    user: {
+      id: string;
+      firstName: string;
+      lastName: string;
+      username: string;
+      email: string;
+    };
   };
 }
 

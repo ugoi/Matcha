@@ -52,6 +52,13 @@ router.get(
 
       if (req.query.filter_by) {
         filter = new FilterBy(JSON.parse(req.query.filter_by));
+        // Set value for location filter
+        if (filter.location) {
+          filter.location.value = {
+            longitude: current_user.gps_longitude,
+            latitude: current_user.gps_latitude,
+          };
+        }
       }
 
       let defaultFilter: FilterBy = {};
@@ -84,6 +91,13 @@ router.get(
 
       if (req.query.sort_by) {
         sort_by = new SortBy(JSON.parse(req.query.sort_by));
+        // Set value for location sort
+        if (sort_by.location) {
+          sort_by.location.value = {
+            longitude: current_user.gps_longitude,
+            latitude: current_user.gps_latitude,
+          };
+        }
       }
 
       let defaultSortBy: SortBy = {};
@@ -251,11 +265,13 @@ router.post(
   "/me",
   passport.authenticate("jwt", { session: false }),
   profileNotExists,
-  body("gender").escape().isString(),
+  body("gender").escape().isString().toLowerCase(),
   body("age").escape().isNumeric(),
-  body("sexual_preference").escape().isString(),
+  body("sexual_preference").escape().isString().toLowerCase(),
   body("biography").escape().isString(),
-  body("profile_picture").escape().isString(),
+  body("profile_picture").isURL(),
+  body("gps_latitude").escape().isNumeric(),
+  body("gps_longitude").escape().isNumeric(),
 
   async function (req, res, next) {
     const result = validationResult(req);
@@ -266,7 +282,7 @@ router.post(
       return;
     }
     try {
-      const profile = await profilesRepository.create({
+      await profilesRepository.create({
         user_id: req.user.user_id,
         data: req.body,
       });

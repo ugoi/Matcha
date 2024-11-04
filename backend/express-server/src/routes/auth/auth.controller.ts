@@ -23,6 +23,8 @@ import { createToken } from "../token/token.repository.js";
 import { TokenType } from "../token/token.interface.js";
 import { userRepository } from "../users/users.repository.js";
 import passport from "passport";
+import { profilesRepository } from "../profiles/profiles.repository.js";
+import { profileService } from "../profiles/profiles.service.js";
 const { unescape, escape } = lodash;
 
 /* Check if user is authenticated */
@@ -88,6 +90,9 @@ router.post(
         username: req.body.username,
         password: req.body.password,
       });
+
+      // Set last_online in profile
+      await profileService.updateLastOnline(result.data.user.id);
 
       // Set token in cookie
       res.cookie("jwt", result.data.token, {
