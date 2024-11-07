@@ -56,9 +56,9 @@ function Login() {
           headers: { "Authorization": `Bearer ${result.data.token}` },
           credentials: 'include',
         });
-        const profileData = await profileResponse.json();
+        const profileResult = await profileResponse.json();
 
-        if (profileResponse.ok && profileData && profileData.isProfileComplete) {
+        if (profileResponse.ok && profileResult.data && profileResult.data.age) {
           window.location.href = "/home";
         } else {
           window.location.href = "/create-profile";
