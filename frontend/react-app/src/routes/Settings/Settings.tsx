@@ -35,8 +35,8 @@ function Settings() {
   const handleLogout = async () => {
     try {
       const response = await fetch(`${window.location.origin}/api/logout`, {
-        method: 'POST', // or 'GET', depending on your backend implementation
-        credentials: 'include', // if you need to send cookies with the request
+        method: 'POST',
+        credentials: 'include',
       });
   
       if (response.ok) {
