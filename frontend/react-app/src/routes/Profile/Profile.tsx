@@ -74,7 +74,7 @@ function Profile() {
   };
 
   if (!user) {
-    return <p>Loading...</p>;
+    return <p></p>;
   }
 
   return (
