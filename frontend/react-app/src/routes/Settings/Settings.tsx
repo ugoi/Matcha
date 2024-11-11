@@ -48,7 +48,7 @@ function Settings() {
   };
 
   const handleSaveChanges = () => {
-    // TODO: Add API call to save settings
+    //call the api to send the data changed
     window.location.href = '/home';
   };
 
@@ -63,13 +63,13 @@ function Settings() {
             <input
               type="range"
               id="distance"
-              min="0"
+              min="3"
               max="100"
               value={distance}
               onChange={handleDistanceChange}
               className="form-range"
             />
-            <p>{distance} km</p>
+            <p className="slider-value">{distance} km</p>
           </div>
 
           <div className="setting-item mb-3">
@@ -89,7 +89,7 @@ function Settings() {
                 setMaxAge(value[1]);
               }}
             />
-            <p>{minAge} - {maxAge} years</p>
+            <p className="slider-value">{minAge} - {maxAge} years</p>
           </div>
 
           <button 

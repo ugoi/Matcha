@@ -123,14 +123,14 @@ function Login() {
                 href="/api/login/google" 
                 className="w-45 social-button"
               >
-                Sign in with Google
+                Google Login
               </Button>
               <Button 
                 variant="outline-primary" 
                 href="/api/login/facebook" 
                 className="w-45 social-button"
               >
-                Sign in with Facebook
+                Facebook Login
               </Button>
             </div>
             <div className="mt-4 text-center">

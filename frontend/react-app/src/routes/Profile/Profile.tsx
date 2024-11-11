@@ -15,7 +15,11 @@ interface UserProfile {
 
 function Profile() {
   const [user, setUser] = useState<UserProfile | null>(null);
-  const [profileImgSrc, setProfileImgSrc] = useState<string>('/src/assets/unknown_picture.png'); // Default placeholder
+  const [profileImgSrc, setProfileImgSrc] = useState<string>('https://via.placeholder.com/400x500?text=Unknown+1');
+  const [isEditing, setIsEditing] = useState(false);
+  const [editedBio, setEditedBio] = useState('');
+  const [editedFirstName, setEditedFirstName] = useState('');
+  const [editedLastName, setEditedLastName] = useState('');
 
   useEffect(() => {
     const fetchProfileData = async () => {
@@ -25,17 +29,10 @@ function Profile() {
           throw new Error('Failed to fetch profile data');
         }
         const result = await response.json();
-        
-        // if (result.status === "fail" && result.data === "profile not found") {
-        //   window.location.href = '/create-profile';
-        //   return;
-        // }
-
         const data = result.data;
 
-        // Map the API response to the UserProfile interface
         const userProfile: UserProfile = {
-          name: `${data.first_name} ${data.last_name}`, // Combine first and last name
+          name: `${data.first_name} ${data.last_name}`,
           age: data.age,
           gender: data.gender,
           sexual_preference: data.sexual_preference,
@@ -46,7 +43,7 @@ function Profile() {
         };
 
         setUser(userProfile);
-        await checkImage(data.profile_picture); // Check if the profile picture is valid
+        await checkImage(data.profile_picture);
       } catch (error) {
         console.error('Error fetching profile data:', error);
         window.location.href = '/create-profile';
@@ -56,7 +53,6 @@ function Profile() {
     fetchProfileData();
   }, []);
 
-  // Function to check if the image URL is valid
   const checkImage = async (url: string) => {
     try {
       console.log('Checking image URL:', url);
@@ -65,11 +61,48 @@ function Profile() {
         setProfileImgSrc(url);
       } else {
         console.error('Image not found, using placeholder');
-        setProfileImgSrc('/src/assets/unknown_picture.png');
+        setProfileImgSrc('https://via.placeholder.com/400x500?text=Unknown+1');
       }
     } catch (error) {
       console.error('Error fetching image:', error); 
-      setProfileImgSrc('/src/assets/unknown_picture.png');
+      setProfileImgSrc('https://via.placeholder.com/400x500?text=Unknown+1');
+    }
+  };
+
+  const handleEditClick = () => {
+    setIsEditing(true);
+    setEditedBio(user?.biography || '');
+    const [firstName, lastName] = user?.name.split(' ') || ['', ''];
+    setEditedFirstName(firstName);
+    setEditedLastName(lastName);
+  };
+
+  const handleSaveClick = async () => {
+    try {
+      const response = await fetch(`${window.location.origin}/api/profiles/me`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          biography: editedBio,
+          first_name: editedFirstName,
+          last_name: editedLastName,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to update profile');
+      }
+
+      setUser(prev => prev ? {
+        ...prev,
+        biography: editedBio,
+        name: `${editedFirstName} ${editedLastName}`,
+      } : null);
+      setIsEditing(false);
+    } catch (error) {
+      console.error('Error updating profile:', error);
     }
   };
 
@@ -87,15 +120,56 @@ function Profile() {
               src={profileImgSrc}
               className="card-img-top"
               alt={`${user.name}`}
-              onError={() => setProfileImgSrc('/src/assets/unknown_picture.png')}
+              onError={() => setProfileImgSrc('https://via.placeholder.com/400x500?text=Unknown+1')}
             />
-            <button className="edit-button">
+            <button className="edit-button" onClick={handleEditClick}>
               <i className="bi bi-pencil-square"></i> Edit
             </button>
           </div>
           <div className="card-body">
             <h4 className="card-title mb-2">{user.name}, {user.age}</h4>
-            <p className="card-text text-muted mb-3">{user.biography}</p>
+            
+            {isEditing ? (
+              <div className="mb-3">
+                <div className="row mb-2">
+                  <div className="col">
+                    <input
+                      type="text"
+                      className="form-control"
+                      value={editedFirstName}
+                      onChange={(e) => setEditedFirstName(e.target.value)}
+                      placeholder="First Name"
+                    />
+                  </div>
+                  <div className="col">
+                    <input
+                      type="text"
+                      className="form-control"
+                      value={editedLastName}
+                      onChange={(e) => setEditedLastName(e.target.value)}
+                      placeholder="Last Name"
+                    />
+                  </div>
+                </div>
+                <textarea
+                  className="form-control mb-2"
+                  value={editedBio}
+                  onChange={(e) => setEditedBio(e.target.value)}
+                  rows={4}
+                />
+                <div className="d-flex justify-content-center gap-2">
+                  <button className="btn btn-primary" onClick={handleSaveClick}>
+                    Save
+                  </button>
+                  <button className="btn btn-secondary" onClick={() => setIsEditing(false)}>
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <p className="card-text text-muted mb-3">{user.biography}</p>
+            )}
+
             <p className="card-text text-muted mb-1">GPS Coordinates: {user.gps_latitude}, {user.gps_longitude}</p>
           </div>
         </div>

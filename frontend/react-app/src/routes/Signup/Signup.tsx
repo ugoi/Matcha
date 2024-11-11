@@ -5,8 +5,6 @@ import Navbar from '../../components/Navbar/Navbar';
 import { Form, Button, Container, Row, Col } from 'react-bootstrap';
 
 interface FormData {
-  firstName: string;
-  lastName: string;
   username: string;
   email: string;
   password: string;
@@ -14,24 +12,18 @@ interface FormData {
 
 function Signup() {
   const [formData, setFormData] = useState<FormData>({
-    firstName: "",
-    lastName: "",
     username: "",
     email: "",
     password: "",
   });
 
   const [errorFields, setErrorFields] = useState<Record<keyof FormData, boolean>>({
-    firstName: false,
-    lastName: false,
     username: false,
     email: false,
     password: false,
   });
 
   const [errorMessages, setErrorMessages] = useState<Record<keyof FormData, string | null>>({
-    firstName: null,
-    lastName: null,
     username: null,
     email: null,
     password: null,
@@ -42,8 +34,8 @@ function Signup() {
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target as HTMLInputElement;
     setFormData((prev) => ({ ...prev, [name]: value }));
-    setErrorFields((prev) => ({ ...prev, [name as keyof FormData]: false })); // Reset error for the field
-    setErrorMessages((prev) => ({ ...prev, [name as keyof FormData]: null })); // Reset message for the field
+    setErrorFields((prev) => ({ ...prev, [name as keyof FormData]: false }));
+    setErrorMessages((prev) => ({ ...prev, [name as keyof FormData]: null }));
   };
 
   const handleSubmit = async (event: React.FormEvent) => {
@@ -52,8 +44,6 @@ function Signup() {
 
     if (hasErrors) {
       const errors: Record<keyof FormData, boolean> = {
-        firstName: !formData.firstName,
-        lastName: !formData.lastName,
         username: !formData.username,
         email: !formData.email,
         password: !formData.password,
@@ -77,15 +67,11 @@ function Signup() {
       } else {
         const errors = result.data?.errors || [];
         const newErrorFields: Record<keyof FormData, boolean> = {
-          firstName: false,
-          lastName: false,
           username: false,
           email: false,
           password: false,
         };
         const newErrorMessages: Record<keyof FormData, string | null> = {
-          firstName: null,
-          lastName: null,
           username: null,
           email: null,
           password: null,
@@ -117,7 +103,7 @@ function Signup() {
           <Col md={6}>
             <h1 className="text-center mb-4">Sign Up</h1>
             <Form onSubmit={handleSubmit}>
-              {["firstName", "lastName", "username", "email", "password"].map((field) => (
+              {["username", "email", "password"].map((field) => (
                 <Form.Group controlId={field} className="mb-3" key={field}>
                   <Form.Label>{field.charAt(0).toUpperCase() + field.slice(1)}</Form.Label>
                   <Form.Control
@@ -140,11 +126,11 @@ function Signup() {
             </Form>
             <p className="text-center">or</p>
             <div className="d-flex justify-content-between">
-              <Button variant="outline-danger" href="/api/login/google" className="w-45">
-                Sign up with Google
+              <Button variant="outline-danger" href="/api/login/google" className="w-45 social-button">
+                Google Sign up
               </Button>
-              <Button variant="outline-primary" href="/api/login/facebook" className="w-45">
-                Sign up with Facebook
+              <Button variant="outline-primary" href="/api/login/facebook" className="w-45 social-button">
+                Facebook Sign up
               </Button>
             </div>
           </Col>

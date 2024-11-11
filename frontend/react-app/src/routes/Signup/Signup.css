@@ -9,3 +9,13 @@
 .w-45 {
     width: 45%;
 }
+
+.social-button {
+    font-size: 0.85rem;
+    padding: 8px;
+    transition: transform 0.3s ease;
+}
+
+.social-button:hover {
+    transform: scale(1.05);
+}
