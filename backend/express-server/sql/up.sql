@@ -72,8 +72,8 @@ CREATE TABLE IF NOT EXISTS visits (
     visit_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- Matches Table: Handles matches between users (previously called 'likes')
-CREATE TABLE IF NOT EXISTS matches (
+-- Matches Table: Handles likes between users (previously called 'likes')
+CREATE TABLE IF NOT EXISTS likes (
     matcher_user_id UUID REFERENCES users(user_id) ON DELETE CASCADE,
     matched_user_id UUID REFERENCES users(user_id) ON DELETE CASCADE,
     match_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,

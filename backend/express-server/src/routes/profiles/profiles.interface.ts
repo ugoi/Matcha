@@ -21,7 +21,6 @@ export interface Profile {
   last_online: Date;
   created_at: Date;
   visit_history: string[];
-  matches: string[];
   blocked_users: string[];
 }
 
@@ -184,7 +183,6 @@ export const mockProfile: Profile = {
   last_online: new Date(),
   created_at: new Date(),
   visit_history: [],
-  matches: [],
   blocked_users: [],
 };
 

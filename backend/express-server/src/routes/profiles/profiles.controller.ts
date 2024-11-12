@@ -144,7 +144,6 @@ router.get(
   }
 );
 
-/* Get matches */
 /* Get user matches */
 router.get(
   "/matched",

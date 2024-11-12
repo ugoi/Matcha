@@ -123,6 +123,9 @@ export const profilesRepository = {
         FROM 
           profiles 
           INNER JOIN users ON profiles.user_id = users.user_id 
+          LEFT JOIN likes
+          ON (profiles.user_id = likes.matched_user_id and likes.matcher_user_id = $2)
+          WHERE likes.matcher_user_id is null or likes.matcher_user_id != $3
         LIMIT 
           20
       ) 
@@ -130,10 +133,10 @@ export const profilesRepository = {
         * 
       FROM 
         profile_with_interests 
-      $2:raw
-      $3:raw
+      $4:raw
+      $5:raw
       `,
-      [user_id, where, order_by]
+      [user_id, user_id, user_id, where, order_by]
     );
 
     return data;
@@ -300,14 +303,14 @@ export const likesRepository = {
     // Check if you already liked the user
     const existingMatch = await db.oneOrNone(
       `
-        SELECT matches.*, (SELECT json_agg (i)
+        SELECT likes.*, (SELECT json_agg (i)
         FROM (
         SELECT profiles.*, users.username, users.first_name, users.last_name
         FROM
         profiles
         INNER JOIN users
           ON profiles.user_id = users.user_id
-        WHERE matches.matcher_user_id = profiles.user_id
+        WHERE likes.matcher_user_id = profiles.user_id
         ) i) as matcher, (SELECT json_agg (i)
         FROM (
         SELECT profiles.*, users.username, users.first_name, users.last_name
@@ -315,9 +318,9 @@ export const likesRepository = {
         profiles
         INNER JOIN users
           ON profiles.user_id = users.user_id
-        WHERE matches.matched_user_id = profiles.user_id
+        WHERE likes.matched_user_id = profiles.user_id
         ) i) as matched
-        FROM matches
+        FROM likes
         WHERE matcher_user_id = $1 AND matched_user_id = $2
       `,
       [matcher_user_id, matched_user_id]
@@ -331,7 +334,7 @@ export const likesRepository = {
     const existingMatch2 = await db.oneOrNone(
       `
         SELECT *
-        FROM matches
+        FROM likes
         WHERE matcher_user_id = $2 AND matched_user_id = $1
       `,
       [matcher_user_id, matched_user_id]
@@ -351,16 +354,16 @@ export const likesRepository = {
   },
 
   find: async function find(user_id: string): Promise<Match[]> {
-    const matches = await db.manyOrNone(
+    const likes = await db.manyOrNone(
       `
-        SELECT matches.*, (SELECT json_agg (i)
+        SELECT likes.*, (SELECT json_agg (i)
         FROM (
         SELECT profiles.*, users.username, users.first_name, users.last_name
         FROM
         profiles
         INNER JOIN users
           ON profiles.user_id = users.user_id
-        WHERE matches.matcher_user_id = profiles.user_id
+        WHERE likes.matcher_user_id = profiles.user_id
         ) i) as matcher, (SELECT json_agg (i)
         FROM (
         SELECT profiles.*, users.username, users.first_name, users.last_name
@@ -368,15 +371,15 @@ export const likesRepository = {
         profiles
         INNER JOIN users
           ON profiles.user_id = users.user_id
-        WHERE matches.matched_user_id = profiles.user_id
+        WHERE likes.matched_user_id = profiles.user_id
         ) i) as matched
-        FROM matches
+        FROM likes
         WHERE matcher_user_id = $1 OR matched_user_id = $1
       `,
       [user_id]
     );
 
-    return matches;
+    return likes;
   },
 
   add: async function like(
@@ -392,7 +395,7 @@ export const likesRepository = {
     const existingMatch = await db.oneOrNone(
       `
         SELECT *
-        FROM matches
+        FROM likes
         WHERE matcher_user_id = $1 AND matched_user_id = $2
       `,
       [matcher_user_id, matched_user_id]
@@ -406,7 +409,7 @@ export const likesRepository = {
     const existingMatch2 = await db.oneOrNone(
       `
         SELECT *
-        FROM matches
+        FROM likes
         WHERE matcher_user_id = $2 AND matched_user_id = $1
       `,
       [matcher_user_id, matched_user_id]
@@ -414,7 +417,7 @@ export const likesRepository = {
 
     const insertedMatch = await db.one(
       `
-        INSERT INTO matches (matcher_user_id, matched_user_id)
+        INSERT INTO likes (matcher_user_id, matched_user_id)
         VALUES ($1, $2)
         RETURNING *
       `,
@@ -447,7 +450,7 @@ export const likesRepository = {
     const existingMatch = await db.oneOrNone(
       `
         SELECT *
-        FROM matches
+        FROM likes
         WHERE matcher_user_id = $1 AND matched_user_id = $2
       `,
       [matcher_user_id, matched_user_id]
@@ -459,7 +462,7 @@ export const likesRepository = {
 
     const deletedMatch = await db.one(
       `
-        DELETE FROM matches
+        DELETE FROM likes
         WHERE matcher_user_id = $1 AND matched_user_id = $2
         RETURNING *
       `,
@@ -473,7 +476,7 @@ export const likesRepository = {
   },
 
   findMatches: async function findMatches(user_id: string): Promise<Match[]> {
-    const matches = await db.manyOrNone(
+    const likes = await db.manyOrNone(
       `
         SELECT m1.*, (SELECT json_agg (i)
         FROM (
@@ -492,8 +495,8 @@ export const likesRepository = {
           ON profiles.user_id = users.user_id
         WHERE m1.matched_user_id = profiles.user_id
         ) i) as matched
-        FROM matches m1
-        JOIN matches m2
+        FROM likes m1
+        JOIN likes m2
           ON m1.matcher_user_id = m2.matched_user_id
           AND m1.matched_user_id = m2.matcher_user_id
         WHERE m1.matcher_user_id = $1
@@ -501,7 +504,7 @@ export const likesRepository = {
       [user_id]
     );
 
-    return matches;
+    return likes;
   },
 };
 
