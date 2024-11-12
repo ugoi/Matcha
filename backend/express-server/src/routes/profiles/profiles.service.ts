@@ -1,9 +1,12 @@
 import db, { pgp } from "../../config/db-config.js";
-import { FilterSet, SortSet } from "../../utils/utils.js";
+import { JFail } from "../../error-handlers/custom-errors.js";
+import { FilterSet, picturesNotExists, SortSet } from "../../utils/utils.js";
+import { Picture } from "./pictures.interface.js";
+import { picturesRepository } from "./pictures.repository.js";
 import { SearchPreferences } from "./profiles.interface.js";
 import { profilesRepository } from "./profiles.repository.js";
 
-export const profileService = {
+export const profilesService = {
   searchProfiles: async function searchProfiles(filter: SearchPreferences) {
     if (filter.filter_by && Object.keys(filter.filter_by).length > 0) {
       var filterSet = new FilterSet(filter.filter_by);
@@ -33,5 +36,44 @@ export const profileService = {
     await db.none(statement);
 
     return;
+  },
+
+  pictureExists: async function pictureExists(picture_id, user_id) {
+    // Check if profile_picture is inside user_pictures
+    const userPictures = await picturesRepository.find(user_id);
+
+    if (
+      !userPictures.some(
+        (picture: Picture) => picture.picture_url === picture_id
+      )
+    ) {
+      throw new JFail(
+        null,
+        "Profile picture not found in user pictures - Please upload the pictures first with POST http://localhost:3000/api/profiles/me/pictures/" + picture_id
+      );
+    }
+  },
+
+  picturesNotExist: async function picturesNotExist(
+    uploadPictures: Array<string>,
+    user_id: string
+  ) {
+    const userPictures = await picturesRepository.find(user_id);
+
+    // Get overlap between userPictures and uploadPictures
+    const overlap = userPictures.filter((picture: Picture) =>
+      uploadPictures.includes(picture.picture_url)
+    );
+
+    const overlapMessage = overlap
+      .map((picture: Picture) => picture.picture_url)
+      .join(", ");
+
+    if (overlap.length > 0) {
+      throw new JFail(
+        null,
+        "Following pictures already exist: " + overlapMessage
+      );
+    }
   },
 };

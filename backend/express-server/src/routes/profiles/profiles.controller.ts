@@ -5,7 +5,11 @@ import passport, { Profile } from "passport";
 import {
   arraySanitizer,
   escapeErrors,
+  pictureCount,
+  pictureExists,
+  picturesNotExists,
   profileExists,
+  profileExistsValidator,
   profileNotExists,
 } from "../../utils/utils.js";
 import { JFail } from "../../error-handlers/custom-errors.js";
@@ -23,7 +27,7 @@ import {
   SortBy,
   SortOrder,
 } from "./profiles.interface.js";
-import { profileService } from "./profiles.service.js";
+import { profilesService } from "./profiles.service.js";
 import { userRepository } from "../users/users.repository.js";
 
 /* 
@@ -79,7 +83,9 @@ router.get(
         };
       } else {
         // No default filter
-        defaultFilter = {};
+        defaultFilter = {
+          user_id: { $neq: current_user.user_id },
+        };
       }
 
       const mergedFilter: FilterBy = {
@@ -114,7 +120,8 @@ router.get(
         };
       } else {
         // No default sort
-        defaultSortBy = {};
+        defaultSortBy = {
+        };
       }
 
       const mergedSortBy: SortBy = {
@@ -128,7 +135,7 @@ router.get(
         sort_by: mergedSortBy,
       };
 
-      const profiles = await profileService.searchProfiles(search);
+      const profiles = await profilesService.searchProfiles(search);
       res.json({ message: "success", data: { profiles: profiles } });
     } catch (error) {
       next(error);
@@ -269,7 +276,7 @@ router.post(
   body("age").escape().isNumeric(),
   body("sexual_preference").escape().isString().toLowerCase(),
   body("biography").escape().isString(),
-  body("profile_picture").isURL(),
+  body("profile_picture").isURL().custom(pictureExists),
   body("gps_latitude").escape().isNumeric(),
   body("gps_longitude").escape().isNumeric(),
 
@@ -323,6 +330,21 @@ router.patch(
       });
       // console.log(req.body["interests[]"]);
       res.json({ message: "success", data: profile });
+    } catch (error) {
+      next(error);
+      return;
+    }
+  }
+);
+
+/* Get user interests*/
+router.get(
+  "/me/interests",
+  passport.authenticate("jwt", { session: false }),
+  async function (req, res, next) {
+    try {
+      const profile = await interestsRepository.find(req.user.user_id);
+      res.json({ message: "success", data: { interests: profile } });
     } catch (error) {
       next(error);
       return;
@@ -393,11 +415,31 @@ router.delete(
   }
 );
 
+/*Get user pictures*/
+router.get(
+  "/me/pictures",
+  passport.authenticate("jwt", { session: false }),
+  async function (req, res, next) {
+    try {
+      const profile = await picturesRepository.find(req.user.user_id);
+      res.json({ message: "success", data: { pictures: profile } });
+    } catch (error) {
+      next(error);
+      return;
+    }
+  }
+);
+
 /* Create user pictures*/
 router.post(
   "/me/pictures",
   passport.authenticate("jwt", { session: false }),
-  body("pictures").customSanitizer(arraySanitizer).isArray({ max: 5 }),
+  body("pictures")
+    .optional()
+    .customSanitizer(arraySanitizer)
+    .isArray({ max: 5 })
+    .custom(picturesNotExists)
+    .custom(pictureCount),
 
   async function (req, res, next) {
     const result = validationResult(req);
@@ -457,7 +499,7 @@ router.post(
   "/:user_id/like",
   passport.authenticate("jwt", { session: false }),
   profileExists,
-  param("user_id").isUUID(),
+  param("user_id").isUUID().custom(profileExistsValidator),
   async function (req, res, next) {
     const result = validationResult(req);
     if (!result.isEmpty()) {
@@ -471,6 +513,13 @@ router.post(
         req.user.user_id,
         req.params.user_id
       );
+
+      // Calculate new fame rating
+
+      const likedProfile = await profilesRepository.findOne(req.params.user_id);
+      let fame_rating = likedProfile.fame_rating + 1;
+      // Increment fame rating of liked user
+      await profilesRepository.update({data: {fame_rating: fame_rating}, user_id: req.params.user_id});
       res.json({ message: "success", data: { match: match } });
     } catch (error) {
       next(error);
@@ -494,8 +543,8 @@ router.delete(
       return;
     }
     try {
-      await likesRepository.remove(req.user.user_id, req.params.user_id);
-      res.json({ message: "success" });
+      const match = await likesRepository.remove(req.user.user_id, req.params.user_id);
+      res.json({ message: "success", data: { match: match } });
     } catch (error) {
       next(error);
       return;

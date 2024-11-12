@@ -10,6 +10,7 @@ import { Picture } from "./pictures.interface.js";
 import { BlockedUser, Match, UserReport } from "./matchs.interface.js";
 import { interestsRepository } from "./interests.repository.js";
 import { picturesRepository } from "./pictures.repository.js";
+import { JError, JFail } from "../../error-handlers/custom-errors.js";
 
 export const profilesRepository = {
   /**
@@ -69,45 +70,66 @@ export const profilesRepository = {
     }
     const data = await db.manyOrNone(
       `
-
       WITH profile_with_interests AS (
-        SELECT profiles.*, users.username, users.first_name, users.last_name,
-        
-    array_length(
-      ARRAY(
-        SELECT interest_tag 
-        FROM user_interests AS ui 
-        WHERE ui.user_id = profiles.user_id
-        INTERSECT
-        SELECT interest_tag 
-        FROM user_interests AS uime 
-        WHERE uime.user_id = $1
-      ), 1
-    ) AS common_interests,
-          
-        
-        
-        
-        (SELECT json_agg (i)
-        FROM (
-        SELECT *
-        FROM
-        user_interests
-        WHERE user_interests.user_id = profiles.user_id
-        ) i) as interests, (SELECT json_agg (i)
-        FROM (
-        SELECT *
-        FROM
-        user_pictures
-        WHERE user_pictures.user_id = profiles.user_id
-        ) i) as pictures
-        FROM profiles
-        INNER JOIN users
-          ON profiles.user_id = users.user_id
-        LIMIT 20
-      )
-      SELECT *
-      FROM profile_with_interests
+        SELECT 
+          profiles.*, 
+          users.username, 
+          users.first_name, 
+          users.last_name, 
+          array_length(
+            ARRAY(
+              SELECT 
+                interest_tag 
+              FROM 
+                user_interests AS ui 
+              WHERE 
+                ui.user_id = profiles.user_id 
+              INTERSECT 
+              SELECT 
+                interest_tag 
+              FROM 
+                user_interests AS uime 
+              WHERE 
+                uime.user_id = $1
+            ), 
+            1
+          ) AS common_interests, 
+          (
+            SELECT 
+              json_agg (i) 
+            FROM 
+              (
+                SELECT 
+                  * 
+                FROM 
+                  user_interests 
+                WHERE 
+                  user_interests.user_id = profiles.user_id
+              ) i
+          ) as interests, 
+          (
+            SELECT 
+              json_agg (i) 
+            FROM 
+              (
+                SELECT 
+                  * 
+                FROM 
+                  user_pictures 
+                WHERE 
+                  user_pictures.user_id = profiles.user_id
+              ) i
+          ) as pictures 
+        FROM 
+          profiles 
+          INNER JOIN users ON profiles.user_id = users.user_id 
+        LIMIT 
+          20
+      ) 
+      SELECT 
+        * 
+      FROM 
+        profile_with_interests 
       $2:raw
       $3:raw
       `,
@@ -128,7 +150,9 @@ export const profilesRepository = {
         (picture: Picture) => picture.picture_url === data.profile_picture
       )
     ) {
-      throw new Error("Profile picture not found in user pictures");
+      throw new JError(
+        "Profile picture not found in user pictures - Please upload the pictures first with POST http://localhost:3000/api/profiles/me/pictures"
+      );
     }
 
     const statement = pgp.as.format(
@@ -153,7 +177,7 @@ export const profilesRepository = {
     return newProfile;
   },
 
-  update: async function update(input) {
+  update: async function update(input: UpdateProfileInput): Promise<Profile> {
     const { gps_latitude, gps_longitude } = input.data;
 
     // Remove gps fields from input.data as they're being handled separately
@@ -171,12 +195,12 @@ export const profilesRepository = {
       ]);
     }
 
-    input.data.location = locationRawSQL;
+    let extendedData = { ...input.data, location: locationRawSQL };
 
     // Filter out undefined fields and add the raw SQL expression for location
     const transformedData = {
       ...Object.fromEntries(
-        Object.entries(input.data).filter(([_, v]) => v !== undefined)
+        Object.entries(extendedData).filter(([_, v]) => v !== undefined)
       ),
     };
 
@@ -186,7 +210,7 @@ export const profilesRepository = {
         col === "location"
           ? {
               name: col,
-              mod: '^',
+              mod: "^",
             }
           : col
       ),
@@ -437,6 +461,7 @@ export const likesRepository = {
       `
         DELETE FROM matches
         WHERE matcher_user_id = $1 AND matched_user_id = $2
+        RETURNING *
       `,
       [matcher_user_id, matched_user_id]
     );

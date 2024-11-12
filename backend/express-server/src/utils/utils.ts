@@ -9,16 +9,45 @@ import { profilesRepository } from "../routes/profiles/profiles.repository.js";
 import { userRepository } from "../routes/users/users.repository.js";
 import { JFail } from "../error-handlers/custom-errors.js";
 import _, { pick } from "lodash";
+import { picturesRepository } from "../routes/profiles/pictures.repository.js";
+import { Picture } from "../routes/profiles/pictures.interface.js";
+import { profilesService } from "../routes/profiles/profiles.service.js";
 const { unescape, escape, pickBy } = _;
 const pgp = pgPromise({
   /* Initialization Options */
 });
 
 export async function arraySanitizer(value) {
+  if (value === undefined) {
+    return value;
+  }
   if (Array.isArray(value)) {
     return value.map((interest) => interest.toLowerCase());
   } else {
     return [value.toLowerCase()];
+  }
+}
+
+export async function pictureExists(value, { req }) {
+  const user_id = req.user.user_id;
+  const picture_id = value;
+
+  await profilesService.pictureExists(picture_id, user_id);
+}
+
+export async function picturesNotExists(value: Array<string>, { req }) {
+  const user_id = req.user.user_id;
+  const uploadPictures = value;
+
+  await profilesService.picturesNotExist(uploadPictures, user_id);
+}
+
+export async function pictureCount(value: Array<string>, { req }) {
+  const user_id = req.user.user_id;
+  const userPictures = await picturesRepository.find(user_id);
+
+  if (userPictures.length + value.length > 5) {
+    throw new Error("Cannot have more than 5 pictures");
   }
 }
 
@@ -38,6 +67,13 @@ export async function profileExists(req, res, next) {
     next(new JFail("profile not found"));
   }
   next();
+}
+
+export async function profileExistsValidator(value) {
+  const profile = await profilesRepository.findOne(value);
+  if (!profile) {
+    throw new Error("profile not found");
+  }
 }
 
 export async function usernameNotExists(value) {
@@ -206,7 +242,6 @@ export class SortSet {
     if (!Object.values(this.sorts).every((item) => typeof item === "object")) {
       throw new Error("Each filter item must be an object");
     }
-
   }
 
   private formatLocation(sortItem: SortItem, sqlKeyword: string) {

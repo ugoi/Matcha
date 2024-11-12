@@ -121,7 +121,7 @@ export interface FilterItem {
 }
 
 export class FilterBy {
-  id?: FilterItem;
+  user_id?: FilterItem;
   username?: FilterItem;
   email?: FilterItem;
   age?: FilterItem;
@@ -135,7 +135,7 @@ export class FilterBy {
   tags?: FilterItem;
 
   constructor(filterBy: FilterBy) {
-    this.id = filterBy.id;
+    this.user_id = filterBy.user_id;
     this.username = filterBy.username;
     this.email = filterBy.email;
     this.age = filterBy.age;
@@ -204,6 +204,7 @@ export interface UpdateProfileInput {
     profile_picture?: string;
     gps_latitude?: number;
     gps_longitude?: number;
+    fame_rating?: number;
   };
 }
 
