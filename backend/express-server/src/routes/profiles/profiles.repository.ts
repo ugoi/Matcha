@@ -124,8 +124,8 @@ export const profilesRepository = {
           profiles 
           INNER JOIN users ON profiles.user_id = users.user_id 
           LEFT JOIN likes
-          ON (profiles.user_id = likes.matched_user_id and likes.matcher_user_id = $2)
-          WHERE likes.matcher_user_id is null or likes.matcher_user_id != $3
+          ON (profiles.user_id = likes.matched_user_id AND likes.matcher_user_id = $2)
+          WHERE likes.matcher_user_id IS NULL
         LIMIT 
           20
       ) 
