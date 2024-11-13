@@ -1,8 +1,9 @@
 export interface Match {
-  matcher_user_id: string;
-  matched_user_id: string;
+  liker_user_id: string;
+  likee_user_id: string;
   both_matched: boolean;
-  match_time: Date;
+  is_like: boolean;
+  like_time: Date;
 }
 
 export interface BlockedUser {

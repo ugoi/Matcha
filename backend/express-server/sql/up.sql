@@ -74,10 +74,12 @@ CREATE TABLE IF NOT EXISTS visits (
 
 -- Matches Table: Handles likes between users (previously called 'likes')
 CREATE TABLE IF NOT EXISTS likes (
-    matcher_user_id UUID REFERENCES users(user_id) ON DELETE CASCADE,
-    matched_user_id UUID REFERENCES users(user_id) ON DELETE CASCADE,
-    match_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    PRIMARY KEY (matcher_user_id, matched_user_id) -- Composite primary key to ensure uniqueness
+    liker_user_id UUID REFERENCES users(user_id) ON DELETE CASCADE,
+    likee_user_id UUID REFERENCES users(user_id) ON DELETE CASCADE,
+    is_like BOOLEAN DEFAULT TRUE, -- Indicates if it's a like or dislike
+    like_type TEXT DEFAULT 'like', -- Options could be 'like', 'superlike', etc.
+    like_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (liker_user_id, likee_user_id) -- Composite primary key to ensure uniqueness
 );
 
 -- Blocked Users Table: Handles blocked users

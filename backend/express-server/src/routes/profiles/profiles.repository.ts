@@ -11,6 +11,7 @@ import { BlockedUser, Match, UserReport } from "./matchs.interface.js";
 import { interestsRepository } from "./interests.repository.js";
 import { picturesRepository } from "./pictures.repository.js";
 import { JError, JFail } from "../../error-handlers/custom-errors.js";
+import { update } from "lodash";
 
 export const profilesRepository = {
   /**
@@ -124,8 +125,8 @@ export const profilesRepository = {
           profiles 
           INNER JOIN users ON profiles.user_id = users.user_id 
           LEFT JOIN likes
-          ON (profiles.user_id = likes.matched_user_id AND likes.matcher_user_id = $2)
-          WHERE likes.matcher_user_id IS NULL
+          ON (profiles.user_id = likes.likee_user_id AND likes.liker_user_id = $2)
+          WHERE likes.liker_user_id IS NULL
         LIMIT 
           20
       ) 
@@ -292,15 +293,14 @@ export const searchPreferencesRepository = {
 
 export const likesRepository = {
   findOne: async function findOne(
-    matcher_user_id: string,
-    matched_user_id: string
+    liker_user_id: string,
+    likee_user_id: string
   ): Promise<Match> {
     // Check if you are liking yourself
-    if (matcher_user_id === matched_user_id) {
+    if (liker_user_id === likee_user_id) {
       throw new Error("You cannot like yourself");
     }
 
-    // Check if you already liked the user
     const existingMatch = await db.oneOrNone(
       `
         SELECT likes.*, (SELECT json_agg (i)
@@ -310,7 +310,7 @@ export const likesRepository = {
         profiles
         INNER JOIN users
           ON profiles.user_id = users.user_id
-        WHERE likes.matcher_user_id = profiles.user_id
+        WHERE likes.liker_user_id = profiles.user_id
         ) i) as matcher, (SELECT json_agg (i)
         FROM (
         SELECT profiles.*, users.username, users.first_name, users.last_name
@@ -318,26 +318,22 @@ export const likesRepository = {
         profiles
         INNER JOIN users
           ON profiles.user_id = users.user_id
-        WHERE likes.matched_user_id = profiles.user_id
+        WHERE likes.likee_user_id = profiles.user_id
         ) i) as matched
         FROM likes
-        WHERE matcher_user_id = $1 AND matched_user_id = $2
+        WHERE liker_user_id = $1 AND likee_user_id = $2
       `,
-      [matcher_user_id, matched_user_id]
+      [liker_user_id, likee_user_id]
     );
-
-    if (existingMatch) {
-      throw new Error("You already liked this user");
-    }
 
     // Check if the user already liked you
     const existingMatch2 = await db.oneOrNone(
       `
         SELECT *
         FROM likes
-        WHERE matcher_user_id = $2 AND matched_user_id = $1
+        WHERE liker_user_id = $2 AND likee_user_id = $1
       `,
-      [matcher_user_id, matched_user_id]
+      [liker_user_id, likee_user_id]
     );
 
     if (existingMatch2) {
@@ -356,25 +352,50 @@ export const likesRepository = {
   find: async function find(user_id: string): Promise<Match[]> {
     const likes = await db.manyOrNone(
       `
-        SELECT likes.*, (SELECT json_agg (i)
-        FROM (
-        SELECT profiles.*, users.username, users.first_name, users.last_name
-        FROM
-        profiles
-        INNER JOIN users
-          ON profiles.user_id = users.user_id
-        WHERE likes.matcher_user_id = profiles.user_id
-        ) i) as matcher, (SELECT json_agg (i)
-        FROM (
-        SELECT profiles.*, users.username, users.first_name, users.last_name
-        FROM
-        profiles
-        INNER JOIN users
-          ON profiles.user_id = users.user_id
-        WHERE likes.matched_user_id = profiles.user_id
-        ) i) as matched
-        FROM likes
-        WHERE matcher_user_id = $1 OR matched_user_id = $1
+      SELECT 
+        likes.*, 
+        (
+          SELECT 
+            json_agg (i) 
+          FROM 
+            (
+              SELECT 
+                profiles.*, 
+                users.username, 
+                users.first_name, 
+                users.last_name 
+              FROM 
+                profiles 
+                INNER JOIN users ON profiles.user_id = users.user_id 
+              WHERE 
+                likes.liker_user_id = profiles.user_id
+                  AND likes.is_like = TRUE
+            ) i
+        ) as matcher, 
+        (
+          SELECT 
+            json_agg (i) 
+          FROM 
+            (
+              SELECT 
+                profiles.*, 
+                users.username, 
+                users.first_name, 
+                users.last_name 
+              FROM 
+                profiles 
+                INNER JOIN users ON profiles.user_id = users.user_id 
+              WHERE 
+                likes.likee_user_id = profiles.user_id
+                  AND likes.is_like = TRUE
+            ) i
+        ) as matched 
+      FROM 
+        likes 
+      WHERE 
+        (liker_user_id = $1 
+          OR likee_user_id = $1)
+            AND is_like = TRUE
       `,
       [user_id]
     );
@@ -383,123 +404,182 @@ export const likesRepository = {
   },
 
   add: async function like(
-    matcher_user_id: string,
-    matched_user_id: string
+    liker_user_id: string,
+    likee_user_id: string,
+    is_like: boolean = true
   ): Promise<Match> {
-    // Check if you are liking yourself
-    if (matcher_user_id === matched_user_id) {
-      throw new Error("You cannot like yourself");
-    }
-
-    // Check if you already liked the user
-    const existingMatch = await db.oneOrNone(
-      `
-        SELECT *
-        FROM likes
-        WHERE matcher_user_id = $1 AND matched_user_id = $2
-      `,
-      [matcher_user_id, matched_user_id]
-    );
-
-    if (existingMatch) {
-      throw new Error("You already liked this user");
-    }
-
-    // Check if the user already liked you
-    const existingMatch2 = await db.oneOrNone(
-      `
-        SELECT *
-        FROM likes
-        WHERE matcher_user_id = $2 AND matched_user_id = $1
-      `,
-      [matcher_user_id, matched_user_id]
-    );
-
     const insertedMatch = await db.one(
       `
-        INSERT INTO likes (matcher_user_id, matched_user_id)
-        VALUES ($1, $2)
+        INSERT INTO likes (liker_user_id, likee_user_id, is_like)
+        VALUES ($1, $2, $3)
         RETURNING *
       `,
-      [matcher_user_id, matched_user_id]
+      [liker_user_id, likee_user_id, is_like]
     );
 
-    if (existingMatch2) {
-      return {
-        ...insertedMatch,
-        both_matched: true,
-      };
-    } else {
-      return {
-        ...insertedMatch,
-        both_matched: false,
-      };
-    }
+    return insertedMatch;
   },
 
   remove: async function remove(
-    matcher_user_id: string,
-    matched_user_id: string
+    liker_user_id: string,
+    likee_user_id: string
   ): Promise<Match> {
     // Check if you are unliking yourself
-    if (matcher_user_id === matched_user_id) {
-      throw new Error("You cannot unlike yourself");
+    if (liker_user_id === likee_user_id) {
+      throw new Error("You cannot dislike yourself");
     }
 
     // Check if you already liked the user
-    const existingMatch = await db.oneOrNone(
+    const existingLike = await db.oneOrNone(
       `
         SELECT *
         FROM likes
-        WHERE matcher_user_id = $1 AND matched_user_id = $2
+        WHERE liker_user_id = $1 AND likee_user_id = $2
       `,
-      [matcher_user_id, matched_user_id]
+      [liker_user_id, likee_user_id]
     );
 
-    if (!existingMatch) {
+    if (!existingLike) {
       throw new Error("You haven't liked this user");
     }
 
     const deletedMatch = await db.one(
       `
         DELETE FROM likes
-        WHERE matcher_user_id = $1 AND matched_user_id = $2
+        WHERE liker_user_id = $1 AND likee_user_id = $2
         RETURNING *
       `,
-      [matcher_user_id, matched_user_id]
+      [liker_user_id, likee_user_id]
     );
 
-    return {
-      ...deletedMatch,
-      both_matched: true,
-    };
+    const existingMatch = await db.oneOrNone(
+      `
+        SELECT *
+        FROM likes
+        WHERE liker_user_id = $2 AND likee_user_id = $1
+        AND is_like = TRUE
+      `,
+      [liker_user_id, likee_user_id]
+    );
+
+    if (existingMatch) {
+      return {
+        ...deletedMatch,
+        both_matched: true,
+      };
+    } else {
+      return {
+        ...deletedMatch,
+        both_matched: false,
+      };
+    }
+  },
+
+  update: async function update({
+    user_id,
+    likee_user_id,
+    data,
+  }): Promise<Match> {
+    // Check if you are updating yourself
+    if (user_id === likee_user_id) {
+      throw new Error("You cannot update yourself");
+    }
+
+    // Check if you already liked the user
+    const existingLike = await db.oneOrNone(
+      `
+        SELECT *
+        FROM likes
+        WHERE liker_user_id = $1 AND likee_user_id = $2
+      `,
+      [user_id, likee_user_id]
+    );
+
+    if (!existingLike) {
+      throw new Error("You haven't liked this user");
+    }
+
+    const updatedMatch = await db.one(
+      `
+        UPDATE likes
+        SET is_like = $1
+        WHERE liker_user_id = $2 AND likee_user_id = $3
+        RETURNING *
+      `,
+      [data.is_like, user_id, likee_user_id]
+    );
+
+    // Check if the user already liked you
+    // TODO: Reuse matched function
+    const existingMatch = await db.oneOrNone(
+      `
+        SELECT *
+        FROM likes
+        WHERE liker_user_id = $2 AND likee_user_id = $1
+        AND is_like = TRUE
+      `,
+      [user_id, likee_user_id]
+    );
+
+    if (existingMatch && data.is_like) {
+      return {
+        ...updatedMatch,
+        both_matched: true,
+      };
+    } else {
+      return {
+        ...updatedMatch,
+        both_matched: false,
+      };
+    }
   },
 
   findMatches: async function findMatches(user_id: string): Promise<Match[]> {
     const likes = await db.manyOrNone(
       `
-        SELECT m1.*, (SELECT json_agg (i)
-        FROM (
-        SELECT profiles.*, users.username, users.first_name, users.last_name
-        FROM
-        profiles
-        INNER JOIN users
-          ON profiles.user_id = users.user_id
-        WHERE m1.matcher_user_id = profiles.user_id
-        ) i) as matcher, (SELECT json_agg (i)
-        FROM (
-        SELECT profiles.*, users.username, users.first_name, users.last_name
-        FROM
-        profiles
-        INNER JOIN users
-          ON profiles.user_id = users.user_id
-        WHERE m1.matched_user_id = profiles.user_id
-        ) i) as matched
-        FROM likes m1
-        JOIN likes m2
-          ON m1.matcher_user_id = m2.matched_user_id
-          AND m1.matched_user_id = m2.matcher_user_id
-        WHERE m1.matcher_user_id = $1
+      SELECT 
+        m1.*, 
+        (
+          SELECT 
+            json_agg (i) 
+          FROM 
+            (
+              SELECT 
+                profiles.*, 
+                users.username, 
+                users.first_name, 
+                users.last_name 
+              FROM 
+                profiles 
+                INNER JOIN users ON profiles.user_id = users.user_id 
+              WHERE 
+                m1.liker_user_id = profiles.user_id
+            ) i
+        ) as matcher, 
+        (
+          SELECT 
+            json_agg (i) 
+          FROM 
+            (
+              SELECT 
+                profiles.*, 
+                users.username, 
+                users.first_name, 
+                users.last_name 
+              FROM 
+                profiles 
+                INNER JOIN users ON profiles.user_id = users.user_id 
+              WHERE 
+                m1.likee_user_id = profiles.user_id
+            ) i
+        ) as matched 
+      FROM 
+        likes m1 
+        JOIN likes m2 ON m1.liker_user_id = m2.likee_user_id 
+        AND m1.likee_user_id = m2.liker_user_id 
+      WHERE 
+        m1.liker_user_id = $1
+          AND m1.is_like = TRUE AND m2.is_like = TRUE
       `,
       [user_id]
     );

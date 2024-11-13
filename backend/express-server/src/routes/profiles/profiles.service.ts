@@ -1,10 +1,11 @@
 import db, { pgp } from "../../config/db-config.js";
 import { JFail } from "../../error-handlers/custom-errors.js";
 import { FilterSet, picturesNotExists, SortSet } from "../../utils/utils.js";
+import { Match } from "./matchs.interface.js";
 import { Picture } from "./pictures.interface.js";
 import { picturesRepository } from "./pictures.repository.js";
 import { SearchPreferences } from "./profiles.interface.js";
-import { profilesRepository } from "./profiles.repository.js";
+import { likesRepository, profilesRepository } from "./profiles.repository.js";
 
 export const profilesService = {
   searchProfiles: async function searchProfiles(filter: SearchPreferences) {
@@ -49,7 +50,8 @@ export const profilesService = {
     ) {
       throw new JFail(
         null,
-        "Profile picture not found in user pictures - Please upload the pictures first with POST http://localhost:3000/api/profiles/me/pictures/" + picture_id
+        "Profile picture not found in user pictures - Please upload the pictures first with POST http://localhost:3000/api/profiles/me/pictures/" +
+          picture_id
       );
     }
   },
@@ -75,5 +77,109 @@ export const profilesService = {
         "Following pictures already exist: " + overlapMessage
       );
     }
+  },
+};
+
+export const likesService = {
+  like: async function like(
+    liker_user_id: string,
+    likee_user_id: string
+  ): Promise<Match> {
+    // Check if you are liking yourself
+    if (liker_user_id === likee_user_id) {
+      throw new Error("You cannot like yourself");
+    }
+
+    // Check if you already liked the user
+    const existingLike = await likesRepository.findOne(
+      liker_user_id,
+      likee_user_id
+    );
+    if (existingLike.is_like === true) {
+      throw new Error("You already liked this user");
+    }
+
+    let match = null;
+    // If like exists update it to like
+    if (existingLike) {
+      match = await likesRepository.update({
+        user_id: liker_user_id,
+        likee_user_id: likee_user_id,
+        data: { is_like: true },
+      });
+    } else {
+      match = await likesRepository.add(liker_user_id, likee_user_id);
+    }
+
+    // Check if the user already liked you
+    const matches = await likesRepository.findMatches(liker_user_id);
+
+    // Check if you have a match
+    const existingMatch = matches.find(
+      (match: Match) =>
+        match.liker_user_id === likee_user_id &&
+        match.likee_user_id === liker_user_id &&
+        match.is_like === true
+    );
+
+    // Calculate new fame rating
+    const likedProfile = await profilesRepository.findOne(likee_user_id);
+    let fame_rating = likedProfile.fame_rating + 1;
+    // Increment fame rating of liked user
+    await profilesRepository.update({
+      data: { fame_rating: fame_rating },
+      user_id: likee_user_id,
+    });
+
+    return {
+      ...match,
+      both_matched: !!existingMatch,
+    };
+  },
+
+  dislike: async function dislike(
+    liker_user_id: string,
+    likee_user_id: string
+  ): Promise<Match> {
+    // Check if you are liking yourself
+    if (liker_user_id === likee_user_id) {
+      throw new Error("You cannot dislike yourself");
+    }
+
+    // Check if you already liked the user
+    // Check if like exists
+    const existingLike = await likesRepository.findOne(
+      liker_user_id,
+      likee_user_id
+    );
+    if (existingLike.is_like === false) {
+      throw new Error("You already unliked this user");
+    }
+
+    // If like exists update it to dislike
+    let match = null;
+    if (existingLike) {
+      match = await likesRepository.update({
+        user_id: liker_user_id,
+        likee_user_id: likee_user_id,
+        data: { is_like: false },
+      });
+    } else {
+      match = await likesRepository.add(liker_user_id, likee_user_id, false);
+    }
+
+    // Calculate new fame rating
+    const likedProfile = await profilesRepository.findOne(likee_user_id);
+    let fame_rating = likedProfile.fame_rating - 1;
+    // Increment fame rating of liked user
+    await profilesRepository.update({
+      data: { fame_rating: fame_rating },
+      user_id: likee_user_id,
+    });
+
+    return {
+      ...match,
+      both_matched: false,
+    };
   },
 };
