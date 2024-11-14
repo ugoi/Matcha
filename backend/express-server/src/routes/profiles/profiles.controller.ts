@@ -5,12 +5,18 @@ import passport, { Profile } from "passport";
 import {
   arraySanitizer,
   escapeErrors,
+  likeExists,
+  likeNotExists,
   pictureCount,
   pictureExists,
   picturesNotExists,
+  profileBlocked,
   profileExists,
   profileExistsValidator,
+  profileLiked,
+  profileNotBlocked,
   profileNotExists,
+  profileNotLiked,
 } from "../../utils/utils.js";
 import { JFail } from "../../error-handlers/custom-errors.js";
 import {
@@ -27,294 +33,23 @@ import {
   SortBy,
   SortOrder,
 } from "./profiles.interface.js";
-import { likesService, profilesService } from "./profiles.service.js";
+import {
+  blockedUsersService,
+  interestsService,
+  likesService,
+  profilesService,
+} from "./profiles.service.js";
 import { userRepository } from "../users/users.repository.js";
 
-/* 
-Profiles - All users
--------------------
-*/
-/* Get list of profiles*/
-router.get(
-  "/",
-  passport.authenticate("jwt", { session: false }),
-  profileExists,
-  query("sort_by").optional(),
-  query("filter_by").optional(),
-  async function (req, res, next) {
-    const result = validationResult(req);
-    if (!result.isEmpty()) {
-      // Escape html tags in error messages for security
-      const errors = escapeErrors(result.array());
-      next(new JFail({ title: "invalid input", errors: errors }));
-      return;
-    }
-    try {
-      const current_user = await profilesRepository.findOne(req.user.user_id);
-
-      let filter: FilterBy = {};
-
-      if (req.query.filter_by) {
-        filter = new FilterBy(JSON.parse(req.query.filter_by));
-        // Set value for location filter
-        if (filter.location) {
-          filter.location.value = {
-            longitude: current_user.gps_longitude,
-            latitude: current_user.gps_latitude,
-          };
-        }
-      }
-
-      let defaultFilter: FilterBy = {};
-      if (process.env.DEFAULT_FILTER == "true") {
-        defaultFilter = {
-          gender: {
-            $eq: current_user.sexual_preference,
-          },
-          location: {
-            $lt: 100,
-            value: {
-              longitude: current_user.gps_longitude,
-              latitude: current_user.gps_latitude,
-            },
-          },
-          fame_rating: { $gte: 0 },
-          common_interests: { $gte: 2 },
-        };
-      } else {
-        // No default filter
-        defaultFilter = {
-          user_id: { $neq: current_user.user_id },
-        };
-      }
-
-      const mergedFilter: FilterBy = {
-        ...defaultFilter,
-        ...filter, // customValues overrides defaultValues
-      };
-
-      let sort_by: SortBy = {};
-
-      if (req.query.sort_by) {
-        sort_by = new SortBy(JSON.parse(req.query.sort_by));
-        // Set value for location sort
-        if (sort_by.location) {
-          sort_by.location.value = {
-            longitude: current_user.gps_longitude,
-            latitude: current_user.gps_latitude,
-          };
-        }
-      }
-
-      let defaultSortBy: SortBy = {};
-
-      if (process.env.DEFAULT_SORT == "true") {
-        defaultSortBy = {
-          location: {
-            value: {
-              longitude: current_user.gps_longitude,
-              latitude: current_user.gps_latitude,
-            },
-            $order: SortOrder.Asc,
-          },
-        };
-      } else {
-        // No default sort
-        defaultSortBy = {};
-      }
-
-      const mergedSortBy: SortBy = {
-        ...defaultSortBy,
-        ...sort_by, // customValues overrides defaultValues
-      };
-
-      const search: SearchPreferences = {
-        user_id: req.user.user_id,
-        filter_by: mergedFilter,
-        sort_by: mergedSortBy,
-      };
-
-      const profiles = await profilesService.searchProfiles(search);
-      res.json({ message: "success", data: { profiles: profiles } });
-    } catch (error) {
-      next(error);
-      return;
-    }
-  }
-);
-
-/* Get user matches */
-router.get(
-  "/matched",
-  passport.authenticate("jwt", { session: false }),
-  profileExists,
-  async function (req, res, next) {
-    try {
-      const matches = await likesRepository.findMatches(req.user.user_id);
-      res.json({ message: "success", data: { matches: matches } });
-    } catch (error) {
-      next(error);
-      return;
-    }
-  }
-);
-
-/* Get likes */
-router.get(
-  "/likes",
-  passport.authenticate("jwt", { session: false }),
-  profileExists,
-  async function (req, res, next) {
-    const result = validationResult(req);
-    if (!result.isEmpty()) {
-      // Escape html tags in error messages for security
-      const errors = escapeErrors(result.array());
-      next(new JFail({ title: "invalid input", errors: errors }));
-      return;
-    }
-    try {
-      const match = await likesRepository.find(req.user.user_id);
-      res.json({ message: "success", data: { likes: match } });
-    } catch (error) {
-      next(error);
-      return;
-    }
-  }
-);
-
-/* Like a user*/
-router.post(
-  "/:user_id/like",
-  passport.authenticate("jwt", { session: false }),
-  profileExists,
-  param("user_id").isUUID().custom(profileExistsValidator),
-  async function (req, res, next) {
-    const result = validationResult(req);
-    if (!result.isEmpty()) {
-      // Escape html tags in error messages for security
-      const errors = escapeErrors(result.array());
-      next(new JFail({ title: "invalid input", errors: errors }));
-      return;
-    }
-    try {
-      const match = await likesService.like(
-        req.user.user_id,
-        req.params.user_id
-      );
-      res.json({ message: "success", data: { match: match } });
-    } catch (error) {
-      next(error);
-      return;
-    }
-  }
-);
-
-/* Unlike a user*/
-router.delete(
-  "/:user_id/like",
-  passport.authenticate("jwt", { session: false }),
-  profileExists,
-  param("user_id").isUUID(),
-  async function (req, res, next) {
-    const result = validationResult(req);
-    if (!result.isEmpty()) {
-      // Escape html tags in error messages for security
-      const errors = escapeErrors(result.array());
-      next(new JFail({ title: "invalid input", errors: errors }));
-      return;
-    }
-    try {
-      const match = await likesRepository.remove(
-        req.user.user_id,
-        req.params.user_id
-      );
-      res.json({ message: "success", data: { match: match } });
-    } catch (error) {
-      next(error);
-      return;
-    }
-  }
-);
-
-/* Dislike a user*/
-/* Like a user*/
-router.post(
-  "/:user_id/dislike",
-  passport.authenticate("jwt", { session: false }),
-  profileExists,
-  param("user_id").isUUID().custom(profileExistsValidator),
-  async function (req, res, next) {
-    const result = validationResult(req);
-    if (!result.isEmpty()) {
-      // Escape html tags in error messages for security
-      const errors = escapeErrors(result.array());
-      next(new JFail({ title: "invalid input", errors: errors }));
-      return;
-    }
-    try {
-      const match = await likesService.dislike(
-        req.user.user_id,
-        req.params.user_id
-      );
-      res.json({ message: "success", data: { match: match } });
-    } catch (error) {
-      next(error);
-      return;
-    }
-  }
-);
-
-// TODO: Implement profilesRepository.getProfile
-/* Get profiles that I blocked */
-router.get(
-  "/blocks",
-  passport.authenticate("jwt", { session: false }),
-  profileExists,
-  async function (req, res, next) {
-    try {
-      const profile = await blockedUsersRepository.find(req.user.user_id);
-      res.json({ message: "success", data: { blocks: profile } });
-    } catch (error) {
-      next(error);
-      return;
-    }
-  }
-);
-
-// TODO: Implement profilesRepository.getProfile
-/* Get profiles that I reported */
-router.get(
-  "/reports",
-  passport.authenticate("jwt", { session: false }),
-  profileExists,
-  async function (req, res, next) {
-    try {
-      const profile = await userReportsRepository.find(req.user.user_id);
-
-      res.json({ message: "success", data: { reports: profile } });
-    } catch (error) {
-      next(error);
-      return;
-    }
-  }
-);
-
-/* 
--------------------
-*/
-
-/* 
-Me - Logged In User 
--------------------
-*/
-/* Get my user details*/
+//#region Profile routes
+/* Get my user profile*/
 router.get(
   "/me",
   passport.authenticate("jwt", { session: false }),
   profileExists,
   async function (req, res, next) {
     try {
-      const profile = await profilesRepository.findOne(req.user.user_id);
+      const profile = await profilesService.getProfile(req.user.user_id);
       res.json({ message: "success", data: profile });
     } catch (error) {
       next(error);
@@ -323,31 +58,7 @@ router.get(
   }
 );
 
-/* Get user details*/
-router.get(
-  "/:user_id",
-  passport.authenticate("jwt", { session: false }),
-  profileExists,
-  param("user_id").isUUID(),
-  async function (req, res, next) {
-    const result = validationResult(req);
-    if (!result.isEmpty()) {
-      // Escape html tags in error messages for security
-      const errors = escapeErrors(result.array());
-      next(new JFail({ title: "invalid input", errors: errors }));
-      return;
-    }
-    try {
-      const profile = await profilesRepository.findOne(req.params.user_id);
-      res.json({ message: "success", data: profile });
-    } catch (error) {
-      next(error);
-      return;
-    }
-  }
-);
-
-/* Create user profile*/
+/* Create my user profile*/
 router.post(
   "/me",
   passport.authenticate("jwt", { session: false }),
@@ -369,7 +80,7 @@ router.post(
       return;
     }
     try {
-      await profilesRepository.create({
+      await profilesService.createProfile({
         user_id: req.user.user_id,
         data: req.body,
       });
@@ -382,7 +93,7 @@ router.post(
   }
 );
 
-/* Update user profile*/
+/* Update my user profile*/
 router.patch(
   "/me",
   passport.authenticate("jwt", { session: false }),
@@ -404,7 +115,7 @@ router.patch(
       return;
     }
     try {
-      const profile = await profilesRepository.update({
+      const profile = await profilesService.updateProfile({
         user_id: req.user.user_id,
         data: req.body,
       });
@@ -417,6 +128,39 @@ router.patch(
   }
 );
 
+/* Get list of profiles */
+router.get(
+  "/",
+  passport.authenticate("jwt", { session: false }),
+  profileExists,
+  query("sort_by").optional(),
+  query("filter_by").optional(),
+  async function (req, res, next) {
+    const result = validationResult(req);
+    if (!result.isEmpty()) {
+      const errors = escapeErrors(result.array());
+      next(new JFail({ title: "invalid input", errors }));
+      return;
+    }
+
+    try {
+      const profiles = await profilesService.searchProfiles({
+        user_id: req.user.user_id,
+        filter_by: req.query.filter_by
+          ? JSON.parse(req.query.filter_by)
+          : undefined,
+        sort_by: req.query.sort_by ? JSON.parse(req.query.sort_by) : undefined,
+      });
+
+      res.json({ message: "success", data: { profiles } });
+    } catch (error) {
+      next(error);
+    }
+  }
+);
+//#endregion
+
+//#region Interests routes
 /* Get user interests*/
 router.get(
   "/me/interests",
@@ -431,8 +175,7 @@ router.get(
     }
   }
 );
-
-/* Create user interests*/
+/* Create user interests */
 router.post(
   "/me/interests",
   passport.authenticate("jwt", { session: false }),
@@ -444,25 +187,22 @@ router.post(
   async function (req, res, next) {
     const result = validationResult(req);
     if (!result.isEmpty()) {
-      // Escape html tags in error messages for security
       const errors = escapeErrors(result.array());
-      next(new JFail({ title: "invalid input", errors: errors }));
+      next(new JFail({ title: "invalid input", errors }));
       return;
     }
+
     try {
-      const profile = await interestsRepository.add(
+      const profile = await interestsService.addInterests(
         req.user.user_id,
         req.body.interests
       );
-      // console.log(req.body["interests[]"]);
       res.json({ message: "success", data: profile });
     } catch (error) {
       next(error);
-      return;
     }
   }
 );
-
 /* Delete user interests*/
 router.delete(
   "/me/interests",
@@ -494,7 +234,9 @@ router.delete(
     }
   }
 );
+//#endregion
 
+//#region Pictures routes
 /*Get user pictures*/
 router.get(
   "/me/pictures",
@@ -558,7 +300,7 @@ router.delete(
       return;
     }
     try {
-      const profile = await interestsRepository.remove(
+      const profile = await picturesRepository.remove(
         req.user.user_id,
         req.body.pictures
       );
@@ -570,28 +312,18 @@ router.delete(
     }
   }
 );
-/* 
--------------------
-*/
+//#endregion
 
-/* Block a user*/
-router.post(
-  "/:user_id/block",
+//#region likes routes
+/* Get user matches */
+router.get(
+  "/matched",
   passport.authenticate("jwt", { session: false }),
   profileExists,
-  param("user_id").isUUID(),
   async function (req, res, next) {
-    const result = validationResult(req);
-    if (!result.isEmpty()) {
-      // Escape html tags in error messages for security
-      const errors = escapeErrors(result.array());
-      next(new JFail({ title: "invalid input", errors: errors }));
-      return;
-    }
     try {
-      await blockedUsersRepository.add(req.user.user_id, req.params.user_id);
-
-      res.json({ message: "success" });
+      const matches = await likesRepository.findMatches(req.user.user_id);
+      res.json({ message: "success", data: { matches: matches } });
     } catch (error) {
       next(error);
       return;
@@ -599,9 +331,74 @@ router.post(
   }
 );
 
-/* Unblock a user*/
-router.delete(
-  "/:user_id/block",
+/* Get likes */
+router.get(
+  "/likes",
+  passport.authenticate("jwt", { session: false }),
+  profileExists,
+  async function (req, res, next) {
+    const result = validationResult(req);
+    if (!result.isEmpty()) {
+      // Escape html tags in error messages for security
+      const errors = escapeErrors(result.array());
+      next(new JFail({ title: "invalid input", errors: errors }));
+      return;
+    }
+    try {
+      const match = await likesRepository.find(req.user.user_id);
+      res.json({ message: "success", data: { likes: match } });
+    } catch (error) {
+      next(error);
+      return;
+    }
+  }
+);
+
+//#endregion
+
+//#region blocked routes
+/* Get profiles that I blocked */
+router.get(
+  "/blocks",
+  passport.authenticate("jwt", { session: false }),
+  profileExists,
+  async function (req, res, next) {
+    try {
+      const profile = await blockedUsersRepository.find(req.user.user_id);
+      res.json({ message: "success", data: { blocks: profile } });
+    } catch (error) {
+      next(error);
+      return;
+    }
+  }
+);
+//#endregion
+
+//#region reports routes
+/* Get profiles that I reported */
+router.get(
+  "/reports",
+  passport.authenticate("jwt", { session: false }),
+  profileExists,
+  async function (req, res, next) {
+    try {
+      const profile = await userReportsRepository.find(req.user.user_id);
+
+      res.json({ message: "success", data: { reports: profile } });
+    } catch (error) {
+      next(error);
+      return;
+    }
+  }
+);
+
+//#endregion
+
+//#region :user_id routes
+
+/* Get user profile*/
+router.get(
+  "/:user_id",
   passport.authenticate("jwt", { session: false }),
   profileExists,
   param("user_id").isUUID(),
@@ -614,11 +411,146 @@ router.delete(
       return;
     }
     try {
-      await blockedUsersRepository.remove(req.user.user_id, req.params.user_id);
-      res.json({ message: "success" });
+      const profile = await profilesService.getProfile(req.params.user_id);
+      res.json({ message: "success", data: profile });
     } catch (error) {
       next(error);
       return;
+    }
+  }
+);
+
+/* Like a user*/
+router.post(
+  "/:user_id/like",
+  passport.authenticate("jwt", { session: false }),
+  profileExists,
+  param("user_id").isUUID().custom(profileExistsValidator).custom(profileNotLiked),
+  async function (req, res, next) {
+    const result = validationResult(req);
+    if (!result.isEmpty()) {
+      // Escape html tags in error messages for security
+      const errors = escapeErrors(result.array());
+      next(new JFail({ title: "invalid input", errors: errors }));
+      return;
+    }
+    try {
+      const match = await likesService.like(
+        req.user.user_id,
+        req.params.user_id
+      );
+      res.json({ message: "success", data: { match: match } });
+    } catch (error) {
+      next(error);
+      return;
+    }
+  }
+);
+
+/* Unlike a user */
+router.delete(
+  "/:user_id/like",
+  passport.authenticate("jwt", { session: false }),
+  profileExists,
+  param("user_id").isUUID().custom(profileExistsValidator).custom(likeExists),
+  async function (req, res, next) {
+    const result = validationResult(req);
+    if (!result.isEmpty()) {
+      const errors = escapeErrors(result.array());
+      next(new JFail({ title: "invalid input", errors }));
+      return;
+    }
+
+    try {
+      const match = await likesService.unlikeUser(
+        req.user.user_id,
+        req.params.user_id
+      );
+      res.json({ message: "success", data: { match } });
+    } catch (error) {
+      next(error);
+    }
+  }
+);
+
+/* Dislike a user*/
+router.post(
+  "/:user_id/dislike",
+  passport.authenticate("jwt", { session: false }),
+  profileExists,
+  param("user_id").isUUID().custom(profileExistsValidator),
+  async function (req, res, next) {
+    const result = validationResult(req);
+    if (!result.isEmpty()) {
+      // Escape html tags in error messages for security
+      const errors = escapeErrors(result.array());
+      next(new JFail({ title: "invalid input", errors: errors }));
+      return;
+    }
+    try {
+      const match = await likesService.dislike(
+        req.user.user_id,
+        req.params.user_id
+      );
+      res.json({ message: "success", data: { match: match } });
+    } catch (error) {
+      next(error);
+      return;
+    }
+  }
+);
+
+/* Block a user */
+router.post(
+  "/:user_id/block",
+  passport.authenticate("jwt", { session: false }),
+  profileExists,
+  param("user_id")
+    .isUUID()
+    .custom(profileExistsValidator)
+    .custom(profileBlocked),
+  async function (req, res, next) {
+    const result = validationResult(req);
+    if (!result.isEmpty()) {
+      const errors = escapeErrors(result.array());
+      next(new JFail({ title: "invalid input", errors }));
+      return;
+    }
+
+    try {
+      await blockedUsersService.blockUser(req.user.user_id, req.params.user_id);
+      res.json({ message: "success" });
+    } catch (error) {
+      next(error);
+    }
+  }
+);
+
+/* Unblock a user */
+router.delete(
+  "/:user_id/block",
+  passport.authenticate("jwt", { session: false }),
+  profileExists,
+  param("user_id")
+    .isUUID()
+    .custom(profileExistsValidator)
+    .custom(profileNotBlocked),
+  async function (req, res, next) {
+    const result = validationResult(req);
+    if (!result.isEmpty()) {
+      const errors = escapeErrors(result.array());
+      next(new JFail({ title: "invalid input", errors }));
+      return;
+    }
+
+    try {
+      await blockedUsersService.unblockUser(
+        req.user.user_id,
+        req.params.user_id
+      );
+      res.json({ message: "success" });
+    } catch (error) {
+      next(error);
     }
   }
 );
@@ -652,4 +584,5 @@ router.post(
   }
 );
 
+//#endregion
 export default router;

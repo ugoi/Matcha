@@ -2,6 +2,7 @@ import db, { pgp } from "../../config/db-config.js";
 import { Interest } from "./interests.interface.js";
 import { Profile } from "./profiles.interface.js";
 import { profilesRepository } from "./profiles.repository.js";
+import { profilesService } from "./profiles.service.js";
 
 export const interestsRepository = {
   find: async function find(user_id: string): Promise<Interest[]> {
@@ -16,60 +17,41 @@ export const interestsRepository = {
 
     return interests;
   },
-
-  add: async function add(
-    user_id: string,
-    interests: string[]
-  ): Promise<Profile> {
-    // Check number of interests is less than 5
-    const interestsCountResult = await db.one(
+  async countInterests(user_id: string): Promise<number> {
+    const result = await db.one(
       `
-              SELECT COUNT(*)
-              FROM user_interests
-              WHERE user_id = $1
-          `,
+      SELECT COUNT(*) AS count
+      FROM user_interests
+      WHERE user_id = $1
+      `,
       [user_id]
     );
+    return parseInt(result.count);
+  },
 
-    const interestsCount = parseInt(interestsCountResult.count);
-
-    if (interestsCount + interests.length > 30) {
-      throw new Error("Cannot have more than 30 interests");
-    }
-
-    // Check if interests already exist
-    let existingInterests = await db.manyOrNone(
+  async getUserInterests(user_id: string): Promise<{ interest_tag: string }[]> {
+    return await db.manyOrNone(
       `
-              SELECT interest_tag
-              FROM user_interests
-              WHERE user_id = $1
-          `,
+      SELECT interest_tag
+      FROM user_interests
+      WHERE user_id = $1
+      `,
       [user_id]
     );
+  },
 
-    if (
-      existingInterests.some((interest) =>
-        interests.includes(interest.interest_tag)
-      )
-    ) {
-      throw new Error("At least one of the interests already exists");
-    }
-
-    // Creating a reusable/static ColumnSet for generating INSERT queries:
+  async add(user_id: string, interests: string[]): Promise<void> {
     const cs = new pgp.helpers.ColumnSet(["user_id", "interest_tag"], {
       table: "user_interests",
     });
 
     const data = interests.map((interest) => ({
-      user_id: user_id,
+      user_id,
       interest_tag: interest,
     }));
 
     const insert = pgp.helpers.insert(data, cs);
-
     await db.none(insert);
-
-    return await profilesRepository.findOne(user_id);
   },
 
   remove: async function remove(
@@ -96,6 +78,6 @@ export const interestsRepository = {
       [values]
     );
 
-    return await profilesRepository.findOne(user_id);
+    return await profilesService.getProfile(user_id);
   },
 };

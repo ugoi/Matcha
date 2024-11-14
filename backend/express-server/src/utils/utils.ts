@@ -5,13 +5,20 @@ import {
   SortBy,
   SortItem,
 } from "../routes/profiles/profiles.interface.js";
-import { profilesRepository } from "../routes/profiles/profiles.repository.js";
+import {
+  blockedUsersRepository,
+  likesRepository,
+  profilesRepository,
+} from "../routes/profiles/profiles.repository.js";
 import { userRepository } from "../routes/users/users.repository.js";
 import { JFail } from "../error-handlers/custom-errors.js";
 import _, { pick } from "lodash";
 import { picturesRepository } from "../routes/profiles/pictures.repository.js";
 import { Picture } from "../routes/profiles/pictures.interface.js";
-import { profilesService } from "../routes/profiles/profiles.service.js";
+import {
+  likesService,
+  profilesService,
+} from "../routes/profiles/profiles.service.js";
 const { unescape, escape, pickBy } = _;
 const pgp = pgPromise({
   /* Initialization Options */
@@ -25,6 +32,58 @@ export async function arraySanitizer(value) {
     return value.map((interest) => interest.toLowerCase());
   } else {
     return [value.toLowerCase()];
+  }
+}
+
+export async function profileBlocked(value, { req }) {
+  // Check if the block already exists
+  const existingBlockedUser = await blockedUsersRepository.findOne(
+    req.user.user_id,
+    value
+  );
+  if (existingBlockedUser) {
+    throw new Error("You already blocked this user");
+  }
+}
+
+export async function profileNotBlocked(value, { req }) {
+  // Check if the block already exists
+  const existingBlockedUser = await blockedUsersRepository.findOne(
+    req.user.user_id,
+    value
+  );
+  if (!existingBlockedUser) {
+    throw new Error("You have not blocked this user");
+  }
+}
+
+export async function profileLiked(value, { req }) {
+  // Check if the block already exists
+  const existingLikedUser = await likesService.hasLiked(
+    req.user.user_id,
+    value
+  );
+  if (!existingLikedUser) {
+    throw new Error("You have not liked this user");
+  }
+}
+
+export async function profileNotLiked(value, { req }) {
+  // Check if the block already exists
+  const existingLikedUser = await likesService.hasLiked(
+    req.user.user_id,
+    value
+  );
+  if (existingLikedUser) {
+    throw new Error("You already liked this user");
+  }
+}
+
+export async function likeExists(value, { req }) {
+  // Check if the block already exists
+  const existingLike = await likesRepository.findLike(req.user.user_id, value);
+  if (!existingLike) {
+    throw new Error("Like does not exist");
   }
 }
 
