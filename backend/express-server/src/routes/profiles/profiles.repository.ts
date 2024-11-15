@@ -102,8 +102,10 @@ export const profilesRepository = {
           profiles 
           INNER JOIN users ON profiles.user_id = users.user_id 
           LEFT JOIN likes
-          ON (profiles.user_id = likes.likee_user_id AND likes.liker_user_id = $2)
-          WHERE likes.liker_user_id IS NULL
+          ON (profiles.user_id = likes.likee_user_id AND likes.liker_user_id = $1)
+          LEFT JOIN blocked_users
+          ON (profiles.user_id = blocked_users.blocked_user_id AND blocked_users.blocker_user_id = $1)
+          WHERE likes.liker_user_id IS NULL AND blocked_users.blocker_user_id IS NULL
         LIMIT 
           20
       ) 
@@ -111,10 +113,10 @@ export const profilesRepository = {
         * 
       FROM 
         profile_with_interests 
-      $4:raw
-      $5:raw
+      $2:raw
+      $3:raw
       `,
-      [user_id, user_id, user_id, where, order_by]
+      [user_id, where, order_by]
     );
 
     return data;
