@@ -8,6 +8,8 @@ import app from "../app.js";
 import debugF from "debug";
 var debug = debugF("express-server:server");
 import { createServer } from "http";
+import { Server } from "socket.io";
+import { initChatSocket } from "../routes/chat/chat.websocket.controller.js";
 
 /**
  * Get port from environment and store in Express.
@@ -29,6 +31,18 @@ var server = createServer(app);
 server.listen(port);
 server.on("error", onError);
 server.on("listening", onListening);
+
+/**
+ * Create Socket.io server.
+ */
+
+const io = new Server(server);
+
+/**
+ * Initialize socket.io
+ */
+
+initChatSocket(io);
 
 /**
  * Normalize a port into a number, string, or false.
@@ -85,3 +99,5 @@ function onListening() {
   var bind = typeof addr === "string" ? "pipe " + addr : "port " + addr.port;
   debug("Listening on " + bind);
 }
+
+export { server };

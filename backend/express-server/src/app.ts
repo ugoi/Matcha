@@ -11,6 +11,7 @@ import { defaultErrorHandler } from "./error-handlers/default-error-handler.js";
 import { up } from "./migrations/up.js";
 import { initPassport } from "./config/passport-config.js";
 
+// run migrations
 up();
 
 var app = express();
@@ -24,6 +25,13 @@ app.use(logger("dev"));
 app.use(json());
 app.use(urlencoded({ extended: false }));
 app.use(cookieParser());
+
+app.get("/chat_example", function (req, res) {
+  res.sendFile("index.html", {
+    root: join(__dirname, "../public/chat_example/"),
+  });
+});
+
 app.use("/api", apiRouter);
 app.use(express.static(join(__dirname, "../../../frontend/react-app/dist")));
 app.get("*", function (req, res) {

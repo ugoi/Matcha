@@ -6,7 +6,6 @@ import {
   arraySanitizer,
   escapeErrors,
   likeExists,
-  likeNotExists,
   pictureCount,
   pictureExists,
   picturesNotExists,
