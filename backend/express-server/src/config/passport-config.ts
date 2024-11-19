@@ -1,5 +1,5 @@
 import passport from "passport";
-import { Strategy as JwtStrategy } from "passport-jwt";
+import { ExtractJwt, Strategy as JwtStrategy } from "passport-jwt";
 import { Strategy as GoogleStrategy } from "passport-google-oauth20";
 import { Strategy as FacebookStrategy } from "passport-facebook";
 import { userRepository } from "../routes/users/users.repository.js";
@@ -14,8 +14,11 @@ export function initPassport() {
     }
     return token;
   };
+
+  // Author
+
   var opts: any = {};
-  opts.jwtFromRequest = cookieExtractor;
+  opts.jwtFromRequest = ExtractJwt.fromExtractors([ cookieExtractor, ExtractJwt.fromAuthHeaderAsBearerToken() ]);
   opts.secretOrKey = process.env.JWT_SECRET;
   opts.issuer = process.env.JWT_ISSUER;
   opts.audience = process.env.JWT_AUDIENCE;

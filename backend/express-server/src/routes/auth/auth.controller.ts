@@ -2,7 +2,6 @@ import { Router } from "express";
 var router = Router();
 import { body, param, query, validationResult } from "express-validator";
 import { JFail } from "../../error-handlers/custom-errors.js";
-import lodash from "lodash";
 import {
   login,
   createJwtToken,
@@ -23,9 +22,7 @@ import { createToken } from "../token/token.repository.js";
 import { TokenType } from "../token/token.interface.js";
 import { userRepository } from "../users/users.repository.js";
 import passport from "passport";
-import { profilesRepository } from "../profiles/profiles.repository.js";
 import { profilesService } from "../profiles/profiles.service.js";
-const { unescape, escape } = lodash;
 
 /* Check if user is authenticated */
 router.get(

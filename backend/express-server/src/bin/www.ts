@@ -9,7 +9,8 @@ import debugF from "debug";
 var debug = debugF("express-server:server");
 import { createServer } from "http";
 import { Server } from "socket.io";
-import { initChatSocket } from "../routes/chat/chat.websocket.controller.js";
+import { initChatSocket } from "../routes/chats/chats.websocket.controller.js";
+import passport from "passport";
 
 /**
  * Get port from environment and store in Express.
@@ -25,24 +26,33 @@ app.set("port", port);
 var server = createServer(app);
 
 /**
- * Listen on provided port, on all network interfaces.
- */
-
-server.listen(port);
-server.on("error", onError);
-server.on("listening", onListening);
-
-/**
  * Create Socket.io server.
  */
 
 const io = new Server(server);
+
+io.engine.use((req, res, next) => {
+  const isHandshake = req._query.sid === undefined;
+  if (isHandshake) {
+    passport.authenticate("jwt", { session: false })(req, res, next);
+  } else {
+    next();
+  }
+});
 
 /**
  * Initialize socket.io
  */
 
 initChatSocket(io);
+
+/**
+ * Listen on provided port, on all network interfaces.
+ */
+
+server.listen(port);
+server.on("error", onError);
+server.on("listening", onListening);
 
 /**
  * Normalize a port into a number, string, or false.

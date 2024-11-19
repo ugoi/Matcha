@@ -18,17 +18,18 @@ export const profilesRepository = {
    *
    * @returns  If the profile is found, return the profile. Otherwise, return null.
    */
-  findOne: async function findOne(search: string): Promise<Profile | null> {
+  findOne: async function findOne(user_id: string): Promise<Profile | null> {
+
     const data = await db.manyOrNone(
       `
       SELECT profiles.*, users.username, users.first_name, users.last_name, st_y(location::geometry) as gps_latitude, st_x(location::geometry) as gps_longitude
       FROM profiles
       INNER JOIN users
         ON profiles.user_id = users.user_id
-      WHERE $1 in (profiles.user_id, users.username, users.email)
+      WHERE profiles.user_id = $1
       LIMIT 1
       `,
-      search
+      [user_id]
     );
 
     return data.length > 0 ? data[0] : null;
@@ -454,14 +455,27 @@ export const likesRepository = {
 };
 
 export const blockedUsersRepository = {
+  /**
+   *  Check if you already blocked the user
+   * 
+   * @param blocker_user_id 
+   * @param blocked_user_id 
+   * @returns 
+   */
   findOne: async function findOne(
     blocker_user_id: string,
     blocked_user_id: string
   ): Promise<BlockedUser> {
-    // Check if you are liking yourself
-    if (blocker_user_id === blocked_user_id) {
-      throw new Error("You cannot block yourself");
+
+    // Check if user ids are valid
+    if (!blocker_user_id) {
+      throw new JFail(null, "blocker_user_id can't be null")
     }
+    // Check if user ids are valid
+    if (!blocked_user_id) {
+      throw new JFail(null, "blocked_user_id can't be null")
+    }
+  
 
     // Check if you already blocked the user
     const existingBlockedUser = await db.oneOrNone(
@@ -485,7 +499,6 @@ export const blockedUsersRepository = {
         ) i) as blocked
         FROM blocked_users
         WHERE blocker_user_id = $1 AND blocked_user_id = $2
-
       `,
       [blocker_user_id, blocked_user_id]
     );

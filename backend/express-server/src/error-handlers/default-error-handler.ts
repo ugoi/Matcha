@@ -8,3 +8,4 @@ export function defaultErrorHandler (err, req, res, next) {
     data: err.data,
   });
 }
+

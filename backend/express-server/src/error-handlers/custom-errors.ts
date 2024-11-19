@@ -8,9 +8,12 @@ export class JFail extends Error {
   data: Object;
   message: string;
 
-  constructor(data: Object, message?: string) {
+  constructor(data?: Object, message?: string) {
     super(message);
     this.status = ErrorStatus.Fail;
+    if (!data) {
+      this.data = {message: message}
+    }
     this.data = data;
     this.message = message;
   }
