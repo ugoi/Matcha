@@ -306,10 +306,14 @@ export const likesRepository = {
                 profiles.*, 
                 users.username, 
                 users.first_name, 
-                users.last_name 
+                users.last_name,
+                blocked.blocked_user_id IS NOT NULL as is_blocked_by_me,
+                blocker.blocker_user_id IS NOT NULL as is_blocking_me
               FROM 
                 profiles 
-                INNER JOIN users ON profiles.user_id = users.user_id 
+                INNER JOIN users ON profiles.user_id = users.user_id
+                LEFT JOIN blocked_users blocked ON (profiles.user_id = blocked.blocked_user_id AND blocked.blocker_user_id = $1)
+                LEFT JOIN blocked_users blocker ON (profiles.user_id = blocker.blocker_user_id AND blocker.blocked_user_id = $1)
               WHERE 
                 likes.liker_user_id = profiles.user_id
                   AND likes.is_like = TRUE
@@ -324,10 +328,14 @@ export const likesRepository = {
                 profiles.*, 
                 users.username, 
                 users.first_name, 
-                users.last_name 
+                users.last_name,
+                blocked.blocked_user_id IS NOT NULL as is_blocked_by_me,
+                blocker.blocker_user_id IS NOT NULL as is_blocking_me
               FROM 
                 profiles 
-                INNER JOIN users ON profiles.user_id = users.user_id 
+                INNER JOIN users ON profiles.user_id = users.user_id
+                LEFT JOIN blocked_users blocked ON (profiles.user_id = blocked.blocked_user_id AND blocked.blocker_user_id = $1)
+                LEFT JOIN blocked_users blocker ON (profiles.user_id = blocker.blocker_user_id AND blocker.blocked_user_id = $1)
               WHERE 
                 likes.likee_user_id = profiles.user_id
                   AND likes.is_like = TRUE

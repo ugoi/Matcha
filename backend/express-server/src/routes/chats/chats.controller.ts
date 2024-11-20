@@ -7,7 +7,11 @@ import { JFail } from "../../error-handlers/custom-errors.js";
 import { chatRepository } from "./chats.repository.js";
 
 
-/* Send a message to a user*/
+/* 
+Send a message to a user
+You probbably want to use chats.websocket.ts to send messages in real time.
+This endpoint is for consumers who want to send messages to users without using websockets
+*/
 router.post(
   "/:user_id",
   passport.authenticate("jwt", { session: false }),
