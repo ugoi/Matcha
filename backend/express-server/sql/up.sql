@@ -99,15 +99,30 @@ CREATE TABLE IF NOT EXISTS chats (
     sent_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- Notifications Table: Stores notifications for various user activities
-CREATE TABLE IF NOT EXISTS notifications (
-    notification_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    user_id UUID REFERENCES users(user_id) ON DELETE CASCADE, -- Notifications linked to user (not public)
-    notification_type TEXT, -- E.g., 'match', 'message', 'visit'
-    notification_text TEXT, -- Text of the notification
-    from_user_id UUID REFERENCES users(user_id),
-    is_read BOOLEAN DEFAULT FALSE,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+-- Notification Object
+CREATE TABLE IF NOT EXISTS notification_object (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY, -- e.g., '123e4567-e89b-12d3-a456-426614174000'
+  entity_type INT NOT NULL,                     -- e.g., 1
+  entity_id INT NOT NULL,                       -- e.g., 42
+  created_on TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL, -- e.g., '2024-11-25 15:30:00'
+  status SMALLINT NOT NULL                      -- e.g., 1
+);
+
+-- Notification
+CREATE TABLE IF NOT EXISTS notification (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,            -- e.g., '123e4567-e89b-12d3-a456-426614174001'
+  notification_object_id UUID REFERENCES notification_object (id), -- e.g., '123e4567-e89b-12d3-a456-426614174000'
+  notifier_id UUID REFERENCES users(user_id),                  -- e.g., '123e4567-e89b-12d3-a456-426614174002'
+  status SMALLINT NOT NULL,                                 -- e.g., 0
+  created_on TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL   -- e.g., '2024-11-25 15:30:00'
+);
+
+-- Notification Change
+CREATE TABLE IF NOT EXISTS notification_change (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,            -- e.g., '123e4567-e89b-12d3-a456-426614174003'
+  notification_object_id UUID REFERENCES notification_object (id), -- e.g., '123e4567-e89b-12d3-a456-426614174000'
+  actor_id UUID REFERENCES users(user_id),                    -- e.g., '123e4567-e89b-12d3-a456-426614174004'
+  created_on TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL   -- e.g., '2024-11-25 15:30:00'
 );
 
 -- Advanced Search Table: This could store user preferences for searches (only visible to the user)

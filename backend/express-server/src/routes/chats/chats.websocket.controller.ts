@@ -7,6 +7,9 @@ import {
 } from "../profiles/profiles.repository.js";
 import { chatRepository } from "./chats.repository.js";
 import { socketioDefaultErrorHandler } from "../../error-handlers/socketio-default-error-handler.js";
+import {
+  notificationsWebsocketService,
+} from "../notifications/notifications.websocket.service.js";
 
 export function initChatSocket(io: Server) {
   /**
@@ -64,6 +67,15 @@ export function initChatSocket(io: Server) {
           socket.nsp
             .to(`user:${receiver}`)
             .emit("chat message", { msg, sender });
+
+          // Send the notification to the sender
+          notificationsWebsocketService.sendNotification({
+            entity_type: "chat",
+            entity_id: receiver,
+            status: "sent",
+            receivers: [receiver],
+            sender,
+          });
         } else {
           console.log("Messaging not allowed");
           socket.nsp

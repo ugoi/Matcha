@@ -11,6 +11,9 @@ import { createServer } from "http";
 import { Server } from "socket.io";
 import { initChatSocket } from "../routes/chats/chats.websocket.controller.js";
 import passport from "passport";
+import { initNotificationsSocket } from "../routes/notifications/notifications.websocket.controller.js";
+import { io } from "../config/socketio-config.js";
+import { server } from "../config/server-config.js";
 
 /**
  * Get port from environment and store in Express.
@@ -20,31 +23,12 @@ var port = normalizePort(process.env.PORT || "3000");
 app.set("port", port);
 
 /**
- * Create HTTP server.
- */
-
-var server = createServer(app);
-
-/**
- * Create Socket.io server.
- */
-
-const io = new Server(server);
-
-io.engine.use((req, res, next) => {
-  const isHandshake = req._query.sid === undefined;
-  if (isHandshake) {
-    passport.authenticate("jwt", { session: false })(req, res, next);
-  } else {
-    next();
-  }
-});
-
-/**
  * Initialize socket.io
  */
 
 initChatSocket(io);
+
+initNotificationsSocket(io);
 
 /**
  * Listen on provided port, on all network interfaces.
@@ -109,5 +93,3 @@ function onListening() {
   var bind = typeof addr === "string" ? "pipe " + addr : "port " + addr.port;
   debug("Listening on " + bind);
 }
-
-export { server };
