@@ -7,9 +7,9 @@ import {
 } from "../profiles/profiles.repository.js";
 import { chatRepository } from "./chats.repository.js";
 import { socketioDefaultErrorHandler } from "../../error-handlers/socketio-default-error-handler.js";
-import {
-  notificationsWebsocketService,
-} from "../notifications/notifications.websocket.service.js";
+import { notificationsWebsocketService } from "../notifications/notifications.websocket.service.js";
+import { notificationService } from "../notifications/notifications.service.js";
+import { NOTIFICATION_ENTITY_TYPE, NOTIFICATION_STATUS } from "../notifications/notification.interface.js";
 
 export function initChatSocket(io: Server) {
   /**
@@ -58,7 +58,7 @@ export function initChatSocket(io: Server) {
 
         if (messagingAllowed) {
           // Add the message to the database
-          await chatRepository.create({
+          const message = await chatRepository.create({
             sender_user_id: sender,
             receiver_user_id: receiver,
             message: msg,
@@ -68,13 +68,19 @@ export function initChatSocket(io: Server) {
             .to(`user:${receiver}`)
             .emit("chat message", { msg, sender });
 
-          // Send the notification to the sender
-          notificationsWebsocketService.sendNotification({
-            entity_type: "chat",
-            entity_id: receiver,
-            status: "sent",
+          const notificationsObject = await notificationService.create({
+            entity_type: NOTIFICATION_ENTITY_TYPE.MESSAGE,
+            entity_id: message.chat_id,
+            status: NOTIFICATION_STATUS.SENT,
             receivers: [receiver],
-            sender,
+            sender: sender,
+          });
+
+          // Send the notification to the sender
+          await notificationsWebsocketService.sendNotification({
+            notificationObject: notificationsObject,
+            sender: sender,
+            receivers: [receiver],
           });
         } else {
           console.log("Messaging not allowed");

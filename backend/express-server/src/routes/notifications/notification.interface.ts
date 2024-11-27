@@ -1,3 +1,11 @@
+// IV.7 Notifications
+// A user must be notified in real-time6 of the following events:
+// • When the user receives a “like”.
+// • When the user’s profile has been viewed.
+// • When the user receives a message.
+// • When “liked” user also “likes” the user back.
+// • When a connected user “unlikes” the user.
+
 export interface Notification {
   id: string;
   notification_object_id: string;
@@ -35,5 +43,18 @@ export const NOTIFICATION_STATUS = {
   READ: 2,
 } as const;
 
+// Entity type for notifications
+export const NOTIFICATION_ENTITY_TYPE = {
+  LIKE: 0,
+  PROFILE_VIEW: 1,
+  MESSAGE: 2,
+  MATCH: 3,
+  UNLIKE: 4,
+  
+} as const;
+
 // Infer a type from NOTIFICATION_STATUS
 export type NotificationStatus = typeof NOTIFICATION_STATUS[keyof typeof NOTIFICATION_STATUS];
+
+// Infer a type from NOTIFICATION_ENTITY_TYPE
+export type NotificationEntityType = typeof NOTIFICATION_ENTITY_TYPE[keyof typeof NOTIFICATION_ENTITY_TYPE];

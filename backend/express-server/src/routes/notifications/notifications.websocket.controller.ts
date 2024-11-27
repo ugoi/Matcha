@@ -13,6 +13,7 @@ import { notificationRepository } from "./notification.repository.js";
 import { notificationObjectRepository } from "./notification-object.repository.js";
 import { NOTIFICATION_STATUS } from "./notification.interface.js";
 import { notificationChangeRepository } from "./notification-change.repository.js";
+import { notificationsWebsocketService } from "./notifications.websocket.service.js";
 
 export function initNotificationsSocket(io: Server) {
   /**
@@ -40,9 +41,10 @@ export function initNotificationsSocket(io: Server) {
           await notificationChangeRepository.findByNotificationObjectId(
             notificationObject.id
           );
-        socket.emit("notification", {
+        notificationsWebsocketService.sendNotification({
           notificationObject,
-          notificationChange: notificationChange[0].actor_id,
+          sender: notificationChange[0].actor_id,
+          receivers: [userId],
         });
       }
     }

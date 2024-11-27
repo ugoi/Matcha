@@ -21,15 +21,15 @@ import { update } from "lodash";
 
 export const notificationRepository = {
   create: async function create(input: CreateNotificationInput) {
-    const { notification_object_id, notifier_id } = input;
+    const { notification_object_id, notifier_id, status } = input;
 
     const createNotification = pgp.as.format(
       `
-            INSERT INTO notification (notification_object_id, notifier_id)
-            VALUES ($1, $2)
+            INSERT INTO notification (notification_object_id, notifier_id, status)
+            VALUES ($1, $2, $3)
             RETURNING *;
         `,
-      [notification_object_id, notifier_id]
+      [notification_object_id, notifier_id, status]
     );
 
     const result = await db.one(createNotification);
