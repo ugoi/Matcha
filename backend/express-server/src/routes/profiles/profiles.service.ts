@@ -21,6 +21,12 @@ import {
   searchPreferencesRepository,
 } from "./profiles.repository.js";
 import { interestsRepository } from "./interests.repository.js";
+import { notificationService } from "../notifications/notifications.service.js";
+import {
+  NOTIFICATION_ENTITY_TYPE,
+  NOTIFICATION_STATUS,
+} from "../notifications/notification.interface.js";
+import { notificationsWebsocketService } from "../notifications/notifications.websocket.service.js";
 
 export const profilesService = {
   getProfile: async function getProfile(user_id: string) {
@@ -215,7 +221,6 @@ export const profilesService = {
 };
 
 export const likesService = {
-
   hasLiked: async function hasLiked(
     liker_user_id: string,
     likee_user_id: string
@@ -277,6 +282,24 @@ export const likesService = {
       data: { fame_rating: fame_rating },
       user_id: likee_user_id,
     });
+
+    if (existingMatch) {
+      await notificationService.createAndSend({
+        entity_type: NOTIFICATION_ENTITY_TYPE.MATCH,
+        entity_id: undefined,
+        status: NOTIFICATION_STATUS.SENT,
+        receivers: [existingMatch.liker_user_id, existingMatch.likee_user_id],
+        sender: existingMatch.liker_user_id,
+      });
+    } else {
+      await notificationService.createAndSend({
+        entity_type: NOTIFICATION_ENTITY_TYPE.LIKE,
+        entity_id: undefined,
+        status: NOTIFICATION_STATUS.SENT,
+        receivers: [likee_user_id],
+        sender: liker_user_id,
+      });
+    }
 
     return {
       ...match,
@@ -421,10 +444,11 @@ export const interestsService = {
   },
 };
 
-
-
 export const blockedUsersService = {
-  async blockUser(blocker_user_id: string, blocked_user_id: string): Promise<BlockedUser> {
+  async blockUser(
+    blocker_user_id: string,
+    blocked_user_id: string
+  ): Promise<BlockedUser> {
     // Check if the user is blocking themselves
     if (blocker_user_id === blocked_user_id) {
       throw new Error("You cannot block yourself");
@@ -443,7 +467,10 @@ export const blockedUsersService = {
     return blockedUsersRepository.add(blocker_user_id, blocked_user_id);
   },
 
-  async unblockUser(blocker_user_id: string, blocked_user_id: string): Promise<BlockedUser> {
+  async unblockUser(
+    blocker_user_id: string,
+    blocked_user_id: string
+  ): Promise<BlockedUser> {
     // Check if the user is unblocking themselves
     if (blocker_user_id === blocked_user_id) {
       throw new Error("You cannot unblock yourself");

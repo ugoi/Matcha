@@ -11,7 +11,7 @@ export class NotificationsWebsocketService {
     this.io = io;
   }
 
-  async sendNotification({ notificationObject, sender, receivers }) {
+  async sendNotification({ notificationObject, sender, receivers, message }) {
     try {
       const io = this.io;
 
@@ -24,6 +24,7 @@ export class NotificationsWebsocketService {
         io.of("/api/notifications").to(`user:${receiver}`).emit("notification", {
           notificationObject,
           sender,
+          message,
         });
       }
     } catch (error) {

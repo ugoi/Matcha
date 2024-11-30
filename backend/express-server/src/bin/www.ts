@@ -13,14 +13,7 @@ import { initChatSocket } from "../routes/chats/chats.websocket.controller.js";
 import passport from "passport";
 import { initNotificationsSocket } from "../routes/notifications/notifications.websocket.controller.js";
 import { io } from "../config/socketio-config.js";
-import { server } from "../config/server-config.js";
-
-/**
- * Get port from environment and store in Express.
- */
-
-var port = normalizePort(process.env.PORT || "3000");
-app.set("port", port);
+import { port, server } from "../config/server-config.js";
 
 /**
  * Initialize socket.io
@@ -37,26 +30,6 @@ initNotificationsSocket(io);
 server.listen(port);
 server.on("error", onError);
 server.on("listening", onListening);
-
-/**
- * Normalize a port into a number, string, or false.
- */
-
-function normalizePort(val) {
-  var port = parseInt(val, 10);
-
-  if (isNaN(port)) {
-    // named pipe
-    return val;
-  }
-
-  if (port >= 0) {
-    // port number
-    return port;
-  }
-
-  return false;
-}
 
 /**
  * Event listener for HTTP server "error" event.

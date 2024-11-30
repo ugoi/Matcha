@@ -20,6 +20,14 @@ export interface CreateNotificationInput {
   status: number;
 }
 
+export interface CreateNotificationServiceInput { 
+  entity_type: number;
+  entity_id: string;
+  status: number;
+  receivers: string[];
+  sender: string;
+}
+
 export interface UpdateNotificationInput {
   id: string;
   status: number;

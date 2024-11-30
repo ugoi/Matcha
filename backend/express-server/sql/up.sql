@@ -103,7 +103,7 @@ CREATE TABLE IF NOT EXISTS chats (
 CREATE TABLE IF NOT EXISTS notification_object (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY, -- e.g., '123e4567-e89b-12d3-a456-426614174000'
   entity_type INT NOT NULL,                     -- e.g., 1
-  entity_id UUID NOT NULL,                       -- e.g., '123e4567-e89b-12d3-a456-426614174001'
+  entity_id UUID,                       -- e.g., '123e4567-e89b-12d3-a456-426614174001'
   created_on TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL, -- e.g., '2024-11-25 15:30:00'
   status SMALLINT NOT NULL                      -- e.g., 1
 );

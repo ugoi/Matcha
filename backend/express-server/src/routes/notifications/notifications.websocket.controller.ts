@@ -14,6 +14,7 @@ import { notificationObjectRepository } from "./notification-object.repository.j
 import { NOTIFICATION_STATUS } from "./notification.interface.js";
 import { notificationChangeRepository } from "./notification-change.repository.js";
 import { notificationsWebsocketService } from "./notifications.websocket.service.js";
+import { notificationService } from "./notifications.service.js";
 
 export function initNotificationsSocket(io: Server) {
   /**
@@ -31,20 +32,25 @@ export function initNotificationsSocket(io: Server) {
       userId,
       NOTIFICATION_STATUS.SENT
     );
-    if (sentNotifications.length > 0 && sentNotifications) {
+    if (sentNotifications && sentNotifications.length > 0) {
       for (let i = 0; i < sentNotifications.length; i++) {
         const notification = sentNotifications[i];
-        const notificationObject = await notificationObjectRepository.find(
+        const notificationObject = await notificationObjectRepository.findOne(
           notification.notification_object_id
         );
         const notificationChange =
           await notificationChangeRepository.findByNotificationObjectId(
             notificationObject.id
           );
+        const message = await notificationService.createMessage(
+          notification.id
+        );
+
         notificationsWebsocketService.sendNotification({
           notificationObject,
           sender: notificationChange[0].actor_id,
           receivers: [userId],
+          message,
         });
       }
     }

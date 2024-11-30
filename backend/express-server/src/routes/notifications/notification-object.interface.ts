@@ -1,14 +1,16 @@
+import { NotificationEntityType, NotificationStatus } from "./notification.interface.js";
+
 export interface NotificationObject {
   id: string;
-  entity_type: number;
+  entity_type: NotificationEntityType;
   entity_id: number;
   created_on: string;
-  status: number;
+  status: NotificationStatus;
 }
 
 export interface CreateNotificationObjectInput {
   entity_type: number;
-  entity_id: number;
+  entity_id: string;
   status: number;
 }
 

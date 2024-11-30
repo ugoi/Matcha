@@ -50,7 +50,7 @@ export const notificationObjectRepository = {
     return result;
   },
 
-  find: async function find(id: string): Promise<NotificationObject> {
+  findOne: async function findOne(id: string): Promise<NotificationObject> {
     const findNotificationObject = pgp.as.format(
       `
             SELECT *

@@ -69,7 +69,7 @@ export const notificationRepository = {
       [notifier_id, status, notification_object_ids]
     );
 
-    const result = await db.many(updateNotificationByNotifierId);
+    const result = await db.manyOrNone(updateNotificationByNotifierId);
     return result;
   },
 
@@ -88,11 +88,11 @@ export const notificationRepository = {
       [notifier_id, status]
     );
 
-    const result = await db.many(updateAllNotificationByNotifierId);
+    const result = await db.manyOrNone(updateAllNotificationByNotifierId);
     return result;
   },
 
-  find: async function find(id: string) {
+  find: async function find(id: string): Promise<Notification> {
     const findNotification = pgp.as.format(
       `
             SELECT *
@@ -102,7 +102,7 @@ export const notificationRepository = {
       [id]
     );
 
-    const result = await db.one(findNotification);
+    const result = await db.oneOrNone(findNotification);
     return result;
   },
 
@@ -120,7 +120,7 @@ export const notificationRepository = {
       [notifier_id, status]
     );
 
-    const result = await db.many(findNotificationByNotifierId);
+    const result = await db.manyOrNone(findNotificationByNotifierId);
     return result;
   },
 

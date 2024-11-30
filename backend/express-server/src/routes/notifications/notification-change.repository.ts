@@ -32,7 +32,7 @@ export const notificationChangeRepository = {
     return result;
   },
 
-  find: async function find(id: string): Promise<NotificationChange> {
+  findOne: async function findOne(id: string): Promise<NotificationChange> {
     const findNotificationChange = pgp.as.format(
       `
             SELECT *
@@ -58,7 +58,7 @@ export const notificationChangeRepository = {
       [notification_object_id]
     );
 
-    const result = await db.manyOrNone(findByNotificationObjectId);
+    const result: NotificationChange[] = await db.manyOrNone(findByNotificationObjectId);
     return result;
   },
 };
