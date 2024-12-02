@@ -66,10 +66,10 @@ CREATE TABLE IF NOT EXISTS user_pictures (
 
 -- Visits Table: Stores profile visit history (who visited whom)
 CREATE TABLE IF NOT EXISTS visits (
-    visit_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     visitor_user_id UUID REFERENCES users(user_id) ON DELETE CASCADE,
     visited_user_id UUID REFERENCES users(user_id) ON DELETE CASCADE,
-    visit_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    visit_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (visitor_user_id, visited_user_id) -- Composite primary key to ensure uniqueness
 );
 
 -- Matches Table: Handles likes between users (previously called 'likes')
@@ -104,7 +104,7 @@ CREATE TABLE IF NOT EXISTS notification_object (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY, -- e.g., '123e4567-e89b-12d3-a456-426614174000'
   entity_type INT NOT NULL,                     -- e.g., 1
   entity_id UUID,                       -- e.g., '123e4567-e89b-12d3-a456-426614174001'
-  created_on TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL, -- e.g., '2024-11-25 15:30:00'
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL, -- e.g., '2024-11-25 15:30:00'
   status SMALLINT NOT NULL                      -- e.g., 1
 );
 
@@ -114,7 +114,7 @@ CREATE TABLE IF NOT EXISTS notification (
   notification_object_id UUID REFERENCES notification_object (id), -- e.g., '123e4567-e89b-12d3-a456-426614174000'
   notifier_id UUID REFERENCES users(user_id),                  -- e.g., '123e4567-e89b-12d3-a456-426614174002'
   status SMALLINT NOT NULL,                                 -- e.g., 0
-  created_on TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL   -- e.g., '2024-11-25 15:30:00'
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL   -- e.g., '2024-11-25 15:30:00'
 );
 
 -- Notification Change
@@ -122,7 +122,7 @@ CREATE TABLE IF NOT EXISTS notification_change (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,            -- e.g., '123e4567-e89b-12d3-a456-426614174003'
   notification_object_id UUID REFERENCES notification_object (id), -- e.g., '123e4567-e89b-12d3-a456-426614174000'
   actor_id UUID REFERENCES users(user_id),                    -- e.g., '123e4567-e89b-12d3-a456-426614174004'
-  created_on TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL   -- e.g., '2024-11-25 15:30:00'
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL   -- e.g., '2024-11-25 15:30:00'
 );
 
 -- Advanced Search Table: This could store user preferences for searches (only visible to the user)

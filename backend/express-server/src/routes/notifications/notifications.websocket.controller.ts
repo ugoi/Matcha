@@ -11,10 +11,15 @@ import {
 } from "../../error-handlers/socketio-default-error-handler.js";
 import { notificationRepository } from "./notification.repository.js";
 import { notificationObjectRepository } from "./notification-object.repository.js";
-import { NOTIFICATION_STATUS } from "./notification.interface.js";
+import {
+  NOTIFICATION_ENTITY_TYPE_STRING,
+  NOTIFICATION_STATUS,
+  NOTIFICATION_STATUS_STRING,
+} from "./notification.interface.js";
 import { notificationChangeRepository } from "./notification-change.repository.js";
 import { notificationsWebsocketService } from "./notifications.websocket.service.js";
 import { notificationService } from "./notifications.service.js";
+import { NotificationResponse } from "./notification.response.interface.js";
 
 export function initNotificationsSocket(io: Server) {
   /**
@@ -46,11 +51,30 @@ export function initNotificationsSocket(io: Server) {
           notification.id
         );
 
+        const sender = notificationChange[0].actor_id;
+
+        const senderAccount = await profilesRepository.findOne(sender);
+
+        const notificationResponse: NotificationResponse = {
+          id: notification.id,
+          type: NOTIFICATION_ENTITY_TYPE_STRING[notificationObject.entity_type],
+          created_at: notification.created_at,
+          status: NOTIFICATION_STATUS_STRING[notification.status],
+          sender: {
+            id: senderAccount.user_id,
+            name: senderAccount.first_name,
+            username: senderAccount.username,
+            avatar_url: senderAccount.profile_picture,
+          },
+          entity: {
+            id: notificationObject.entity_id,
+          },
+          message: message,
+        };
+
         notificationsWebsocketService.sendNotification({
-          notificationObject,
-          sender: notificationChange[0].actor_id,
+          notificationResponse,
           receivers: [userId],
-          message,
         });
       }
     }

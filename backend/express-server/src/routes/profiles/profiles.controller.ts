@@ -12,7 +12,6 @@ import {
   profileBlocked,
   profileExists,
   profileExistsValidator,
-  profileLiked,
   profileNotBlocked,
   profileNotExists,
   profileNotLiked,
@@ -21,24 +20,20 @@ import { JFail } from "../../error-handlers/custom-errors.js";
 import {
   blockedUsersRepository,
   likesRepository,
-  profilesRepository,
   userReportsRepository,
 } from "./profiles.repository.js";
 import { interestsRepository } from "./interests.repository.js";
 import { picturesRepository } from "./pictures.repository.js";
-import {
-  FilterBy,
-  SearchPreferences,
-  SortBy,
-  SortOrder,
-} from "./profiles.interface.js";
 import {
   blockedUsersService,
   interestsService,
   likesService,
   profilesService,
 } from "./profiles.service.js";
-import { userRepository } from "../users/users.repository.js";
+import visitsRouter from "./visits/visits.controller.js";
+
+router.use("/", visitsRouter);
+
 
 //#region Profile routes
 /* Get my user profile*/

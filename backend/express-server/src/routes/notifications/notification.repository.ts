@@ -4,7 +4,7 @@
 //   notification_object_id UUID REFERENCES notification_object (id), -- e.g., '123e4567-e89b-12d3-a456-426614174000'
 //   notifier_id UUID REFERENCES "user" (id),                  -- e.g., '123e4567-e89b-12d3-a456-426614174002'
 //   status SMALLINT NOT NULL,                                 -- e.g., 0
-//   created_on TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL   -- e.g., '2024-11-25 15:30:00'
+//   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL   -- e.g., '2024-11-25 15:30:00'
 // );
 
 import db, { pgp } from "../../config/db-config.js";

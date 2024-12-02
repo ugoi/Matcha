@@ -7,10 +7,13 @@ import {
   CreateNotificationServiceInput,
   Notification,
   NOTIFICATION_ENTITY_TYPE,
+  NOTIFICATION_ENTITY_TYPE_STRING,
   NOTIFICATION_STATUS,
+  NOTIFICATION_STATUS_STRING,
   NotificationEntityType,
 } from "./notification.interface.js";
 import { notificationRepository } from "./notification.repository.js";
+import { NotificationResponse } from "./notification.response.interface.js";
 import { notificationsWebsocketService } from "./notifications.websocket.service.js";
 
 export const notificationService = {
@@ -82,11 +85,27 @@ export const notificationService = {
     for (let index = 0; index < notifications.length; index++) {
       const element = notifications[index];
       const message = await notificationService.createMessage(element.id);
+      const senderAccount = await profilesRepository.findOne(sender);
+      const notificationResponse: NotificationResponse = {
+        id: element.id,
+        type: NOTIFICATION_ENTITY_TYPE_STRING[notificationObject.entity_type],
+        created_at: element.created_at,
+        status: NOTIFICATION_STATUS_STRING[element.status],
+        sender: {
+          id: senderAccount.user_id,
+          name: senderAccount.first_name,
+          username: senderAccount.username,
+          avatar_url: senderAccount.profile_picture,
+        },
+        entity: {
+          id: notificationObject.entity_id,
+        },
+        message: message,
+      };
+
       await notificationsWebsocketService.sendNotification({
-        notificationObject,
-        sender,
+        notificationResponse,
         receivers,
-        message,
       });
     }
   },
@@ -109,7 +128,7 @@ export const notificationService = {
     )[0];
 
     const senderId = notificationChnage.actor_id;
-    const created_on = notificationChnage.created_on;
+    const created_at = notificationChnage.created_at;
 
     const sender = await profilesRepository.findOne(senderId);
 
@@ -117,15 +136,15 @@ export const notificationService = {
 
     switch (notifications_entyty_type) {
       case NOTIFICATION_ENTITY_TYPE.LIKE:
-        return `${senderName} liked your post on ${created_on}`;
+        return `${senderName} liked your post on ${created_at}`;
       case NOTIFICATION_ENTITY_TYPE.MATCH:
-        return `${senderName} matched with you on ${created_on}`;
+        return `${senderName} matched with you on ${created_at}`;
       case NOTIFICATION_ENTITY_TYPE.MESSAGE:
-        return `${senderName} sent you a message on ${created_on}`;
+        return `${senderName} sent you a message on ${created_at}`;
       case NOTIFICATION_ENTITY_TYPE.PROFILE_VIEW:
-        return `${senderName} viewed your profile on ${created_on}`;
+        return `${senderName} viewed your profile on ${created_at}`;
       case NOTIFICATION_ENTITY_TYPE.UNLIKE:
-        return `${senderName} unliked your post on ${created_on}`;
+        return `${senderName} unliked your post on ${created_at}`;
       default:
         return "Invalid notification entity type";
     }

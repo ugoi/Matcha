@@ -286,7 +286,7 @@ export const likesService = {
     if (existingMatch) {
       await notificationService.createAndSend({
         entity_type: NOTIFICATION_ENTITY_TYPE.MATCH,
-        entity_id: undefined,
+        entity_id: existingMatch.liker_user_id,
         status: NOTIFICATION_STATUS.SENT,
         receivers: [existingMatch.liker_user_id, existingMatch.likee_user_id],
         sender: existingMatch.liker_user_id,
@@ -294,7 +294,7 @@ export const likesService = {
     } else {
       await notificationService.createAndSend({
         entity_type: NOTIFICATION_ENTITY_TYPE.LIKE,
-        entity_id: undefined,
+        entity_id: liker_user_id,
         status: NOTIFICATION_STATUS.SENT,
         receivers: [likee_user_id],
         sender: liker_user_id,
@@ -316,32 +316,41 @@ export const likesService = {
       throw new Error("You cannot dislike yourself");
     }
 
-    // Check if you already liked the user
-    // Check if like exists
     const existingLike = await likesRepository.findLike(
       liker_user_id,
       likee_user_id
     );
+
+    // Check if you already unliked the user
     if (existingLike.is_like === false) {
       throw new Error("You already unliked this user");
     }
 
-    // If like exists update it to dislike
     let match = null;
     if (existingLike) {
+      // update it to dislike
       match = await likesService.updateLikeStatus({
         user_id: liker_user_id,
         likee_user_id: likee_user_id,
         data: { is_like: false },
       });
+
+      // Send notification to the user
+      await notificationService.createAndSend({
+        entity_type: NOTIFICATION_ENTITY_TYPE.UNLIKE,
+        entity_id: liker_user_id,
+        status: NOTIFICATION_STATUS.SENT,
+        receivers: [likee_user_id],
+        sender: liker_user_id,
+      });
     } else {
+      // add a new dislike
       match = await likesRepository.add(liker_user_id, likee_user_id, false);
     }
 
-    // Calculate new fame rating
+    // Update fame rating
     const likedProfile = await profilesRepository.findOne(likee_user_id);
     let fame_rating = likedProfile.fame_rating - 1;
-    // Increment fame rating of liked user
     await profilesService.updateProfile({
       data: { fame_rating: fame_rating },
       user_id: likee_user_id,

@@ -3,7 +3,7 @@
 //   id UUID DEFAULT gen_random_uuid() PRIMARY KEY, -- e.g., '123e4567-e89b-12d3-a456-426614174000'
 //   entity_type INT NOT NULL,                     -- e.g., 1
 //   entity_id INT NOT NULL,                       -- e.g., 42
-//   created_on TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL, -- e.g., '2024-11-25 15:30:00'
+//   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL, -- e.g., '2024-11-25 15:30:00'
 //   status SMALLINT NOT NULL                      -- e.g., 1
 // );
 

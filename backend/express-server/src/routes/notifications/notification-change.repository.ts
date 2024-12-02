@@ -3,7 +3,7 @@
 //   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,            -- e.g., '123e4567-e89b-12d3-a456-426614174003'
 //   notification_object_id UUID REFERENCES notification_object (id), -- e.g., '123e4567-e89b-12d3-a456-426614174000'
 //   actor_id UUID REFERENCES "user" (id),                    -- e.g., '123e4567-e89b-12d3-a456-426614174004'
-//   created_on TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL   -- e.g., '2024-11-25 15:30:00'
+//   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL   -- e.g., '2024-11-25 15:30:00'
 // );
 
 import db, { pgp } from "../../config/db-config.js";
@@ -58,7 +58,9 @@ export const notificationChangeRepository = {
       [notification_object_id]
     );
 
-    const result: NotificationChange[] = await db.manyOrNone(findByNotificationObjectId);
+    const result: NotificationChange[] = await db.manyOrNone(
+      findByNotificationObjectId
+    );
     return result;
   },
 };
