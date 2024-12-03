@@ -1,18 +1,16 @@
 import { Server } from "socket.io";
 import _ from "lodash";
-import { escape } from "lodash";
 import {
-  blockedUsersRepository,
   profilesRepository,
 } from "../profiles/profiles.repository.js";
 import { chatRepository } from "./chats.repository.js";
 import { socketioDefaultErrorHandler } from "../../error-handlers/socketio-default-error-handler.js";
-import { notificationsWebsocketService } from "../notifications/notifications.websocket.service.js";
 import { notificationService } from "../notifications/notifications.service.js";
 import {
   NOTIFICATION_ENTITY_TYPE,
   NOTIFICATION_STATUS,
 } from "../notifications/notification.interface.js";
+import { blockedUsersRepository } from "../profiles/blocks/blocks.repository.js";
 
 export function initChatSocket(io: Server) {
   /**

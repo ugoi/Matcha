@@ -1,9 +1,7 @@
-import db, { pgp } from "../../config/db-config.js";
-import { JFail } from "../../error-handlers/custom-errors.js";
+import db, { pgp } from "../../../config/db-config.js";
+import { Profile } from "../profiles.interface.js";
+import { profilesService } from "../profiles.service.js";
 import { Picture } from "./pictures.interface.js";
-import { Profile } from "./profiles.interface.js";
-import { profilesRepository } from "./profiles.repository.js";
-import { profilesService } from "./profiles.service.js";
 
 export const picturesRepository = {
   find: async function find(user_id: string): Promise<Picture[]> {

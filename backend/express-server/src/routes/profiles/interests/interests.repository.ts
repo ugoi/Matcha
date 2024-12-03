@@ -1,8 +1,8 @@
-import db, { pgp } from "../../config/db-config.js";
+import db, { pgp } from "../../../config/db-config.js";
 import { Interest } from "./interests.interface.js";
-import { Profile } from "./profiles.interface.js";
-import { profilesRepository } from "./profiles.repository.js";
-import { profilesService } from "./profiles.service.js";
+import { Profile } from "../profiles.interface.js";
+import { profilesRepository } from "../profiles.repository.js";
+import { profilesService } from "../profiles.service.js";
 
 export const interestsRepository = {
   find: async function find(user_id: string): Promise<Interest[]> {

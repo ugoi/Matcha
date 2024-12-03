@@ -6,19 +6,18 @@ import {
   SortItem,
 } from "../routes/profiles/profiles.interface.js";
 import {
-  blockedUsersRepository,
-  likesRepository,
   profilesRepository,
 } from "../routes/profiles/profiles.repository.js";
 import { userRepository } from "../routes/users/users.repository.js";
 import { JFail } from "../error-handlers/custom-errors.js";
-import _, { pick } from "lodash";
-import { picturesRepository } from "../routes/profiles/pictures.repository.js";
-import { Picture } from "../routes/profiles/pictures.interface.js";
+import _ from "lodash";
 import {
-  likesService,
   profilesService,
 } from "../routes/profiles/profiles.service.js";
+import { blockedUsersRepository } from "../routes/profiles/blocks/blocks.repository.js";
+import { likesService } from "../routes/profiles/likes/likes.service.js";
+import { likesRepository } from "../routes/profiles/likes/likes.repository.js";
+import { picturesRepository } from "../routes/profiles/pictures/pictures.repository.js";
 const { unescape, escape, pickBy } = _;
 const pgp = pgPromise({
   /* Initialization Options */

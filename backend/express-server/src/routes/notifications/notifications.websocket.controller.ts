@@ -1,14 +1,8 @@
 import { Server } from "socket.io";
 import _ from "lodash";
-import { escape } from "lodash";
 import {
-  blockedUsersRepository,
   profilesRepository,
 } from "../profiles/profiles.repository.js";
-import {
-  socketioDefaultErrorHandler,
-  socketioDefaultErrorHandlerIO,
-} from "../../error-handlers/socketio-default-error-handler.js";
 import { notificationRepository } from "./notification.repository.js";
 import { notificationObjectRepository } from "./notification-object.repository.js";
 import {

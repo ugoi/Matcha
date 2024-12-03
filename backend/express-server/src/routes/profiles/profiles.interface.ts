@@ -1,5 +1,5 @@
-import { Interest } from "./interests.interface.js";
-import { Picture } from "./pictures.interface.js";
+import { Interest } from "./interests/interests.interface.js";
+import { Picture } from "./pictures/pictures.interface.js";
 
 export interface Profile {
   profile_id: string;
