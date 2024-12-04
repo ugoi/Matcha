@@ -26,10 +26,7 @@ app.use(json());
 app.use(urlencoded({ extended: false }));
 
 app.use(
-  cookieParser(process.env.COOKIE_SECRET, {
-    // @ts-ignore
-    sameSite: "strict",
-  })
+  cookieParser(process.env.COOKIE_SECRET)
 );
 
 app.get("/chat_example", function (req, res) {

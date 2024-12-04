@@ -95,6 +95,7 @@ router.post(
       res.cookie("jwt", result.data.token, {
         httpOnly: true,
         secure: true,
+        sameSite: "strict",
       });
 
       res.json(result);
@@ -264,6 +265,7 @@ router.get(
       res.cookie("jwt", result.data.token, {
         httpOnly: true,
         secure: true,
+        sameSite: "strict",
       });
 
       res.redirect("/");
@@ -292,6 +294,7 @@ router.get(
       res.cookie("jwt", result.data.token, {
         httpOnly: true,
         secure: true,
+        sameSite: "strict",
       });
 
       res.redirect("/");
