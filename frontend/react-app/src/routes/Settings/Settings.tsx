@@ -1,22 +1,55 @@
 import NavbarLogged from '../../components/NavbarLogged/NavbarLogged';
 import './settings.css';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import ReactSlider from 'react-slider';
 
 function Settings() {
   const [distance, setDistance] = useState<number>(50);
-  const [ageGap, setAgeGap] = useState<number>(5);
+  const [minAge, setMinAge] = useState<number>(18);
+  const [maxAge, setMaxAge] = useState<number>(30);
+
+  useEffect(() => {
+    const checkProfile = async () => {
+      try {
+        const response = await fetch(`${window.location.origin}/api/profiles/me`);
+        const result = await response.json();
+        
+        if (result.status === "fail" && result.data === "profile not found") {
+          window.location.href = '/create-profile';
+        }
+      } catch (error) {
+        console.error('Error checking profile:', error);
+        window.location.href = '/create-profile';
+      }
+    };
+
+    checkProfile();
+  }, []);
 
   const handleDistanceChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setDistance(Number(e.target.value));
   };
 
-  const handleAgeGapChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setAgeGap(Number(e.target.value));
+  const handleLogout = async () => {
+    try {
+      const response = await fetch(`${window.location.origin}/api/logout`, {
+        method: 'POST',
+        credentials: 'include',
+      });
+  
+      if (response.ok) {
+        window.location.href = '/';
+      } else {
+        console.error('Logout failed:', response.statusText);
+      }
+    } catch (error) {
+      console.error('Error logging out:', error);
+    }
   };
 
-  const handleLogout = () => {
-    // call endpoint /api/logoutsdsa
-    window.location.href = "/";
+  const handleSaveChanges = () => {
+    //call the api to send the data changed
+    window.location.href = '/home';
   };
 
   return (
@@ -30,30 +63,41 @@ function Settings() {
             <input
               type="range"
               id="distance"
-              min="0"
+              min="3"
               max="100"
               value={distance}
               onChange={handleDistanceChange}
               className="form-range"
             />
-            <p>{distance} km</p>
+            <p className="slider-value">{distance} km</p>
           </div>
 
           <div className="setting-item mb-3">
-            <label htmlFor="ageGap" className="form-label">Age Gap (years)</label>
-            <input
-              type="range"
-              id="ageGap"
-              min="0"
-              max="20"
-              value={ageGap}
-              onChange={handleAgeGapChange}
-              className="form-range"
+            <label className="form-label">Age Range</label>
+            <ReactSlider
+              className="horizontal-slider"
+              thumbClassName="slider-thumb"
+              trackClassName="slider-track"
+              defaultValue={[minAge, maxAge]}
+              ariaLabel={['Lower thumb', 'Upper thumb']}
+              pearling
+              minDistance={1}
+              min={18}
+              max={90}
+              onChange={(value: number[]) => {
+                setMinAge(value[0]);
+                setMaxAge(value[1]);
+              }}
             />
-            <p>{ageGap} years</p>
+            <p className="slider-value">{minAge} - {maxAge} years</p>
           </div>
 
-          <button className="btn btn-primary mt-3">Save Changes</button>
+          <button 
+            className="btn btn-primary mt-3" 
+            onClick={handleSaveChanges}
+          >
+            Save Changes
+          </button>
           <button className="btn btn-danger mt-3" onClick={handleLogout}>Logout</button>
         </div>
       </div>

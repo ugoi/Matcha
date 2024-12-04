@@ -1,10 +1,33 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import "./Login.css";
 import Navbar from '../../components/Navbar/Navbar';
-import { Form, Button, Container, Row, Col } from 'react-bootstrap';
+import { Form, Button, Container, Row, Col, Alert } from 'react-bootstrap';
+import { useSearchParams } from 'react-router-dom';
 
 function Login() {
   const [error, setError] = useState(false);
+  const [searchParams] = useSearchParams();
+  const [statusMessage, setStatusMessage] = useState<string>("");
+
+  useEffect(() => {
+    const message = searchParams.get("message");
+    if (message) {
+      switch (message) {
+        case "verification_success":
+          setStatusMessage("Email successfully verified! Please login to continue.");
+          break;
+        case "already_verified":
+          setStatusMessage("This email is already verified. Please login to continue.");
+          break;
+        case "verification_failed":
+          setStatusMessage("Email verification failed. Please request a new verification email.");
+          break;
+        case "verification_error":
+          setStatusMessage("An error occurred during verification. Please try again.");
+          break;
+      }
+    }
+  }, [searchParams]);
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -25,20 +48,20 @@ function Login() {
     };
   
     try {
-      const response = await fetch("http://localhost:3000/api/login", requestOptions);
+      const response = await fetch(`${window.location.origin}/api/login`, requestOptions);
       const result = await response.json();
   
       if (response.ok && result.status === 'success' && result.data.token) {
-        const profileResponse = await fetch("http://localhost:3000/api/profiles/me", {
+        const profileResponse = await fetch(`${window.location.origin}/api/profiles/me`, {
           headers: { "Authorization": `Bearer ${result.data.token}` },
           credentials: 'include',
         });
-        const profileData = await profileResponse.json();
+        const profileResult = await profileResponse.json();
 
-        if (profileResponse.ok && profileData && profileData.isProfileComplete) {
+        if (profileResponse.ok && profileResult.data && profileResult.data.age) {
           window.location.href = "/home";
         } else {
-          window.location.href = "/createprofile";
+          window.location.href = "/create-profile";
         }
       } else {
         setError(true);
@@ -56,6 +79,14 @@ function Login() {
         <Row className="justify-content-center">
           <Col md={6}>
             <h1 className="text-center mb-4">Login</h1>
+            {statusMessage && (
+              <Alert 
+                variant={statusMessage.includes("success") ? "success" : "info"}
+                className="mb-3"
+              >
+                {statusMessage}
+              </Alert>
+            )}
             <Form onSubmit={handleSubmit}>
               <Form.Group controlId="username" className="mb-3">
                 <Form.Label>Username</Form.Label>
@@ -92,14 +123,14 @@ function Login() {
                 href="/api/login/google" 
                 className="w-45 social-button"
               >
-                Sign in with Google
+                Google Login
               </Button>
               <Button 
                 variant="outline-primary" 
                 href="/api/login/facebook" 
                 className="w-45 social-button"
               >
-                Sign in with Facebook
+                Facebook Login
               </Button>
             </div>
             <div className="mt-4 text-center">

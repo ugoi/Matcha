@@ -16,8 +16,7 @@ function CollapsibleExample() {
                 <Nav.Link href="/">Home</Nav.Link>
                 <Nav.Link href="/about">About</Nav.Link>
                 <NavDropdown title="Language" id="collapsible-nav-dropdown">
-                  <NavDropdown.Item href="#action/3.1">English</NavDropdown.Item>
-                  <NavDropdown.Item href="#action/3.2">Español</NavDropdown.Item>
+                  <NavDropdown.Item href="">English</NavDropdown.Item>
                 </NavDropdown>
               </Nav>
             </Navbar.Collapse>

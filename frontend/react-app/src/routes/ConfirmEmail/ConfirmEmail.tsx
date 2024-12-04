@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Container, Alert, Button } from 'react-bootstrap';
+import { Container, Alert, Button, Form, Row, Col } from 'react-bootstrap';
 import { useNavigate } from 'react-router-dom';
 
 function ConfirmEmail() {
@@ -7,13 +7,23 @@ function ConfirmEmail() {
   const [isSending, setIsSending] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [error, setError] = useState("");
+  const [email, setEmail] = useState(() => {
+    return localStorage.getItem('verificationEmail') || "";
+  });
+  const [cooldown, setCooldown] = useState(() => {
+    const storedCooldownEnd = localStorage.getItem('emailVerificationCooldown');
+    if (storedCooldownEnd) {
+      const remainingTime = Math.ceil((parseInt(storedCooldownEnd) - Date.now()) / 1000);
+      return remainingTime > 0 ? remainingTime : 0;
+    }
+    return 0;
+  });
   const navigate = useNavigate();
-  const userEmail = "user@example.com";
 
   useEffect(() => {
     const checkAuth = async () => {
       try {
-        const response = await fetch("http://localhost:3000/api/check-auth", {
+        const response = await fetch(`${window.location.origin}/api/check-auth`, {
           method: "GET",
           credentials: "include",
         });
@@ -29,26 +39,50 @@ function ConfirmEmail() {
   }, []);
 
   useEffect(() => {
-    if (isAuthenticated) navigate("/createprofile");
+    if (isAuthenticated) navigate("/create-profile");
   }, [isAuthenticated, navigate]);
+
+  useEffect(() => {
+    if (cooldown > 0) {
+      const timer = setTimeout(() => {
+        setCooldown(cooldown - 1);
+        if (cooldown - 1 <= 0) {
+          localStorage.removeItem('emailVerificationCooldown');
+        }
+      }, 1000);
+      return () => clearTimeout(timer);
+    }
+  }, [cooldown]);
+
+  useEffect(() => {
+    if (email) {
+      localStorage.setItem('verificationEmail', email);
+    } else {
+      localStorage.removeItem('verificationEmail');
+    }
+  }, [email]);
 
   const handleResend = async () => {
     setIsSending(true);
-    setError(""); // Clear previous error messages
-    setMessage(""); // Clear previous success message
+    setError("");
+    setMessage("");
     try {
-      const response = await fetch("http://localhost:3000/api/resend-verification-email", {
+      const response = await fetch(`${window.location.origin}/api/resend-verification-email`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: userEmail }),
+        body: JSON.stringify({ email }),
       });
       const data = await response.json();
       
       if (data.status === "success") {
         setMessage("Verification email has been resent.");
+        const cooldownEnd = Date.now() + (60 * 1000); // 60 seconds from now
+        localStorage.setItem('emailVerificationCooldown', cooldownEnd.toString());
+        setCooldown(60);
+      } else if (data.status === "fail" && data.data?.errors?.includes("email already verified")) {
+        navigate("/login?message=already_verified");
       } else {
-        // Show a more specific message if available from the backend
-        setError(data.data?.message || "Failed to resend verification email.");
+        setError(data.data?.errors?.[0] || data.data?.message || "Failed to resend verification email.");
       }
     } catch (error) {
       console.error("Resend email error:", error);
@@ -59,15 +93,56 @@ function ConfirmEmail() {
   };
 
   return (
-    <Container className="mt-5 text-center">
-      <Alert variant="info">
-        A verification email has been sent. Please check your inbox and follow the instructions to verify your email.
-      </Alert>
-      {message && <Alert variant="success">{message}</Alert>}
-      {error && <Alert variant="danger">{error}</Alert>}
-      <Button onClick={handleResend} disabled={isSending} variant="primary" className="mt-3">
-        {isSending ? "Sending..." : "Resend Verification Email"}
-      </Button>
+    <Container className="mt-5">
+      <Row className="justify-content-center">
+        <Col md={6}>
+          <div className="text-center mb-4">
+            <h2>Email Verification</h2>
+            <Alert variant="info" className="mt-3">
+              Please enter your email address to resend the verification email.
+            </Alert>
+          </div>
+          
+          <Form className="mt-4">
+            <Form.Group className="mb-3">
+              <Form.Label>Email address</Form.Label>
+              <Form.Control
+                type="email"
+                name="email"
+                autoComplete="email"
+                placeholder="name@example.com"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+              />
+            </Form.Group>
+          </Form>
+
+          {message && <Alert variant="success" className="mt-3">{message}</Alert>}
+          {error && <Alert variant="danger" className="mt-3">{error}</Alert>}
+          
+          <div className="text-center">
+            <Button 
+              onClick={handleResend} 
+              disabled={isSending || !email || cooldown > 0} 
+              variant="primary" 
+              size="lg"
+              className="mt-3 px-4"
+            >
+              {isSending ? (
+                <>
+                  <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                  Sending...
+                </>
+              ) : cooldown > 0 ? (
+                `Wait ${cooldown}s to resend`
+              ) : (
+                "Resend Verification Email"
+              )}
+            </Button>
+          </div>
+        </Col>
+      </Row>
     </Container>
   );
 }

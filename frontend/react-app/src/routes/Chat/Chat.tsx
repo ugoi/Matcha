@@ -1,6 +1,6 @@
 import NavbarLogged from '../../components/NavbarLogged/NavbarLogged';
 import './chat.css';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 const matches = [
   { id: 1, name: 'Alice', image: 'https://via.placeholder.com/400x500' },
@@ -16,6 +16,24 @@ const chats = [
 
 function Chat() {
   const [selectedChat, setSelectedChat] = useState<number | null>(null);
+
+  useEffect(() => {
+    const checkProfile = async () => {
+      try {
+        const response = await fetch(`${window.location.origin}/api/profiles/me`);
+        const result = await response.json();
+        
+        if (result.status === "fail" && result.data === "profile not found") {
+          window.location.href = '/create-profile';
+        }
+      } catch (error) {
+        console.error('Error checking profile:', error);
+        window.location.href = '/create-profile';
+      }
+    };
+
+    checkProfile();
+  }, []);
 
   return (
     <>
