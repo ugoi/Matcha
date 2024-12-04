@@ -43,7 +43,7 @@ export function initPassport() {
       {
         clientID: process.env.GOOGLE_CLIENT_ID,
         clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-        callbackURL: "http://localhost:3000/api/oauth2/redirect/google",
+        callbackURL: `${process.env.BASE_URL}/api/oauth2/redirect/google`,
       },
       async function (accessToken, refreshToken, profile, cb) {
         try {
@@ -62,7 +62,7 @@ export function initPassport() {
       {
         clientID: process.env.FACEBOOK_CLIENT_ID,
         clientSecret: process.env.FACEBOOK_CLIENT_SECRET,
-        callbackURL: "http://localhost:3000/api/oauth2/redirect/facebook",
+        callbackURL: `${process.env.BASE_URL}/api/oauth2/redirect/facebook`,
         profileFields: ["id", "displayName", "photos", "emails", "name"],
       },
       async function (accessToken, refreshToken, profile, cb) {

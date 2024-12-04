@@ -1,8 +1,6 @@
 import { Server } from "socket.io";
 import _ from "lodash";
-import {
-  profilesRepository,
-} from "../profiles/profiles.repository.js";
+import { profilesRepository } from "../profiles/profiles.repository.js";
 import { chatRepository } from "./chats.repository.js";
 import { socketioDefaultErrorHandler } from "../../error-handlers/socketio-default-error-handler.js";
 import { notificationService } from "../notifications/notifications.service.js";
@@ -17,11 +15,15 @@ export function initChatSocket(io: Server) {
    * Listen on provided port, on all network interfaces.
    */
   io.of("/api/chat").on("connection", (socket) => {
-    // @ts-ignore
+    if (!socket.request.user) {
+      console.log("User not authenticated");
+      socket.disconnect();
+      return;
+    }
+
     const userId = socket.request.user.user_id;
     // the user ID is used as a room
     socket.join(`user:${userId}`);
-    console.log("a user connected");
 
     socket.on("disconnect", () => {
       console.log("user disconnected");
@@ -83,7 +85,6 @@ export function initChatSocket(io: Server) {
             .emit("error", "Messaging not allowed");
         }
       } catch (error) {
-        const sender = socket.request.user.user_id;
         console.log(error);
         socketioDefaultErrorHandler(error, socket);
         return;

@@ -62,14 +62,8 @@ export const likesService = {
         match.is_like === true
     );
 
-    // Calculate new fame rating
-    const likedProfile = await profilesRepository.findOne(likee_user_id);
-    let fame_rating = likedProfile.fame_rating + 1;
-    // Increment fame rating of liked user
-    await profilesService.updateProfile({
-      data: { fame_rating: fame_rating },
-      user_id: likee_user_id,
-    });
+    // Atomically increment fame rating of liked user
+    await profilesRepository.incrementFameRating(likee_user_id, 1);
 
     if (existingMatch) {
       await notificationService.createAndSend({
@@ -136,13 +130,8 @@ export const likesService = {
       match = await likesRepository.like(liker_user_id, likee_user_id, false);
     }
 
-    // Update fame rating
-    const likedProfile = await profilesRepository.findOne(likee_user_id);
-    let fame_rating = likedProfile.fame_rating - 1;
-    await profilesService.updateProfile({
-      data: { fame_rating: fame_rating },
-      user_id: likee_user_id,
-    });
+    // Atomically decrement fame rating of liked user
+    await profilesRepository.incrementFameRating(likee_user_id, -1);
 
     return {
       ...match,

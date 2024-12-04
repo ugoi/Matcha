@@ -6,11 +6,10 @@ import { arraySanitizer, escapeErrors } from "../../utils/utils.js";
 import { JFail } from "../../error-handlers/custom-errors.js";
 import { notificationRepository } from "./notification.repository.js";
 
-
 /* Get user notifications*/
 router.get(
   "/",
-  //   passport.authenticate("jwt", { session: false }),
+  passport.authenticate("jwt", { session: false }),
   async function (req, res, next) {
     const result = validationResult(req);
     if (!result.isEmpty()) {
@@ -33,12 +32,8 @@ router.get(
 
 router.patch(
   "/",
-  body("ids")
-  .optional()
-  .escape()
-  .customSanitizer(arraySanitizer)
-  .isArray(),
-  //   passport.authenticate("jwt", { session: false }),
+  body("ids").optional().escape().customSanitizer(arraySanitizer).isArray(),
+  passport.authenticate("jwt", { session: false }),
   async function (req, res, next) {
     const result = validationResult(req);
     if (!result.isEmpty()) {
@@ -48,17 +43,18 @@ router.patch(
       return;
     }
     try {
-      const updatedNotification = await notificationRepository.updateByNotifierId({
-        notifier_id: req.user.user_id,
-        status: req.body.status,
-        notification_object_ids: req.body.ids,
-      });
+      const updatedNotification =
+        await notificationRepository.updateByNotifierId({
+          notifier_id: req.user.user_id,
+          status: req.body.status,
+          notification_object_ids: req.body.ids,
+        });
       res.json(updatedNotification);
     } catch (error) {
       next(error);
       return;
     }
   }
-)
+);
 
 export default router;

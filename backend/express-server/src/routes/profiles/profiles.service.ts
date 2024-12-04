@@ -54,7 +54,7 @@ export const profilesService = {
       )
     ) {
       throw new JError(
-        "Profile picture not found in user pictures - Please upload the pictures first with POST http://localhost:3000/api/profiles/me/pictures"
+        `Profile picture not found in user pictures - Please upload the pictures first with POST ${process.env.BASE_URL}/api/profiles/me/pictures`
       );
     }
 
@@ -180,8 +180,7 @@ export const profilesService = {
     ) {
       throw new JFail(
         null,
-        "Profile picture not found in user pictures - Please upload the pictures first with POST http://localhost:3000/api/profiles/me/pictures/" +
-          picture_id
+        `Profile picture not found in user pictures - Please upload the pictures first with POST ${process.env.BASE_URL}/api/profiles/me/pictures/${picture_id}`
       );
     }
   },

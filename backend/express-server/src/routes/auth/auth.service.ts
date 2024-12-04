@@ -223,9 +223,7 @@ export async function login(input: LoginInput): Promise<LoginOutput> {
 
 export async function createJwtToken(user: User): Promise<LoginOutput> {
   if (!user) {
-    throw new JFail({
-      title: "Invalid credentials",
-    });
+    throw new Error("User is required");
   }
 
   var token = jwt.sign(
@@ -352,7 +350,7 @@ export async function authenticateWithCredentials(
   sendVerificationEmail(
     `${userData.first_name} ${userData.last_name}`,
     userData.email,
-    `http://localhost:3000/verify-email?token=${tokenData.token_id}`
+    `${process.env.BASE_URL}/verify-email?token=${tokenData.token_id}`
   );
 
   const title = "User created. Verification email sent";

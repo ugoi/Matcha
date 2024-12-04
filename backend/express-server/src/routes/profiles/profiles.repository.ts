@@ -172,6 +172,17 @@ export const profilesRepository = {
     return updatedProfile;
   },
 
+  incrementFameRating: async function incrementFameRating(user_id: string, incrementValue: number) {
+    return await db.none(
+      `
+      UPDATE profiles
+      SET fame_rating = fame_rating + $1
+      WHERE user_id = $2
+      `,
+      [incrementValue, user_id]
+    );
+  },
+
   delete: async function deleteProfile(user_id: string): Promise<Profile> {
     let deletedProfile = await db.one(
       `

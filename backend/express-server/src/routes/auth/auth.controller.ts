@@ -259,6 +259,11 @@ router.get(
   passport.authenticate("google", { session: false }),
   async function (req, res, next) {
     try {
+      if (!req.user) {
+        throw new JFail({
+          title: "Invalid credentials",
+        });
+      }
       const result = await createJwtToken(req.user);
 
       // Set token in cookie
@@ -288,6 +293,11 @@ router.get(
   passport.authenticate("facebook", { session: false }),
   async function (req, res, next) {
     try {
+      if (!req.user) {
+        throw new JFail({
+          title: "Invalid credentials",
+        });
+      }
       const result = await createJwtToken(req.user);
 
       // Set token in cookie
