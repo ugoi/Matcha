@@ -337,7 +337,7 @@ export async function authenticateWithCredentials(
   );
 
   const nextMonth = new Date();
-  nextMonth.setDate(new Date().getDate() + 30);
+  nextMonth.setDate(new Date().getDate() + Number(process.env.JWT_EXPIRES_IN));
 
   let tokenData = await createToken({
     user_id: userData.user_id,

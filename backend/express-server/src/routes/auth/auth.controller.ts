@@ -140,7 +140,7 @@ router.post(
       }
 
       const nextMonth = new Date();
-      nextMonth.setDate(new Date().getDate() + 30);
+      nextMonth.setDate(new Date().getDate() + Number(process.env.JWT_EXPIRES_IN));
       const token = await createToken({
         user_id: user.user_id,
         token_type: TokenType.EmailVerification,
@@ -198,7 +198,7 @@ router.post(
     try {
       // Send reset password email
       const nextMonth = new Date();
-      nextMonth.setDate(new Date().getDate() + 30);
+      nextMonth.setDate(new Date().getDate() + Number(process.env.JWT_EXPIRES_IN));
       const user = await userRepository.findOne({ email: req.body.email });
       const token = await createToken({
         user_id: user.user_id,
