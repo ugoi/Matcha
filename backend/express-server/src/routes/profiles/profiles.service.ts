@@ -73,6 +73,9 @@ export const profilesService = {
         gps_longitude,
         gps_latitude,
       ]);
+      // Remove gps fields from input
+      delete input.data.gps_latitude;
+      delete input.data.gps_longitude
     }
 
     // Remove gps fields from input and add the raw SQL expression for location
@@ -104,12 +107,8 @@ export const profilesService = {
       process.env.DEFAULT_FILTER === "true"
         ? {
             gender: { $eq: currentUser.sexual_preference },
-            location: {
-              $lt: 100,
-              value: {
-                longitude: currentUser.gps_longitude,
-                latitude: currentUser.gps_latitude,
-              },
+            distance: {
+              $lt: 100
             },
             fame_rating: { $gte: 0 },
             common_interests: { $gte: 2 },
@@ -130,11 +129,7 @@ export const profilesService = {
     const defaultSortBy: SortBy =
       process.env.DEFAULT_SORT === "true"
         ? {
-            location: {
-              value: {
-                longitude: currentUser.gps_longitude,
-                latitude: currentUser.gps_latitude,
-              },
+            distance: {
               $order: SortOrder.Asc,
             },
           }

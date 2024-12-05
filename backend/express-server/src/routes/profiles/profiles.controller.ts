@@ -15,6 +15,8 @@ import visitsRouter from "./visits/visits.controller.js";
 import interestsRouter from "./interests/interests.controller.js";
 import likesRouter from "./likes/likes.controller.js";
 import blocksRouter from "./blocks/blocks.controller.js";
+import picturesRouter from "./pictures/pictures.controller.js";
+import { PublicProfile } from "./profiles.interface.js";
 
 router.use("/", visitsRouter);
 
@@ -23,6 +25,8 @@ router.use("/", interestsRouter);
 router.use("/", likesRouter);
 
 router.use("/", blocksRouter);
+
+router.use("/", picturesRouter);
 
 //#region Profile routes
 /* Get my user profile*/
@@ -98,6 +102,17 @@ router.patch(
       return;
     }
     try {
+      // Check if both gps_latitude and gps_longitude are provided
+      if (
+        (req.body.gps_latitude && !req.body.gps_longitude) ||
+        (!req.body.gps_latitude && req.body.gps_longitude)
+      ) {
+        throw new JFail({
+          title: "invalid input",
+          errors: "Both gps_latitude and gps_longitude must be provided",
+        });
+      }
+
       const profile = await profilesService.updateProfile({
         user_id: req.user.user_id,
         data: req.body,
@@ -135,7 +150,9 @@ router.get(
         sort_by: req.query.sort_by ? JSON.parse(req.query.sort_by) : undefined,
       });
 
-      res.json({ message: "success", data: { profiles } });
+      const publicProfiles = profiles.map((profile) => new PublicProfile(profile));
+
+      res.json({ message: "success", data: { profiles: publicProfiles } });
     } catch (error) {
       next(error);
     }
@@ -181,7 +198,8 @@ router.get(
     }
     try {
       const profile = await profilesService.getProfile(req.params.user_id);
-      res.json({ message: "success", data: profile });
+      const publicProfile = new PublicProfile(profile);
+      res.json({ message: "success", data: publicProfile });
     } catch (error) {
       next(error);
       return;

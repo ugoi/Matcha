@@ -5,15 +5,11 @@ import {
   SortBy,
   SortItem,
 } from "../routes/profiles/profiles.interface.js";
-import {
-  profilesRepository,
-} from "../routes/profiles/profiles.repository.js";
+import { profilesRepository } from "../routes/profiles/profiles.repository.js";
 import { userRepository } from "../routes/users/users.repository.js";
 import { JFail } from "../error-handlers/custom-errors.js";
 import _ from "lodash";
-import {
-  profilesService,
-} from "../routes/profiles/profiles.service.js";
+import { profilesService } from "../routes/profiles/profiles.service.js";
 import { blockedUsersRepository } from "../routes/profiles/blocks/blocks.repository.js";
 import { likesService } from "../routes/profiles/likes/likes.service.js";
 import { likesRepository } from "../routes/profiles/likes/likes.repository.js";
@@ -237,17 +233,6 @@ export class FilterSet {
     }
   }
 
-  private formatLocation(
-    filterItem: FilterItem,
-    operator: string,
-    radius: number
-  ) {
-    const { longitude, latitude } = filterItem.value;
-    return `location <-> ST_Point(${pgp.as.value(longitude)}, ${pgp.as.value(
-      latitude
-    )})::geography ${operator} ${pgp.as.value(radius)}`;
-  }
-
   toPostgres() {
     return _.map(this.filters, (filterItem: FilterItem, filterKey: string) => {
       const formattedFilters = _.map(
@@ -257,11 +242,6 @@ export class FilterSet {
           if (!operator) {
             throw new Error("Invalid filter operator");
           }
-
-          if (filterKey === "location") {
-            return this.formatLocation(filterItem, operator, 1000);
-          }
-
           return `${pgp.as.name(filterKey)} ${operator} ${pgp.as.format(
             "$1",
             value
@@ -302,13 +282,6 @@ export class SortSet {
     }
   }
 
-  private formatLocation(sortItem: SortItem, sqlKeyword: string) {
-    const { longitude, latitude } = sortItem.value;
-    return `location <-> ST_Point(${pgp.as.value(longitude)}, ${pgp.as.value(
-      latitude
-    )})::geography ${sqlKeyword}`;
-  }
-
   toPostgres() {
     return _.map(this.sorts, (sortItem: SortItem, key: string) => {
       if (typeof sortItem !== "object") {
@@ -321,9 +294,7 @@ export class SortSet {
         throw new Error("Invalid sort order");
       }
 
-      return key === "location"
-        ? this.formatLocation(sortItem, sqlKeyword)
-        : `${pgp.as.name(key)} ${sqlKeyword}`;
+      return `${pgp.as.name(key)} ${sqlKeyword}`;
     }).join(", ");
   }
 }

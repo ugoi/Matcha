@@ -44,10 +44,22 @@ export const profilesRepository = {
       `
       WITH profile_with_interests AS (
         SELECT 
-          profiles.*, 
           users.username, 
           users.first_name, 
           users.last_name, 
+          profiles.profile_id,
+          profiles.user_id,
+          profiles.gender,
+          profiles.age,
+          profiles.sexual_preference,
+          profiles.biography,
+          profiles.fame_rating,
+          profiles.profile_picture,
+          (
+            profiles.location <-> ( SELECT location FROM profiles WHERE user_id = $1 )
+          ) AS distance,
+          profiles.last_online,
+          profiles.created_at,
           array_length(
             ARRAY(
               SELECT 
@@ -172,7 +184,10 @@ export const profilesRepository = {
     return updatedProfile;
   },
 
-  incrementFameRating: async function incrementFameRating(user_id: string, incrementValue: number) {
+  incrementFameRating: async function incrementFameRating(
+    user_id: string,
+    incrementValue: number
+  ) {
     return await db.none(
       `
       UPDATE profiles

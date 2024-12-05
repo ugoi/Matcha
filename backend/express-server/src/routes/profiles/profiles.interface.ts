@@ -12,12 +12,14 @@ export interface Profile {
   sexual_preference: string;
   biography: string;
   interests: Interest[];
+  common_interests: Interest[];
   pictures: Picture[];
   search_preferences: SearchPreferences;
   fame_rating: number;
   profile_picture: string;
   gps_latitude: number;
   gps_longitude: number;
+  distance: number;
   last_online: Date;
   created_at: Date;
   visit_history: string[];
@@ -35,6 +37,7 @@ export class PublicProfile {
   sexual_preference: string;
   biography: string;
   interests: Interest[];
+  common_interests: Interest[];
   pictures: Picture[];
   fame_rating: number;
   profile_picture: string;
@@ -53,10 +56,11 @@ export class PublicProfile {
     this.sexual_preference = profile.sexual_preference;
     this.biography = profile.biography;
     this.interests = profile.interests;
+    this.common_interests = profile.common_interests;
     this.pictures = profile.pictures;
     this.fame_rating = profile.fame_rating;
     this.profile_picture = profile.profile_picture;
-    this.distance = 1;
+    this.distance = profile.distance;
     this.last_online = profile.last_online;
     this.created_at = profile.created_at;
   }
@@ -85,7 +89,7 @@ export interface SortValue {
 export class SortBy {
   age?: SortItem;
   age_gap?: SortItem;
-  location?: SortItem;
+  distance?: SortItem;
   fame_rating?: SortItem;
   fame_rating_gap?: SortItem;
   common_tags?: SortItem;
@@ -94,7 +98,7 @@ export class SortBy {
   constructor(sortBy: SortBy) {
     this.age = sortBy.age;
     this.age_gap = sortBy.age_gap;
-    this.location = sortBy.location;
+    this.distance = sortBy.distance;
     this.fame_rating = sortBy.fame_rating;
     this.fame_rating_gap = sortBy.fame_rating_gap;
     this.common_tags = sortBy.common_tags;
@@ -125,7 +129,7 @@ export class FilterBy {
   email?: FilterItem;
   age?: FilterItem;
   age_gap?: FilterItem;
-  location?: FilterItem;
+  distance?: FilterItem;
   fame_rating?: FilterItem;
   fame_rating_gap?: FilterItem;
   gender?: FilterItem;
@@ -139,7 +143,7 @@ export class FilterBy {
     this.email = filterBy.email;
     this.age = filterBy.age;
     this.age_gap = filterBy.age_gap;
-    this.location = filterBy.location;
+    this.distance = filterBy.distance;
     this.fame_rating = filterBy.fame_rating;
     this.fame_rating_gap = filterBy.fame_rating_gap;
     this.common_interests = filterBy.common_interests;
@@ -171,6 +175,10 @@ export const mockProfile: Profile = {
     { interest_id: "1", user_id: "1", interest_tag: "music" },
     { interest_id: "2", user_id: "1", interest_tag: "sports" },
   ],
+  common_interests: [
+    { interest_id: "1", user_id: "1", interest_tag: "music" },
+    { interest_id: "2", user_id: "1", interest_tag: "sports" },
+  ],
   pictures: [
     { picture_id: "1", user_id: "1", picture_url: "https://www.google.com" },
     { picture_id: "2", user_id: "1", picture_url: "https://www.google.com" },
@@ -180,6 +188,7 @@ export const mockProfile: Profile = {
   profile_picture: "https://www.google.com",
   gps_latitude: 0,
   gps_longitude: 0,
+  distance: 0,
   last_online: new Date(),
   created_at: new Date(),
   visit_history: [],
