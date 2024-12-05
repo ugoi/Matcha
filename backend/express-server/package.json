@@ -9,6 +9,7 @@
     "build": "tsc",
     "db:down": "node ./dist/migrations/down.script.js",
     "db:up": "node ./dist/migrations/up.script.js",
+    "db:add-test-users": "node ./dist/migrations/add-test-users.script.js",
     "test": "vitest"
   },
   "dependencies": {
