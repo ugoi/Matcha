@@ -20,7 +20,7 @@ export default function SignUp() {
     });
   };
 
-  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
     const myHeaders = new Headers();
@@ -40,23 +40,25 @@ export default function SignUp() {
       redirect: "follow",
     };
 
-    fetch("http://localhost:3000/api/signup", requestOptions)
-      .then(async (response) => {
-        const json = await response.json();
-        console.log(json);
-        const status = json.status;
-        if (status === "error") {
-          setStatus("error");
-        }
-        else if (status === "fail") {
-          setStatus("fail");
-        }
-        else if (status === "success") {
-          setStatus("success");
-        }
+    try {
+      const response = await fetch(
+        "http://localhost:3000/api/signup",
+        requestOptions
+      );
 
-      })
-      .catch((error) => console.error(error));
+      const json = await response.json();
+      console.log(json);
+      const status = json.status;
+      if (status === "error") {
+        setStatus("error");
+      } else if (status === "fail") {
+        setStatus("fail");
+      } else if (status === "success") {
+        setStatus("success");
+      }
+    } catch (error) {
+      console.error("Error:", error);
+    }
   };
 
   return (
@@ -64,7 +66,9 @@ export default function SignUp() {
       <div className="gradient-background"></div>
       <div className="form-container">
         <h1 className="form-title">Join Us</h1>
-        <p className="form-subtitle">Create your account to unlock new adventures</p>
+        <p className="form-subtitle">
+          Create your account to unlock new adventures
+        </p>
         <form onSubmit={handleSubmit} className="signup-form">
           <div className="form-group">
             <input
@@ -125,9 +129,17 @@ export default function SignUp() {
             Sign Up
           </button>
         </form>
-        {status === "success" && <p className="success-message">Success! Welcome aboard.</p>}
-        {status === "error" && <p className="error-message">Error! Please try again.</p>}
-        {status === "fail" && <p className="error-message">Error! Username or email already exists.</p>}
+        {status === "success" && (
+          <p className="success-message">Success! Welcome aboard.</p>
+        )}
+        {status === "error" && (
+          <p className="error-message">Error! Please try again.</p>
+        )}
+        {status === "fail" && (
+          <p className="error-message">
+            Error! Username or email already exists.
+          </p>
+        )}
       </div>
     </div>
   );

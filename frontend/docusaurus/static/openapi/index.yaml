@@ -1,0 +1,788 @@
+openapi: 3.1.0
+info:
+  title: Matcha - OpenAPI 3.1
+  version: 1.0.0
+  description: |-
+    **Welcome to the Matcha Dating App API!**  
+    This specification outlines the Matcha API, a service designed to help people find meaningful connections. The API is built to be:
+    - **JSend-compliant**: All responses conform to the [JSend specification](https://github.com/omniti-labs/jsend).
+    - **Secure and Privacy-Focused**: We prioritize user safety, data privacy, and consent.
+    - **Feature-Rich**: Manage profiles, authenticate users, exchange messages, receive notifications, and more.
+
+    **Useful Resources:**
+    - [Matcha GitHub Repository](https://github.com/ugoi/Matcha)
+    - [OpenAPI Definition on GitHub](https://github.com/ugoi/Matcha/blob/main/backend/openapi/index.yaml)
+
+  termsOfService: https://github.com/ugoi/Matcha
+  contact:
+    name: Code Crafting Pro
+    url: https://github.com/ugoi/Matcha
+    email: codecraftingpro@gmail.com
+  license:
+    name: Apache 2.0
+    url: https://www.apache.org/licenses/LICENSE-2.0.html
+
+externalDocs:
+  description: Learn more about the Matcha project on GitHub
+  url: https://github.com/ugoi/Matcha
+
+x-logo:
+  url: 'https://example.com/images/matcha-logo.png'
+  backgroundColor: '#FFFFFF'
+  altText: 'Matcha Logo'
+
+servers:
+  - url: http://localhost:3000/api
+    description: Local development server
+
+tags:
+  - name: profile
+    description: |-
+      Operations for managing and interacting with user profiles.
+      
+      **Capabilities:**
+      - View and update profile details
+      - Search profiles by various filters
+      - Like, block, or report users
+      - Manage user interests and photos
+    externalDocs:
+      description: Detailed documentation for profile operations
+      url: https://github.com/ugoi/Matcha
+
+  - name: user
+    description: |-
+      Operations that allow you to manage user accounts.
+      
+      **Capabilities:**
+      - Create a new user
+      - Update existing user details
+      - View user account information
+      - Delete a user account
+    externalDocs:
+      description: More information on user management
+      url: https://github.com/ugoi/Matcha
+
+  - name: auth
+    description: |-
+      Operations related to user authentication and authorization.
+      
+      **Capabilities:**
+      - User registration
+      - Login and logout
+      - Password reset and recovery
+    externalDocs:
+      description: Learn more about authentication flows
+      url: https://github.com/ugoi/Matcha
+
+  - name: notifications
+    description: |-
+      Operations to handle user notifications.
+      
+      **Capabilities:**
+      - View notifications
+    externalDocs:
+      description: Notification management details
+      url: https://github.com/ugoi/Matcha
+
+  - name: chat
+    description: |-
+      Operations for messaging between users.
+      
+      **Capabilities:**
+      - Send messages to other users
+      - View conversation history
+    externalDocs:
+      description: Chat system documentation
+      url: https://github.com/ugoi/Matcha
+
+paths:
+  ### Profile Endpoints
+  /profiles:
+    get:
+      tags:
+        - profile
+      summary: Get a list of user profiles
+      description: Retrieve multiple user profiles (with optional filters & sorting).
+      parameters:
+        - in: query
+          name: sort_by
+          description: Sort criteria (JSON)
+          schema:
+            type: string
+        - in: query
+          name: filter_by
+          description: Filter criteria (JSON)
+          schema:
+            type: string
+      responses:
+        '200':
+          description: A list of profiles
+
+  /profiles/{user_id}:
+    get:
+      tags:
+        - profile
+      summary: Get a user profile by ID
+      description: Retrieve a single user profile by user_id.
+      parameters:
+        - in: path
+          name: user_id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: A single profile
+
+  /profiles/me:
+    get:
+      tags:
+        - profile
+      summary: Get my profile
+      description: Retrieve the authenticated user's profile.
+      responses:
+        '200':
+          description: The authenticated user's profile
+    patch:
+      tags:
+        - profile
+      summary: Update my profile
+      description: Update fields of the authenticated user's profile.
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              properties:
+                gps_longitude:
+                  type: string
+                gps_latitude:
+                  type: string
+      responses:
+        '200':
+          description: Profile updated successfully
+    post:
+      tags:
+        - profile
+      summary: Create or complete my profile
+      description: Initialize or complete the authenticated user's profile details.
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              properties:
+                gender:
+                  type: string
+                age:
+                  type: string
+                sexual_preference:
+                  type: string
+                biography:
+                  type: string
+                profile_picture:
+                  type: string
+                gps_latitude:
+                  type: string
+                gps_longitude:
+                  type: string
+      responses:
+        '201':
+          description: Profile created or updated successfully
+
+  ### Profile Visits
+  /profiles/{user_id}/visits:
+    post:
+      tags:
+        - profile
+      summary: Record a profile visit
+      parameters:
+        - in: path
+          name: user_id
+          required: true
+          schema:
+            type: string
+      responses:
+        '201':
+          description: Visit recorded successfully
+
+  /profiles/visits:
+    get:
+      tags:
+        - profile
+      summary: Get profiles the user visited
+      responses:
+        '200':
+          description: List of visited profiles
+
+  ### Profile Interests
+  /profiles/me/interests:
+    post:
+      tags:
+        - profile
+      summary: Add interests to my profile
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              properties:
+                interests:
+                  type: array
+                  items:
+                    type: string
+      responses:
+        '200':
+          description: Interests added
+    get:
+      tags:
+        - profile
+      summary: Get my interests
+      responses:
+        '200':
+          description: List of interests
+    delete:
+      tags:
+        - profile
+      summary: Remove interests from my profile
+      description: Provide interests to remove via query parameters.
+      parameters:
+        - in: query
+          name: interests
+          description: Interests to remove (repeat for multiple)
+          required: false
+          schema:
+            type: array
+            items:
+              type: string
+      responses:
+        '200':
+          description: Interests removed
+
+  /profiles/{user_id}/interests:
+    get:
+      tags:
+        - profile
+      summary: Get interests of a user by ID
+      parameters:
+        - in: path
+          name: user_id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: List of user's interests
+
+  ### Profile Pictures
+  /profiles/me/pictures:
+    post:
+      tags:
+        - profile
+      summary: Add pictures to my profile
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              properties:
+                pictures:
+                  type: array
+                  items:
+                    type: string
+      responses:
+        '200':
+          description: Pictures added
+    get:
+      tags:
+        - profile
+      summary: Get my profile pictures
+      responses:
+        '200':
+          description: List of pictures
+    delete:
+      tags:
+        - profile
+      summary: Delete pictures from my profile
+      description: Provide pictures to remove via query parameters.
+      parameters:
+        - in: query
+          name: pictures
+          description: Pictures to remove (repeat for multiple)
+          required: false
+          schema:
+            type: array
+            items:
+              type: string
+      responses:
+        '200':
+          description: Pictures removed
+
+  ### Profile Likes & Matches
+  /profiles/{user_id}/like:
+    post:
+      tags:
+        - profile
+      summary: Like a user
+      parameters:
+        - in: path
+          name: user_id
+          required: true
+          schema:
+            type: string
+      responses:
+        '201':
+          description: User liked
+    delete:
+      tags:
+        - profile
+      summary: Remove like from a user
+      parameters:
+        - in: path
+          name: user_id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Like removed
+
+  /profiles/{user_id}/dislike:
+    post:
+      tags:
+        - profile
+      summary: Dislike a user
+      parameters:
+        - in: path
+          name: user_id
+          required: true
+          schema:
+            type: string
+      responses:
+        '201':
+          description: User disliked
+
+  /profiles/likes:
+    get:
+      tags:
+        - profile
+      summary: Get my likes
+      responses:
+        '200':
+          description: List of liked profiles
+
+  /profiles/matched:
+    get:
+      tags:
+        - profile
+      summary: Get my matches
+      responses:
+        '200':
+          description: List of matched profiles
+
+  ### Profile Blocks
+  /profiles/blocks:
+    get:
+      tags:
+        - profile
+      summary: Get blocked profiles
+      responses:
+        '200':
+          description: List of blocked profiles
+
+  /profiles/{user_id}/block:
+    post:
+      tags:
+        - profile
+      summary: Block a user
+      parameters:
+        - in: path
+          name: user_id
+          required: true
+          schema:
+            type: string
+      responses:
+        '201':
+          description: User blocked
+    delete:
+      tags:
+        - profile
+      summary: Unblock a user
+      description: Provide a reason via query parameter if needed.
+      parameters:
+        - in: path
+          name: user_id
+          required: true
+          schema:
+            type: string
+        - in: query
+          name: reason
+          description: Reason for unblocking (optional)
+          required: false
+          schema:
+            type: string
+      responses:
+        '200':
+          description: User unblocked
+
+  ### Profile Reports
+  /profiles/reports:
+    get:
+      tags:
+        - profile
+      summary: Get reported profiles
+      responses:
+        '200':
+          description: List of reported profiles
+
+  /profiles/{user_id}/report:
+    post:
+      tags:
+        - profile
+      summary: Report a user
+      parameters:
+        - in: path
+          name: user_id
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              properties:
+                reason:
+                  type: string
+      responses:
+        '201':
+          description: User reported
+
+  ### User Endpoints
+  /users/me:
+    get:
+      tags:
+        - user
+      summary: Get my user account
+      responses:
+        '200':
+          description: User account details
+    delete:
+      tags:
+        - user
+      summary: Delete my user account
+      responses:
+        '200':
+          description: User account deleted
+    patch:
+      tags:
+        - user
+      summary: Update my user account
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              properties:
+                username:
+                  type: string
+                phone:
+                  type: string
+      responses:
+        '200':
+          description: User account updated
+
+  ### Auth Endpoints
+  /signup:
+    post:
+      tags:
+        - auth
+      summary: Sign up
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              properties:
+                firstName:
+                  type: string
+                username:
+                  type: string
+                lastName:
+                  type: string
+                email:
+                  type: string
+                password:
+                  type: string
+      responses:
+        '201':
+          description: User created successfully
+      x-codeSamples:
+        - lang: cURL
+          source: |
+            curl --location 'http://localhost:3000/api/signup' \
+            --header 'Content-Type: application/x-www-form-urlencoded' \
+            --header 'Cookie: jwt=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJlMWIzMmZhZC1kYjc2LTQ5YzUtOWFjNC04ZTQwMDEyZjk3NmMiLCJpc3MiOiJtYXRjaGEiLCJhdWQiOiJtYXRjaGEiLCJpYXQiOjE3MzM3NTkwMTEsImV4cCI6MTczNjM1MTAxMX0.i6hnJvPm4GoHHgGJRJclqM2HddIQHyToIjPGP5txGIc' \
+            --data-urlencode 'firstName=John' \
+            --data-urlencode 'username=john_doe' \
+            --data-urlencode 'lastName=Doe' \
+            --data-urlencode 'email=john.doe@gmail.com' \
+            --data-urlencode 'password=Password123...'
+        - lang: typescript
+          source: |
+            const myHeaders = new Headers();
+            myHeaders.append("Content-Type", "application/x-www-form-urlencoded");
+
+            const urlencoded = new URLSearchParams();
+            urlencoded.append("firstName", "John");
+            urlencoded.append("username", "john_doe");
+            urlencoded.append("lastName", "Doe");
+            urlencoded.append("email", "john.doe@gmail.com");
+            urlencoded.append("password", "Password123...");
+
+            const requestOptions: RequestInit = {
+              method: "POST",
+              headers: myHeaders,
+              body: urlencoded,
+              redirect: "follow",
+            };
+
+            try {
+              const response = await fetch(
+                "http://localhost:3000/api/signup",
+                requestOptions
+              );
+
+              const json = await response.json();
+              console.log(json);
+              const status = json.status;
+              if (status === "error") {
+                setStatus("error");
+              } else if (status === "fail") {
+                setStatus("fail");
+              } else if (status === "success") {
+                setStatus("success");
+              }
+            } catch (error) {
+              console.error("Error:", error);
+            }
+
+  /login:
+    post:
+      tags:
+        - auth
+      summary: Login
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              properties:
+                username:
+                  type: string
+                password:
+                  type: string
+      responses:
+        '200':
+          description: Authenticated successfully
+
+  /logout:
+    get:
+      tags:
+        - auth
+      summary: Logout
+      responses:
+        '200':
+          description: Logged out successfully
+
+  /check-auth:
+    get:
+      tags:
+        - auth
+      summary: Check authentication
+      responses:
+        '200':
+          description: Session is valid
+        '401':
+          description: Not authenticated
+
+  /reset-password:
+    post:
+      tags:
+        - auth
+      summary: Request password reset
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              properties:
+                email:
+                  type: string
+      responses:
+        '200':
+          description: Password reset link sent
+
+    patch:
+      tags:
+        - auth
+      summary: Reset password
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              properties:
+                token:
+                  type: string
+                password:
+                  type: string
+      responses:
+        '200':
+          description: Password reset successfully
+
+  /resend-verification-email:
+    post:
+      tags:
+        - auth
+      summary: Resend verification email
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              properties:
+                email:
+                  type: string
+      responses:
+        '200':
+          description: Verification email resent
+
+  /verify-email:
+    patch:
+      tags:
+        - auth
+      summary: Verify email
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              properties:
+                token:
+                  type: string
+      responses:
+        '200':
+          description: Email verified successfully
+
+  ### Chat Endpoints
+  /chat/{user_id}:
+    post:
+      tags:
+        - chat
+      summary: Send a chat message
+      parameters:
+        - in: path
+          name: user_id
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                message:
+                  type: string
+      responses:
+        '201':
+          description: Message sent
+
+  /chats/{user_id}:
+    get:
+      tags:
+        - chat
+      summary: Get chat history
+      description: Retrieve the chat history between the authenticated user and another user.
+      parameters:
+        - in: path
+          name: user_id
+          required: true
+          schema:
+            type: string
+        - in: query
+          name: next_cursor
+          required: false
+          schema:
+            type: string
+          description: Cursor for pagination
+        - in: query
+          name: limit
+          required: false
+          schema:
+            type: integer
+            default: 20
+          description: Number of messages to retrieve
+      responses:
+        '200':
+          description: List of chat messages
+
+  ### Notifications Endpoints
+  /notifications:
+    get:
+      tags:
+        - notifications
+      summary: Get notifications
+      responses:
+        '200':
+          description: List of notifications
+
+components:
+  schemas:
+    # These are placeholder schemas. Expand as needed.
+    Message:
+      type: object
+      properties:
+        message:
+          type: string
+    Notification:
+      type: object
+      properties:
+        id:
+          type: string
+        type:
+          type: string
+        message:
+          type: string
+    Profile:
+      type: object
+      properties:
+        user_id:
+          type: string
+        username:
+          type: string
+    UserAccount:
+      type: object
+      properties:
+        username:
+          type: string
+        email:
+          type: string
+        first_name:
+          type: string
+        last_name:
+          type: string
