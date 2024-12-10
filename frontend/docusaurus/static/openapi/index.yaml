@@ -576,6 +576,7 @@ paths:
 
   /login:
     post:
+      security: []
       tags:
         - auth
       summary: Login
@@ -616,6 +617,7 @@ paths:
 
   /reset-password:
     post:
+      security: []
       tags:
         - auth
       summary: Request password reset
@@ -633,6 +635,7 @@ paths:
           description: Password reset link sent
 
     patch:
+      security: []
       tags:
         - auth
       summary: Reset password
@@ -653,6 +656,7 @@ paths:
 
   /resend-verification-email:
     post:
+      security: []
       tags:
         - auth
       summary: Resend verification email
@@ -671,6 +675,7 @@ paths:
 
   /verify-email:
     patch:
+      security: []
       tags:
         - auth
       summary: Verify email
@@ -752,37 +757,46 @@ paths:
           description: List of notifications
 
 components:
-  schemas:
-    # These are placeholder schemas. Expand as needed.
-    Message:
-      type: object
-      properties:
-        message:
-          type: string
-    Notification:
-      type: object
-      properties:
-        id:
-          type: string
-        type:
-          type: string
-        message:
-          type: string
-    Profile:
-      type: object
-      properties:
-        user_id:
-          type: string
-        username:
-          type: string
-    UserAccount:
-      type: object
-      properties:
-        username:
-          type: string
-        email:
-          type: string
-        first_name:
-          type: string
-        last_name:
-          type: string
+  securitySchemes:
+    cookieAuth:
+      type: apiKey
+      in: cookie
+      name: jwt
+
+security:
+  - cookieAuth: []
+
+schemas:
+  # These are placeholder schemas. Expand as needed.
+  Message:
+    type: object
+    properties:
+      message:
+        type: string
+  Notification:
+    type: object
+    properties:
+      id:
+        type: string
+      type:
+        type: string
+      message:
+        type: string
+  Profile:
+    type: object
+    properties:
+      user_id:
+        type: string
+      username:
+        type: string
+  UserAccount:
+    type: object
+    properties:
+      username:
+        type: string
+      email:
+        type: string
+      first_name:
+        type: string
+      last_name:
+        type: string
