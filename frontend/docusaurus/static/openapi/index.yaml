@@ -27,9 +27,9 @@ externalDocs:
   url: https://github.com/ugoi/Matcha
 
 x-logo:
-  url: 'https://example.com/images/matcha-logo.png'
-  backgroundColor: '#FFFFFF'
-  altText: 'Matcha Logo'
+  url: "https://example.com/images/matcha-logo.png"
+  backgroundColor: "#FFFFFF"
+  altText: "Matcha Logo"
 
 servers:
   - url: http://localhost:3000/api
@@ -39,7 +39,7 @@ tags:
   - name: profile
     description: |-
       Operations for managing and interacting with user profiles.
-      
+
       **Capabilities:**
       - View and update profile details
       - Search profiles by various filters
@@ -52,7 +52,7 @@ tags:
   - name: user
     description: |-
       Operations that allow you to manage user accounts.
-      
+
       **Capabilities:**
       - Create a new user
       - Update existing user details
@@ -65,7 +65,7 @@ tags:
   - name: auth
     description: |-
       Operations related to user authentication and authorization.
-      
+
       **Capabilities:**
       - User registration
       - Login and logout
@@ -77,7 +77,7 @@ tags:
   - name: notifications
     description: |-
       Operations to handle user notifications.
-      
+
       **Capabilities:**
       - View notifications
     externalDocs:
@@ -87,7 +87,7 @@ tags:
   - name: chat
     description: |-
       Operations for messaging between users.
-      
+
       **Capabilities:**
       - Send messages to other users
       - View conversation history
@@ -115,8 +115,14 @@ paths:
           schema:
             type: string
       responses:
-        '200':
+        "200":
           description: A list of profiles
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/PublicProfile"
 
   /profiles/{user_id}:
     get:
@@ -131,7 +137,7 @@ paths:
           schema:
             type: string
       responses:
-        '200':
+        "200":
           description: A single profile
 
   /profiles/me:
@@ -141,7 +147,7 @@ paths:
       summary: Get my profile
       description: Retrieve the authenticated user's profile.
       responses:
-        '200':
+        "200":
           description: The authenticated user's profile
     patch:
       tags:
@@ -160,7 +166,7 @@ paths:
                 gps_latitude:
                   type: string
       responses:
-        '200':
+        "200":
           description: Profile updated successfully
     post:
       tags:
@@ -189,7 +195,7 @@ paths:
                 gps_longitude:
                   type: string
       responses:
-        '201':
+        "201":
           description: Profile created or updated successfully
 
   ### Profile Visits
@@ -205,7 +211,7 @@ paths:
           schema:
             type: string
       responses:
-        '201':
+        "201":
           description: Visit recorded successfully
 
   /profiles/visits:
@@ -214,7 +220,7 @@ paths:
         - profile
       summary: Get profiles the user visited
       responses:
-        '200':
+        "200":
           description: List of visited profiles
 
   ### Profile Interests
@@ -235,14 +241,14 @@ paths:
                   items:
                     type: string
       responses:
-        '200':
+        "200":
           description: Interests added
     get:
       tags:
         - profile
       summary: Get my interests
       responses:
-        '200':
+        "200":
           description: List of interests
     delete:
       tags:
@@ -259,7 +265,7 @@ paths:
             items:
               type: string
       responses:
-        '200':
+        "200":
           description: Interests removed
 
   /profiles/{user_id}/interests:
@@ -274,7 +280,7 @@ paths:
           schema:
             type: string
       responses:
-        '200':
+        "200":
           description: List of user's interests
 
   ### Profile Pictures
@@ -295,14 +301,14 @@ paths:
                   items:
                     type: string
       responses:
-        '200':
+        "200":
           description: Pictures added
     get:
       tags:
         - profile
       summary: Get my profile pictures
       responses:
-        '200':
+        "200":
           description: List of pictures
     delete:
       tags:
@@ -319,7 +325,7 @@ paths:
             items:
               type: string
       responses:
-        '200':
+        "200":
           description: Pictures removed
 
   ### Profile Likes & Matches
@@ -335,7 +341,7 @@ paths:
           schema:
             type: string
       responses:
-        '201':
+        "201":
           description: User liked
     delete:
       tags:
@@ -348,7 +354,7 @@ paths:
           schema:
             type: string
       responses:
-        '200':
+        "200":
           description: Like removed
 
   /profiles/{user_id}/dislike:
@@ -363,7 +369,7 @@ paths:
           schema:
             type: string
       responses:
-        '201':
+        "201":
           description: User disliked
 
   /profiles/likes:
@@ -372,7 +378,7 @@ paths:
         - profile
       summary: Get my likes
       responses:
-        '200':
+        "200":
           description: List of liked profiles
 
   /profiles/matched:
@@ -381,7 +387,7 @@ paths:
         - profile
       summary: Get my matches
       responses:
-        '200':
+        "200":
           description: List of matched profiles
 
   ### Profile Blocks
@@ -391,7 +397,7 @@ paths:
         - profile
       summary: Get blocked profiles
       responses:
-        '200':
+        "200":
           description: List of blocked profiles
 
   /profiles/{user_id}/block:
@@ -406,7 +412,7 @@ paths:
           schema:
             type: string
       responses:
-        '201':
+        "201":
           description: User blocked
     delete:
       tags:
@@ -426,7 +432,7 @@ paths:
           schema:
             type: string
       responses:
-        '200':
+        "200":
           description: User unblocked
 
   ### Profile Reports
@@ -436,7 +442,7 @@ paths:
         - profile
       summary: Get reported profiles
       responses:
-        '200':
+        "200":
           description: List of reported profiles
 
   /profiles/{user_id}/report:
@@ -460,7 +466,7 @@ paths:
                 reason:
                   type: string
       responses:
-        '201':
+        "201":
           description: User reported
 
   ### User Endpoints
@@ -470,14 +476,14 @@ paths:
         - user
       summary: Get my user account
       responses:
-        '200':
+        "200":
           description: User account details
     delete:
       tags:
         - user
       summary: Delete my user account
       responses:
-        '200':
+        "200":
           description: User account deleted
     patch:
       tags:
@@ -495,12 +501,13 @@ paths:
                 phone:
                   type: string
       responses:
-        '200':
+        "200":
           description: User account updated
 
   ### Auth Endpoints
   /signup:
     post:
+      security: []
       tags:
         - auth
       summary: Sign up
@@ -522,8 +529,52 @@ paths:
                 password:
                   type: string
       responses:
-        '201':
+        "200":
           description: User created successfully
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - allOf:
+                    - $ref: "#/components/schemas/SuccessResponse"
+                    title: SuccessResponse
+                    type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          title:
+                            type: string
+                          user:
+                            $ref: "#/components/schemas/User"
+                  - allOf:
+                    - $ref: "#/components/schemas/FailResponse"
+                    title: FailResponse
+                    type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          title:
+                            type: string
+                          errors:
+                            type: array
+                            items:
+                              $ref: "#/components/schemas/FieldError"
+                  - allOf:
+                    - $ref: "#/components/schemas/ErrorResponse"
+                    title: ErrorResponse
+                    type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          title:
+                            type: string
+                          errors:
+                            type: array
+                            items:
+                              $ref: "#/components/schemas/FieldError"
       x-codeSamples:
         - lang: cURL
           source: |
@@ -564,11 +615,11 @@ paths:
               console.log(json);
               const status = json.status;
               if (status === "error") {
-                setStatus("error");
+                console.error(status)
               } else if (status === "fail") {
-                setStatus("fail");
+                console.log(status)
               } else if (status === "success") {
-                setStatus("success");
+                console.error(status)
               }
             } catch (error) {
               console.error("Error:", error);
@@ -592,7 +643,7 @@ paths:
                 password:
                   type: string
       responses:
-        '200':
+        "200":
           description: Authenticated successfully
 
   /logout:
@@ -601,7 +652,7 @@ paths:
         - auth
       summary: Logout
       responses:
-        '200':
+        "200":
           description: Logged out successfully
 
   /check-auth:
@@ -610,9 +661,9 @@ paths:
         - auth
       summary: Check authentication
       responses:
-        '200':
+        "200":
           description: Session is valid
-        '401':
+        "401":
           description: Not authenticated
 
   /reset-password:
@@ -631,7 +682,7 @@ paths:
                 email:
                   type: string
       responses:
-        '200':
+        "200":
           description: Password reset link sent
 
     patch:
@@ -651,7 +702,7 @@ paths:
                 password:
                   type: string
       responses:
-        '200':
+        "200":
           description: Password reset successfully
 
   /resend-verification-email:
@@ -670,7 +721,7 @@ paths:
                 email:
                   type: string
       responses:
-        '200':
+        "200":
           description: Verification email resent
 
   /verify-email:
@@ -689,7 +740,7 @@ paths:
                 token:
                   type: string
       responses:
-        '200':
+        "200":
           description: Email verified successfully
 
   ### Chat Endpoints
@@ -714,7 +765,7 @@ paths:
                 message:
                   type: string
       responses:
-        '201':
+        "201":
           description: Message sent
 
   /chats/{user_id}:
@@ -743,7 +794,7 @@ paths:
             default: 20
           description: Number of messages to retrieve
       responses:
-        '200':
+        "200":
           description: List of chat messages
 
   ### Notifications Endpoints
@@ -753,7 +804,7 @@ paths:
         - notifications
       summary: Get notifications
       responses:
-        '200':
+        "200":
           description: List of notifications
 
 components:
@@ -763,40 +814,213 @@ components:
       in: cookie
       name: jwt
 
+  schemas:
+    FieldError:
+      type: object
+      properties:
+        type:
+          type: string
+          description: The type of error.
+          example: field
+        value:
+          type: string
+          description: The input value that caused the error.
+          example: adrgonzax2
+        msg:
+          type: string
+          description: The error message.
+          example: username already exists
+        path:
+          type: string
+          description: The field or path associated with the error.
+          example: username
+        location:
+          type: string
+          description: The location of the error (e.g., body, query, params).
+          example: body
+    SuccessResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          enum: [success]
+          description: The status of the response.
+        data:
+          type: object
+          nullable: true
+          description: The data payload of the response.
+    FailResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          enum: [fail]
+          description: The status of the response.
+        data:
+          type: object
+          nullable: true
+          description: The data payload of the response.
+    ErrorResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          enum: [error]
+          description: The status of the response.
+        message:
+          type: string
+          description: The error message.
+        data:
+          type: object
+          nullable: true
+          description: The data payload of the response.
+    User:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Unique identifier for the user.
+        firstName:
+          type: string
+          description: First name of the user.
+        lastName:
+          type: string
+          description: Last name of the user.
+        username:
+          type: string
+          description: Username of the user.
+        email:
+          type: string
+          format: email
+          description: Email address of the user.
+    Message:
+      type: object
+      properties:
+        message:
+          type: string
+    Notification:
+      type: object
+      properties:
+        id:
+          type: string
+        type:
+          type: string
+        message:
+          type: string
+    Profile:
+      type: object
+      properties:
+        user_id:
+          type: string
+        username:
+          type: string
+    PublicProfile:
+      type: object
+      properties:
+        profile_id:
+          type: string
+          format: uuid
+          description: Unique identifier for the profile.
+        user_id:
+          type: string
+          format: uuid
+          description: Unique identifier for the user.
+        first_name:
+          type: string
+          description: First name of the user.
+        last_name:
+          type: string
+          description: Last name of the user.
+        username:
+          type: string
+          description: Username of the user.
+        gender:
+          type: string
+          enum: [male, female, other]
+          description: Gender of the user.
+        age:
+          type: integer
+          description: Age of the user.
+        sexual_preference:
+          type: string
+          description: Sexual preference of the user.
+        biography:
+          type: string
+          description: Biography of the user.
+        interests:
+          type: array
+          items:
+            $ref: "#/components/schemas/Interest"
+          description: List of user interests.
+        common_interests:
+          type: array
+          items:
+            type: string
+          nullable: true
+          description: List of common interests, if any.
+        pictures:
+          type: array
+          items:
+            $ref: "#/components/schemas/Picture"
+          description: List of user pictures.
+        fame_rating:
+          type: integer
+          description: Fame rating of the user.
+        profile_picture:
+          type: string
+          description: URL of the profile picture.
+        distance:
+          type: number
+          format: double
+          description: Distance to the user in meters.
+        last_online:
+          type: string
+          format: date-time
+          description: Last online timestamp of the user.
+        created_at:
+          type: string
+          format: date-time
+          description: Creation timestamp of the profile.
+    Interest:
+      type: object
+      properties:
+        interest_id:
+          type: string
+          format: uuid
+          description: Unique identifier for the interest.
+        user_id:
+          type: string
+          format: uuid
+          description: User ID associated with the interest.
+        interest_tag:
+          type: string
+          description: Tag describing the interest.
+    Picture:
+      type: object
+      properties:
+        picture_id:
+          type: string
+          format: uuid
+          description: Unique identifier for the picture.
+        user_id:
+          type: string
+          format: uuid
+          description: User ID associated with the picture.
+        picture_url:
+          type: string
+          description: URL of the picture.
+    UserAccount:
+      type: object
+      properties:
+        username:
+          type: string
+        email:
+          type: string
+        first_name:
+          type: string
+        last_name:
+          type: string
+
 security:
   - cookieAuth: []
-
-schemas:
-  # These are placeholder schemas. Expand as needed.
-  Message:
-    type: object
-    properties:
-      message:
-        type: string
-  Notification:
-    type: object
-    properties:
-      id:
-        type: string
-      type:
-        type: string
-      message:
-        type: string
-  Profile:
-    type: object
-    properties:
-      user_id:
-        type: string
-      username:
-        type: string
-  UserAccount:
-    type: object
-    properties:
-      username:
-        type: string
-      email:
-        type: string
-      first_name:
-        type: string
-      last_name:
-        type: string
