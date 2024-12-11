@@ -23,13 +23,15 @@ import { TokenType } from "../token/token.interface.js";
 import { userRepository } from "../users/users.repository.js";
 import passport from "passport";
 import { profilesService } from "../profiles/profiles.service.js";
+import { SuccessResponse } from "../../interfaces/response.js";
 
 /* Check if user is authenticated */
 router.get(
   "/check-auth",
   passport.authenticate("jwt", { session: false }),
   function (req, res) {
-    res.json({ status: "success", data: { message: "Authenticated" } });
+    const response = new SuccessResponse({ message: "Authenticated" });
+    res.json(response);
   }
 );
 
@@ -59,7 +61,9 @@ router.post(
         email: req.body.email,
         password: req.body.password,
       });
-      res.json(user);
+
+      const response = new SuccessResponse({ user });
+      res.json(response);
       return;
     } catch (error) {
       next(error);
@@ -89,16 +93,18 @@ router.post(
       });
 
       // Set last_online in profile
-      await profilesService.updateLastOnline(result.data.user.id);
+      await profilesService.updateLastOnline(result.user.user_id);
 
       // Set token in cookie
-      res.cookie("jwt", result.data.token, {
+      res.cookie("jwt", result.token, {
         httpOnly: true,
         secure: true,
         sameSite: "strict",
       });
 
-      res.json(result);
+      const response = new SuccessResponse(result);
+
+      res.json(response);
     } catch (error) {
       next(error);
       return;
@@ -109,7 +115,8 @@ router.post(
 /* Logout */
 router.get("/logout", function (req, res) {
   res.clearCookie("jwt");
-  res.json({ status: "success", data: { message: "Logged out" } });
+  const response = new SuccessResponse({ message: "Logged out" });
+  res.json(response);
 });
 
 /* Resend verification email */
@@ -140,7 +147,9 @@ router.post(
       }
 
       const nextMonth = new Date();
-      nextMonth.setDate(new Date().getDate() + Number(process.env.JWT_EXPIRES_IN));
+      nextMonth.setDate(
+        new Date().getDate() + Number(process.env.JWT_EXPIRES_IN)
+      );
       const token = await createToken({
         user_id: user.user_id,
         token_type: TokenType.EmailVerification,
@@ -155,10 +164,10 @@ router.post(
           token.token_id
         }`
       );
-      res.json({
-        status: "success",
-        data: { message: "Verification email sent" },
+      const response = new SuccessResponse({
+        message: "Verification email sent",
       });
+      res.json(response);
     } catch (error) {
       next(error);
       return;
@@ -182,7 +191,9 @@ router.patch(
         return;
       }
 
-      res.json({ status: "success", data: { message: "Email verified" } });
+      const response = new SuccessResponse({ message: "Email verified" });
+
+      res.json(response);
     } else {
       next(new JFail({ title: "invalid input", errors: result.array() }));
     }
@@ -198,7 +209,9 @@ router.post(
     try {
       // Send reset password email
       const nextMonth = new Date();
-      nextMonth.setDate(new Date().getDate() + Number(process.env.JWT_EXPIRES_IN));
+      nextMonth.setDate(
+        new Date().getDate() + Number(process.env.JWT_EXPIRES_IN)
+      );
       const user = await userRepository.findOne({ email: req.body.email });
       const token = await createToken({
         user_id: user.user_id,
@@ -213,10 +226,11 @@ router.post(
           token.token_id
         }`
       );
-      res.json({
-        status: "success",
-        data: { message: "Reset password email sent" },
+
+      const response = new SuccessResponse({
+        message: "Reset password email sent",
       });
+      res.json(response);
     } catch (error) {
       next(error);
       return;
@@ -240,7 +254,8 @@ router.patch(
         return;
       }
 
-      res.json({ status: "success", data: { message: "Password reset" } });
+      const response = new SuccessResponse({ message: "Password reset" });
+      res.json(response);
     } else {
       next(new JFail({ title: "invalid input", errors: result.array() }));
     }
@@ -267,7 +282,7 @@ router.get(
       const result = await createJwtToken(req.user);
 
       // Set token in cookie
-      res.cookie("jwt", result.data.token, {
+      res.cookie("jwt", result.token, {
         httpOnly: true,
         secure: true,
         sameSite: "strict",
@@ -301,7 +316,7 @@ router.get(
       const result = await createJwtToken(req.user);
 
       // Set token in cookie
-      res.cookie("jwt", result.data.token, {
+      res.cookie("jwt", result.token, {
         httpOnly: true,
         secure: true,
         sameSite: "strict",

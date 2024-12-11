@@ -6,28 +6,29 @@ export enum ErrorStatus {
 export class JFail extends Error {
   status: ErrorStatus;
   data: Object;
-  message: string;
 
-  constructor(data?: Object, message?: string) {
-    super(message);
+  constructor(data?: Object) {
+    super();
     this.status = ErrorStatus.Fail;
-    if (!data) {
-      this.data = {message: message}
-    }
     this.data = data;
-    this.message = message;
   }
 }
 
 export class JError extends Error {
   status: ErrorStatus;
-  message: string;
   data: Object;
+  code: string
 
-  constructor(message: string, data?: Object) {
+  constructor(message?: string, data?: Object, code?: string) {
     super(message);
     this.status = ErrorStatus.Error;
     this.data = data;
-    this.message = message;
+    this.code = code;
+  }
+}
+
+export class ValidationError extends Error {
+  constructor(message: string) {
+    super(message);
   }
 }

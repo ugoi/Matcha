@@ -1,5 +1,5 @@
 import db from "../../../config/db-config.js";
-import { JFail } from "../../../error-handlers/custom-errors.js";
+import { ValidationError } from "../../../error-handlers/custom-errors.js";
 import { BlockedUser } from "../likes/matchs.interface.js";
 
 export const blockedUsersRepository = {
@@ -16,11 +16,11 @@ export const blockedUsersRepository = {
   ): Promise<BlockedUser> {
     // Check if user ids are valid
     if (!blocker_user_id) {
-      throw new JFail(null, "blocker_user_id can't be null");
+      throw new ValidationError("blocker_user_id can't be null");
     }
     // Check if user ids are valid
     if (!blocked_user_id) {
-      throw new JFail(null, "blocked_user_id can't be null");
+      throw new ValidationError("blocked_user_id can't be null");
     }
 
     // Check if you already blocked the user

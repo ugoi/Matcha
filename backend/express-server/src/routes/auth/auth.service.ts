@@ -1,12 +1,11 @@
 import db from "../../config/db-config.js";
-import { JFail } from "../../error-handlers/custom-errors.js";
+import { ValidationError } from "../../error-handlers/custom-errors.js";
 import apiInstance from "../../brevo-object.js";
 import brevo from "@getbrevo/brevo";
 import fs from "node:fs";
 import { join } from "path";
 import {
   CreateAccountInput,
-  CreateAccountOutput,
   LoginInput,
   LoginOutput,
 } from "./auth.interface.js";
@@ -24,7 +23,7 @@ export async function sendVerificationEmail(
   name: string,
   email: string,
   verificationLink: string
-) {
+): Promise<void> {
   // send email to email
   let sendSmtpEmail = new brevo.SendSmtpEmail();
 
@@ -51,7 +50,10 @@ export async function sendVerificationEmail(
   }
 }
 
-export async function sendPasswordResetEmail(email: string, resetLink: string) {
+export async function sendPasswordResetEmail(
+  email: string,
+  resetLink: string
+): Promise<void> {
   // send email to email
   let sendSmtpEmail = new brevo.SendSmtpEmail();
 
@@ -78,7 +80,7 @@ export async function sendPasswordResetEmail(email: string, resetLink: string) {
   }
 }
 
-export async function verifyEmail(token: string) {
+export async function verifyEmail(token: string): Promise<void> {
   // Check if token is valid
   let tokenData;
   try {
@@ -93,21 +95,14 @@ export async function verifyEmail(token: string) {
     const user = await userRepository.findOne({ id: tokenData.user_id });
 
     if (user.is_email_verified) {
-      throw new JFail({
-        title: "Email already verified",
-      });
+      throw new ValidationError("Email already verified");
     }
 
     if (user.email !== tokenData.value) {
-      throw new JFail({
-        title: "Invalid token",
-        description: "Token does not match email",
-      });
+      throw new ValidationError("Token does not match email");
     }
   } catch (error) {
-    throw new JFail({
-      title: "Invalid token",
-    });
+    throw new ValidationError("Invalid token");
   } finally {
     // Mark token as used
     await db.one(
@@ -122,9 +117,7 @@ export async function verifyEmail(token: string) {
   }
 
   if (tokenData.expiry_date < new Date()) {
-    throw new JFail({
-      title: "Token expired",
-    });
+    throw new ValidationError("Token expired");
   }
 
   // Mark email as verified
@@ -138,7 +131,10 @@ export async function verifyEmail(token: string) {
   );
 }
 
-export async function resetPassword(token: string, newPassword: string) {
+export async function resetPassword(
+  token: string,
+  newPassword: string
+): Promise<void> {
   // Check if token is valid
   let tokenData;
   try {
@@ -151,20 +147,14 @@ export async function resetPassword(token: string, newPassword: string) {
     );
 
     if (!tokenData) {
-      throw new JFail({
-        title: "Invalid token",
-      });
+      throw new ValidationError("Invalid token");
     }
   } catch (error) {
-    throw new JFail({
-      title: "Invalid token",
-    });
+    throw new ValidationError("Invalid token");
   }
 
   if (tokenData.expiry_date < new Date()) {
-    throw new JFail({
-      title: "Token expired",
-    });
+    throw new ValidationError("Token expired");
   }
 
   // Mark token as used
@@ -201,24 +191,20 @@ export async function login(input: LoginInput): Promise<LoginOutput> {
   });
 
   if (!user) {
-    throw new JFail({
-      title: "Invalid credentials",
-    });
+    throw new ValidationError("Invalid credentials");
   }
 
   if (!user.password_hash) {
-    throw new JFail({
-      title: "Invalid credentials",
-    });
+    throw new ValidationError("Invalid credentials");
   }
 
   if (!(await bcrypt.compare(password, user.password_hash))) {
-    throw new JFail({
-      title: "Invalid credentials",
-    });
+    throw new ValidationError("Invalid credentials");
   }
 
-  return await createJwtToken(user);
+  const token = await createJwtToken(user);
+
+  return token;
 }
 
 export async function createJwtToken(user: User): Promise<LoginOutput> {
@@ -238,18 +224,8 @@ export async function createJwtToken(user: User): Promise<LoginOutput> {
   );
 
   return {
-    status: "success",
-    data: {
-      token: token,
-      user: {
-        id: user.user_id,
-        firstName: user.first_name,
-        lastName: user.last_name,
-        username: user.username,
-        email: user.email
-      },
-      
-    },
+    token,
+    user,
   };
 }
 
@@ -306,7 +282,7 @@ export async function authenticatedWithFederatedProvider(
 
 export async function authenticateWithCredentials(
   input: CreateAccountInput
-): Promise<CreateAccountOutput> {
+): Promise<User> {
   let hashedPassword = "";
 
   hashedPassword = await bcrypt.hash(input.password, 10);
@@ -317,14 +293,14 @@ export async function authenticateWithCredentials(
   });
 
   if (userData) {
-    throw new JFail({ data: { email: "Email already in use" } });
+    throw new ValidationError("Email already in use");
   }
 
   userData = await db.one(
     `
         INSERT INTO users(first_name, last_name, username, email, password_hash, created_at) 
         VALUES($1, $2, $3, $4, $5, $6)
-        RETURNING user_id, first_name, last_name, username, email
+        RETURNING *
         `,
     [
       input.firstName,
@@ -347,25 +323,11 @@ export async function authenticateWithCredentials(
   });
 
   // On successful user creation, send verification email and return user data
-  sendVerificationEmail(
+  await sendVerificationEmail(
     `${userData.first_name} ${userData.last_name}`,
     userData.email,
     `${process.env.BASE_URL}/verify-email?token=${tokenData.token_id}`
   );
 
-  const title = "User created. Verification email sent";
-
-  return {
-    status: "success",
-    data: {
-      user: {
-        id: userData.user_id,
-        firstName: userData.first_name,
-        lastName: userData.last_name,
-        username: userData.username,
-        email: userData.email,
-      },
-      title: title,
-    },
-  };
+  return userData;
 }

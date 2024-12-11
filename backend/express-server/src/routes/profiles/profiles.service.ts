@@ -1,5 +1,5 @@
 import db, { pgp } from "../../config/db-config.js";
-import { JError, JFail } from "../../error-handlers/custom-errors.js";
+import { JError, ValidationError } from "../../error-handlers/custom-errors.js";
 import { FilterSet, SortSet } from "../../utils/utils.js";
 import {
   CreateProfileInput,
@@ -75,7 +75,7 @@ export const profilesService = {
       ]);
       // Remove gps fields from input
       delete input.data.gps_latitude;
-      delete input.data.gps_longitude
+      delete input.data.gps_longitude;
     }
 
     // Remove gps fields from input and add the raw SQL expression for location
@@ -108,7 +108,7 @@ export const profilesService = {
         ? {
             gender: { $eq: currentUser.sexual_preference },
             distance: {
-              $lt: 100
+              $lt: 100,
             },
             fame_rating: { $gte: 0 },
             common_interests: { $gte: 2 },
@@ -173,8 +173,7 @@ export const profilesService = {
         (picture: Picture) => picture.picture_url === picture_id
       )
     ) {
-      throw new JFail(
-        null,
+      throw new ValidationError(
         `Profile picture not found in user pictures - Please upload the pictures first with POST ${process.env.BASE_URL}/api/profiles/me/pictures/${picture_id}`
       );
     }
@@ -196,8 +195,7 @@ export const profilesService = {
       .join(", ");
 
     if (overlap.length > 0) {
-      throw new JFail(
-        null,
+      throw new ValidationError(
         "Following pictures already exist: " + overlapMessage
       );
     }

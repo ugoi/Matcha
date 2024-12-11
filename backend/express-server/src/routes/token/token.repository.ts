@@ -1,5 +1,5 @@
 import db from "../../config/db-config.js";
-import { JFail } from "../../error-handlers/custom-errors.js";
+
 import { CreateTokenInput, Token } from "./token.interface.js";
 
 export async function createToken(input: CreateTokenInput): Promise<Token> {
