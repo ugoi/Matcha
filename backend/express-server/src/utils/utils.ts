@@ -7,13 +7,14 @@ import {
 } from "../routes/profiles/profiles.interface.js";
 import { profilesRepository } from "../routes/profiles/profiles.repository.js";
 import { userRepository } from "../routes/users/users.repository.js";
-import { JFail } from "../error-handlers/custom-errors.js";
+import { JFail, ValidationError } from "../error-handlers/custom-errors.js";
 import _ from "lodash";
 import { profilesService } from "../routes/profiles/profiles.service.js";
 import { blockedUsersRepository } from "../routes/profiles/blocks/blocks.repository.js";
 import { likesService } from "../routes/profiles/likes/likes.service.js";
 import { likesRepository } from "../routes/profiles/likes/likes.repository.js";
 import { picturesRepository } from "../routes/profiles/pictures/pictures.repository.js";
+import { findToken } from "../routes/token/token.repository.js";
 const { unescape, escape, pickBy } = _;
 const pgp = pgPromise({
   /* Initialization Options */
@@ -146,6 +147,14 @@ export async function emailNotExists(value) {
   return true;
 }
 
+export async function userExistsValidator(value) {
+  const user = await userRepository.findOne({ username: value, email: value });
+  if (!user) {
+    throw new Error("user not found");
+  }
+  return true;
+}
+
 export function isHtmlTagFree(value) {
   if (!value || typeof value !== "string" || value.length === 0) {
     return true;
@@ -174,6 +183,15 @@ export async function emailVerified(value: string) {
 
   if (!user.is_email_verified) {
     throw new Error("email not verified");
+  }
+
+  return true;
+}
+
+export async function tokenIsValid(value: string) {
+  const token = await findToken(value);
+  if (!token) {
+    throw new Error("invalid token");
   }
 
   return true;

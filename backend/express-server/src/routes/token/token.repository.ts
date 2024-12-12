@@ -14,3 +14,16 @@ export async function createToken(input: CreateTokenInput): Promise<Token> {
 
   return data;
 }
+
+export async function findToken(token_id: string, used = false): Promise<Token> {
+  let data = await db.oneOrNone(
+    `
+      SELECT *
+      FROM tokens
+      WHERE token_id = $1 AND used = $2
+      `,
+    [token_id, used]
+  );
+
+  return data;
+}

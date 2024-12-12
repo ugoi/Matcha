@@ -14,8 +14,8 @@ router.get(
   passport.authenticate("jwt", { session: false }),
   async function (req, res, next) {
     try {
-      const profile = await interestsRepository.find(req.user.user_id);
-      res.json({ message: "success", data: { interests: profile } });
+      const interests = await interestsRepository.find(req.user.user_id);
+      res.json({ message: "success", data: { interests } });
     } catch (error) {
       next(error);
       return;

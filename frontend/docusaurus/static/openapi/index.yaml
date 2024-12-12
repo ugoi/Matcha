@@ -547,40 +547,13 @@ paths:
                             type: string
                           user:
                             $ref: "#/components/schemas/User"
-                  - allOf:
-                    - $ref: "#/components/schemas/FailResponse"
-                    title: FailResponse
-                    type: object
-                    properties:
-                      data:
-                        type: object
-                        properties:
-                          title:
-                            type: string
-                          errors:
-                            type: array
-                            items:
-                              $ref: "#/components/schemas/FieldError"
-                  - allOf:
-                    - $ref: "#/components/schemas/ErrorResponse"
-                    title: ErrorResponse
-                    type: object
-                    properties:
-                      data:
-                        type: object
-                        properties:
-                          title:
-                            type: string
-                          errors:
-                            type: array
-                            items:
-                              $ref: "#/components/schemas/FieldError"
+                  - $ref: "#/components/schemas/FailResponse"
+                  - $ref: "#/components/schemas/ErrorResponse"
       x-codeSamples:
         - lang: cURL
           source: |
             curl --location 'http://localhost:3000/api/signup' \
             --header 'Content-Type: application/x-www-form-urlencoded' \
-            --header 'Cookie: jwt=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJlMWIzMmZhZC1kYjc2LTQ5YzUtOWFjNC04ZTQwMDEyZjk3NmMiLCJpc3MiOiJtYXRjaGEiLCJhdWQiOiJtYXRjaGEiLCJpYXQiOjE3MzM3NTkwMTEsImV4cCI6MTczNjM1MTAxMX0.i6hnJvPm4GoHHgGJRJclqM2HddIQHyToIjPGP5txGIc' \
             --data-urlencode 'firstName=John' \
             --data-urlencode 'username=john_doe' \
             --data-urlencode 'lastName=Doe' \
@@ -645,6 +618,64 @@ paths:
       responses:
         "200":
           description: Authenticated successfully
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - allOf:
+                    - $ref: "#/components/schemas/SuccessResponse"
+                    title: SuccessResponse
+                    type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          title:
+                            type: string
+                          token:
+                            type: string
+                            description: JWT token for authenticated sessions
+                          user:
+                            $ref: "#/components/schemas/User"
+                  - $ref: "#/components/schemas/FailResponse"
+                  - $ref: "#/components/schemas/ErrorResponse"
+      x-codeSamples:
+          - lang: cURL
+            source: |
+              curl --location 'http://localhost:3000/api/login' \
+              --header 'Content-Type: application/x-www-form-urlencoded' \
+              --data-urlencode 'username=john_doe' \
+              --data-urlencode 'password=Password123...'
+          - lang: typescript
+            source: |
+              const myHeaders = new Headers();
+              myHeaders.append("Content-Type", "application/x-www-form-urlencoded");
+
+              const urlencoded = new URLSearchParams();
+              urlencoded.append("username", "john_doe");
+              urlencoded.append("password", "Password123...");
+
+              const requestOptions: RequestInit = {
+                method: "POST",
+                headers: myHeaders,
+                body: urlencoded,
+                redirect: "follow",
+              };
+
+              try {
+                const response = await fetch("http://localhost:3000/api/login", requestOptions);
+                const json = await response.json();
+                const status = json.status;
+                if (status === "error") {
+                  console.error(status, json);
+                } else if (status === "fail") {
+                  console.log(status, json.data.errors);
+                } else if (status === "success") {
+                  console.log("Logged in successfully!", json.data);
+                }
+              } catch (error) {
+                console.error("Error:", error);
+              }
 
   /logout:
     get:
@@ -654,6 +685,46 @@ paths:
       responses:
         "200":
           description: Logged out successfully
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - allOf:
+                    - $ref: "#/components/schemas/SuccessResponse"
+                    title: SuccessResponse
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          message:
+                            type: string
+                  - $ref: "#/components/schemas/FailResponse"
+                  - $ref: "#/components/schemas/ErrorResponse"
+      x-codeSamples:
+        - lang: cURL
+          source: |
+            curl --location 'http://localhost:3000/api/logout'
+        - lang: typescript
+          source: |
+            const requestOptions: RequestInit = {
+              method: "GET",
+              redirect: "follow",
+            };
+
+            try {
+              const response = await fetch("http://localhost:3000/api/logout", requestOptions);
+              const json = await response.json();
+              const status = json.status;
+              if (status === "error") {
+                console.error(status, json);
+              } else if (status === "fail") {
+                console.log(status, json.data.errors);
+              } else if (status === "success") {
+                console.log("Logged out successfully!", json.data);
+              }
+            } catch (error) {
+              console.error("Error:", error);
+            }
 
   /check-auth:
     get:
@@ -663,8 +734,53 @@ paths:
       responses:
         "200":
           description: Session is valid
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - allOf:
+                    - $ref: "#/components/schemas/SuccessResponse"
+                    title: SuccessResponse
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          message:
+                            type: string
+                  - $ref: "#/components/schemas/FailResponse"
+                  - $ref: "#/components/schemas/ErrorResponse"
         "401":
           description: Not authenticated
+          content:
+            application/text:
+              schema:
+                type: string
+                example: Unauthorized
+      x-codeSamples:
+        - lang: cURL
+          source: |
+            curl --location 'http://localhost:3000/api/check-auth'
+        - lang: typescript
+          source: |
+            const requestOptions: RequestInit = {
+              method: "GET",
+              redirect: "follow",
+            };
+
+            try {
+              const response = await fetch("http://localhost:3000/api/check-auth", requestOptions);
+              const json = await response.json();
+              const status = json.status;
+              if (status === "error") {
+                console.error(status, json);
+              } else if (status === "fail") {
+                console.log(status, json.data.errors);
+              } else if (status === "success") {
+                console.log("Session is valid!", json.data);
+              }
+            } catch (error) {
+              console.error("Error:", error);
+            }
 
   /reset-password:
     post:
@@ -684,6 +800,61 @@ paths:
       responses:
         "200":
           description: Password reset link sent
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - allOf:
+                    - $ref: "#/components/schemas/SuccessResponse"
+                    title: SuccessResponse
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          message:
+                            type: string
+                  - $ref: "#/components/schemas/FailResponse"
+                  - $ref: "#/components/schemas/ErrorResponse"
+      x-codeSamples:
+        - lang: cURL
+          source: |
+            curl --location 'http://localhost:3000/api/reset-password' \
+            --header 'Content-Type: application/x-www-form-urlencoded' \
+            --data-urlencode 'email=john.doe@gmail.com'
+        - lang: typescript
+          source: |
+            const myHeaders = new Headers();
+            myHeaders.append("Content-Type", "application/x-www-form-urlencoded");
+
+            const urlencoded = new URLSearchParams();
+            urlencoded.append("email", "john.doe@gmail.com");
+
+            const requestOptions: RequestInit = {
+              method: "POST",
+              headers: myHeaders,
+              body: urlencoded,
+              redirect: "follow",
+            };
+
+            try {
+              const response = await fetch(
+                "http://localhost:3000/api/reset-password",
+                requestOptions
+              );
+
+              const json = await response.json();
+              console.log(json);
+              const status = json.status;
+              if (status === "error") {
+                console.error(status)
+              } else if (status === "fail") {
+                console.log(status)
+              } else if (status === "success") {
+                console.error(status)
+              }
+            } catch (error) {
+              console.error("Error:", error);
+            }
 
     patch:
       security: []
@@ -704,6 +875,63 @@ paths:
       responses:
         "200":
           description: Password reset successfully
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - allOf:
+                    - $ref: "#/components/schemas/SuccessResponse"
+                    title: SuccessResponse
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          message:
+                            type: string
+                  - $ref: "#/components/schemas/FailResponse"
+                  - $ref: "#/components/schemas/ErrorResponse"
+      x-codeSamples:
+        - lang: cURL
+          source: |
+            curl --location 'http://localhost:3000/api/reset-password' \
+            --header 'Content-Type: application/x-www-form-urlencoded' \
+            --data-urlencode 'token=123456' \
+            --data-urlencode 'password=Password123...'
+        - lang: typescript
+          source: |
+            const myHeaders = new Headers();
+            myHeaders.append("Content-Type", "application/x-www-form-urlencoded");
+
+            const urlencoded = new URLSearchParams();
+            urlencoded.append("token", "123456");
+            urlencoded.append("password", "Password123...");
+
+            const requestOptions: RequestInit = {
+              method: "PATCH",
+              headers: myHeaders,
+              body: urlencoded,
+              redirect: "follow",
+            };
+
+            try {
+              const response = await fetch(
+                "http://localhost:3000/api/reset-password",
+                requestOptions
+              );
+
+              const json = await response.json();
+              console.log(json);
+              const status = json.status;
+              if (status === "error") {
+                console.error(status)
+              } else if (status === "fail") {
+                console.log(status)
+              } else if (status === "success") {
+                console.error(status)
+              }
+            } catch (error) {
+              console.error("Error:", error);
+            }
 
   /resend-verification-email:
     post:
@@ -723,6 +951,61 @@ paths:
       responses:
         "200":
           description: Verification email resent
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - allOf:
+                    - $ref: "#/components/schemas/SuccessResponse"
+                    title: SuccessResponse
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          message:
+                            type: string
+                  - $ref: "#/components/schemas/FailResponse"
+                  - $ref: "#/components/schemas/ErrorResponse"
+      x-codeSamples:
+        - lang: cURL
+          source: |
+            curl --location 'http://localhost:3000/api/resend-verification-email' \
+            --header 'Content-Type: application/x-www-form-urlencoded' \
+            --data-urlencode 'john.doe@gmail.com'
+        - lang: typescript
+          source: |
+            const myHeaders = new Headers();
+            myHeaders.append("Content-Type", "application/x-www-form-urlencoded");
+
+            const urlencoded = new URLSearchParams();
+            urlencoded.append("email", "john.doe@gmail.com");
+
+            const requestOptions: RequestInit = {
+              method: "POST",
+              headers: myHeaders,
+              body: urlencoded,
+              redirect: "follow",
+            };
+
+            try {
+              const response = await fetch(
+                "http://localhost:3000/api/resend-verification-email",
+                requestOptions
+              );
+
+              const json = await response.json();
+              console.log(json);
+              const status = json.status;
+              if (status === "error") {
+                console.error(status)
+              } else if (status === "fail") {
+                console.log(status)
+              } else if (status === "success") {
+                console.error(status)
+              }
+            } catch (error) {
+              console.error("Error:", error);
+            }
 
   /verify-email:
     patch:
@@ -742,6 +1025,101 @@ paths:
       responses:
         "200":
           description: Email verified successfully
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - allOf:
+                    - $ref: "#/components/schemas/SuccessResponse"
+                    title: SuccessResponse
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          message:
+                            type: string
+                  - $ref: "#/components/schemas/FailResponse"
+                  - $ref: "#/components/schemas/ErrorResponse"
+      x-codeSamples:
+        - lang: cURL
+          source: |
+            curl --location 'http://localhost:3000/api/verify-email' \
+            --header 'Content-Type: application/x-www-form-urlencoded' \
+            --data-urlencode 'token=123456'
+        - lang: typescript
+          source: |
+            const myHeaders = new Headers();
+            myHeaders.append("Content-Type", "application/x-www-form-urlencoded");
+
+            const urlencoded = new URLSearchParams();
+            urlencoded.append("token", "123456");
+
+            const requestOptions: RequestInit = {
+              method: "PATCH",
+              headers: myHeaders,
+              body: urlencoded,
+              redirect: "follow",
+            };
+
+            try {
+              const response = await fetch(
+                "http://localhost:3000/api/verify-email",
+                requestOptions
+              );
+
+              const json = await response.json();
+              console.log(json);
+              const status = json.status;
+              if (status === "error") {
+                console.error(status)
+              } else if (status === "fail") {
+                console.log(status)
+              } else if (status === "success") {
+                console.error(status)
+              }
+            } catch (error) {
+              console.error("Error:", error);
+            }
+
+  /login/google:
+    get:
+      tags:
+        - auth
+      summary: Google OAuth Login
+      description: Initiate Google OAuth flow.
+      responses:
+        "302":
+          description: Redirect to Google OAuth page
+
+  /oauth2/redirect/google:
+    get:
+      tags:
+        - auth
+      summary: Google OAuth Redirect
+      description: Handle the redirect after Google OAuth login.
+      responses:
+        "302":
+          description: Redirect after Google auth flow completes
+
+  /login/facebook:
+    get:
+      tags:
+        - auth
+      summary: Facebook OAuth Login
+      description: Initiate Facebook OAuth flow.
+      responses:
+        "302":
+          description: Redirect to Facebook OAuth page
+
+  /oauth2/redirect/facebook:
+    get:
+      tags:
+        - auth
+      summary: Facebook OAuth Redirect
+      description: Handle the redirect after Facebook OAuth login.
+      responses:
+        "302":
+          description: Redirect after Facebook auth flow completes
 
   ### Chat Endpoints
   /chat/{user_id}:
@@ -860,6 +1238,13 @@ components:
           type: object
           nullable: true
           description: The data payload of the response.
+          properties:
+            title:
+              type: string
+            errors:
+              type: array
+              items:
+                $ref: "#/components/schemas/FieldError"
     ErrorResponse:
       type: object
       properties:

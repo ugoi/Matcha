@@ -1,0 +1,18 @@
+.home-page {
+    text-align: center;
+    background: linear-gradient(135deg, #6D5BBA, #8EDCE6, #FF7EB9);
+    min-height: 100vh;
+    padding: 50px 20px;
+    color: #ffffff;
+    font-family: 'Quicksand', sans-serif;
+  }
+  
+  .home-content h1 {
+    font-size: 3rem;
+    margin-bottom: 20px;
+  }
+  
+  .home-content p {
+    font-size: 1.2rem;
+    margin: 10px 0;
+  }

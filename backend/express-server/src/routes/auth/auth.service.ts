@@ -204,10 +204,13 @@ export async function login(input: LoginInput): Promise<LoginOutput> {
 
   const token = await createJwtToken(user);
 
-  return token;
+  return {
+    token,
+    user,
+  };
 }
 
-export async function createJwtToken(user: User): Promise<LoginOutput> {
+export async function createJwtToken(user: User): Promise<string> {
   if (!user) {
     throw new Error("User is required");
   }
@@ -223,10 +226,7 @@ export async function createJwtToken(user: User): Promise<LoginOutput> {
     { expiresIn: "30d" }
   );
 
-  return {
-    token,
-    user,
-  };
+  return token;
 }
 
 export async function authenticatedWithFederatedProvider(

@@ -16,6 +16,8 @@ import {
   emailVerified,
   isHtmlTagFree,
   usernameNotExists,
+  userExistsValidator,
+  tokenIsValid,
 } from "../../utils/utils.js";
 import { authenticateWithCredentials } from "../auth/auth.service.js";
 import { createToken } from "../token/token.repository.js";
@@ -24,6 +26,7 @@ import { userRepository } from "../users/users.repository.js";
 import passport from "passport";
 import { profilesService } from "../profiles/profiles.service.js";
 import { SuccessResponse } from "../../interfaces/response.js";
+import { title } from "node:process";
 
 /* Check if user is authenticated */
 router.get(
@@ -102,7 +105,11 @@ router.post(
         sameSite: "strict",
       });
 
-      const response = new SuccessResponse(result);
+      const response = new SuccessResponse({
+        title: "Logged in",
+        user: result.user,
+        token: result.token,
+      });
 
       res.json(response);
     } catch (error) {
@@ -125,6 +132,13 @@ router.post(
   body("email").isEmail().escape(),
 
   async function (req, res, next) {
+    const result = validationResult(req);
+    if (!result.isEmpty()) {
+      // Escape html tags in error messages for security
+      const errors = escapeErrors(result.array());
+      next(new JFail({ title: "invalid input", errors: errors }));
+      return;
+    }
     try {
       // Resend verification email
       const user = await userRepository.findOne({ email: req.body.email });
@@ -178,7 +192,7 @@ router.post(
 /* Verify email */
 router.patch(
   "/verify-email",
-  body("token").notEmpty(),
+  body("token").notEmpty().custom(tokenIsValid),
   async function (req, res, next) {
     const result = validationResult(req);
     if (result.isEmpty()) {
@@ -203,9 +217,15 @@ router.patch(
 /* Send reset password email */
 router.post(
   "/reset-password",
-  body("email").isEmail().escape(),
-
+  body("email").isEmail().custom(userExistsValidator),
   async function (req, res, next) {
+    const result = validationResult(req);
+    if (!result.isEmpty()) {
+      // Escape html tags in error messages for security
+      const errors = escapeErrors(result.array());
+      next(new JFail({ title: "invalid input", errors: errors }));
+      return;
+    }
     try {
       // Send reset password email
       const nextMonth = new Date();
@@ -279,10 +299,10 @@ router.get(
           title: "Invalid credentials",
         });
       }
-      const result = await createJwtToken(req.user);
+      const token = await createJwtToken(req.user);
 
       // Set token in cookie
-      res.cookie("jwt", result.token, {
+      res.cookie("jwt", token, {
         httpOnly: true,
         secure: true,
         sameSite: "strict",
@@ -313,10 +333,10 @@ router.get(
           title: "Invalid credentials",
         });
       }
-      const result = await createJwtToken(req.user);
+      const token = await createJwtToken(req.user);
 
       // Set token in cookie
-      res.cookie("jwt", result.token, {
+      res.cookie("jwt", token, {
         httpOnly: true,
         secure: true,
         sameSite: "strict",
