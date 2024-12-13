@@ -12,6 +12,10 @@ interface UserProfile {
   gps_latitude: number;
   gps_longitude: number;
   nearest_location?: string;
+  pictures: Array<{
+    picture_id: string;
+    picture_url: string;
+  }>;
 }
 
 function Profile() {
@@ -21,6 +25,7 @@ function Profile() {
   const [editedBio, setEditedBio] = useState('');
   const [editedFirstName, setEditedFirstName] = useState('');
   const [editedLastName, setEditedLastName] = useState('');
+  const [currentPhotoIndex, setCurrentPhotoIndex] = useState(0);
 
   useEffect(() => {
     const fetchProfileData = async () => {
@@ -42,6 +47,7 @@ function Profile() {
           gps_latitude: data.gps_latitude,
           gps_longitude: data.gps_longitude,
           nearest_location: await fetchNearestLocation(data.gps_latitude, data.gps_longitude),
+          pictures: data.pictures,
         };
 
         setUser(userProfile);
@@ -139,7 +145,7 @@ function Profile() {
         <div className="card text-center p-3 shadow-lg">
           <div className="profile-img-container position-relative">
             <img
-              src={profileImgSrc}
+              src={user.pictures[currentPhotoIndex]?.picture_url || profileImgSrc}
               className="card-img-top"
               alt={`${user.name}`}
               onError={() => setProfileImgSrc('https://via.placeholder.com/400x500?text=Unknown+1')}
@@ -147,6 +153,26 @@ function Profile() {
             <button className="edit-button" onClick={handleEditClick}>
               <i className="bi bi-pencil-square"></i> Edit
             </button>
+            {user.pictures.length > 1 && (
+              <div className="photo-navigation">
+                <button 
+                  className="photo-arrow left-arrow" 
+                  onClick={() => setCurrentPhotoIndex((prev) => 
+                    (prev - 1 + user.pictures.length) % user.pictures.length
+                  )}
+                >
+                  <i className="bi bi-chevron-left"></i>
+                </button>
+                <button 
+                  className="photo-arrow right-arrow" 
+                  onClick={() => setCurrentPhotoIndex((prev) => 
+                    (prev + 1) % user.pictures.length
+                  )}
+                >
+                  <i className="bi bi-chevron-right"></i>
+                </button>
+              </div>
+            )}
           </div>
           <div className="card-body">
             <h4 className="card-title mb-2">{user.name}, {user.age}</h4>
