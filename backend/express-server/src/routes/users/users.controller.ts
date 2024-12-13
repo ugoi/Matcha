@@ -11,6 +11,7 @@ import {
 } from "../../utils/utils.js";
 import { userRepository } from "./users.repository.js";
 import { JFail } from "../../error-handlers/custom-errors.js";
+import { SuccessResponse } from "../../interfaces/response.js";
 
 // TODO: Move this into profile and rename everything in profile to user
 
@@ -23,7 +24,8 @@ router.get(
     try {
       const user = await req.user;
       const protectedUser = new ProtectedUser(user);
-      res.json({ message: "success", data: protectedUser });
+      const response = new SuccessResponse({ user: protectedUser });
+      res.json(response);
     } catch (error) {
       next(error);
       return;
@@ -58,7 +60,9 @@ router.patch(
 
       const protectedUser = new ProtectedUser(user);
 
-      res.json({ message: "success", data: protectedUser });
+      const response = new SuccessResponse({ user: protectedUser });
+
+      res.json(response);
     } catch (error) {
       next(error);
       return;
@@ -74,7 +78,8 @@ router.delete(
   async function (req, res, next) {
     try {
       await userRepository.delete(req.user.user_id);
-      res.json({ message: "success" });
+      const response = new SuccessResponse();
+      res.json(response);
     } catch (error) {
       next(error);
       return;

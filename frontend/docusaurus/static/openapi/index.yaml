@@ -478,6 +478,51 @@ paths:
       responses:
         "200":
           description: User account details
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - allOf:
+                    - $ref: "#/components/schemas/SuccessResponse"
+                    title: SuccessResponse
+                    type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          title:
+                            type: string
+                          user:
+                            $ref: "#/components/schemas/User"
+                  - $ref: "#/components/schemas/FailResponse"
+                  - $ref: "#/components/schemas/ErrorResponse"
+      x-codeSamples:
+        - lang: cURL
+          source: |
+            curl --location 'http://localhost:3000/api/users/me'
+        - lang: typescript
+          source: |
+            const requestOptions: RequestInit = {
+              method: "GET",
+              redirect: "follow",
+            };
+
+            try {
+              const response = await fetch("http://localhost:3000/api/users/me", requestOptions);
+              const json = await response.json();
+              console.log(json);
+              const status = json.status;
+              if (status === "error") {
+                console.error(status)
+              } else if (status === "fail") {
+                console.log(status)
+              } else if (status === "success") {
+                console.error(status)
+              }
+            } catch (error) {
+              console.error("Error:", error);
+            }
+
     delete:
       tags:
         - user
@@ -485,6 +530,51 @@ paths:
       responses:
         "200":
           description: User account deleted
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - allOf:
+                    - $ref: "#/components/schemas/SuccessResponse"
+                    title: SuccessResponse
+                    type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          title:
+                            type: string
+                          message:
+                            type: string
+                  - $ref: "#/components/schemas/FailResponse"
+                  - $ref: "#/components/schemas/ErrorResponse"
+      x-codeSamples:
+        - lang: cURL
+          source: |
+            curl --location 'http://localhost:3000/api/users/me' \
+            --request DELETE
+        - lang: typescript
+          source: |
+            const requestOptions: RequestInit = {
+              method: "DELETE",
+              redirect: "follow",
+            };
+
+            try {
+              const response = await fetch("http://localhost:3000/api/users/me", requestOptions);
+              const json = await response.json();
+              console.log(json);
+              const status = json.status;
+              if (status === "error") {
+                console.error(status)
+              } else if (status === "fail") {
+                console.log(status)
+              } else if (status === "success") {
+                console.error(status)
+              }
+            } catch (error) {
+              console.error("Error:", error);
+            }
     patch:
       tags:
         - user
@@ -498,12 +588,80 @@ paths:
               properties:
                 username:
                   type: string
+                email:
+                  type: string
+                first_name:
+                  type: string
+                last_name:
+                  type: string
                 phone:
                   type: string
       responses:
         "200":
           description: User account updated
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - allOf:
+                    - $ref: "#/components/schemas/SuccessResponse"
+                    title: SuccessResponse
+                    type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          title:
+                            type: string
+                          user:
+                            $ref: "#/components/schemas/User"
+                  - $ref: "#/components/schemas/FailResponse"
+                  - $ref: "#/components/schemas/ErrorResponse"
+      x-codeSamples:
+        - lang: cURL
+          source: |
+            curl --location 'http://localhost:3000/api/users/me' \
+            --header 'Content-Type: application/x-www-form-urlencoded' \
+            --data-urlencode 'username=john_doe' \
+            --data-urlencode 'email=john.doe@gmail.com' \
+            --data-urlencode 'first_name=John' \
+            --data-urlencode 'last_name=Doe' \
+            --data-urlencode 'phone=1234567890' \
+            --request PATCH
+        - lang: typescript
+          source: |
+            const myHeaders = new Headers();
+            myHeaders.append("Content-Type", "application/x-www-form-urlencoded");
 
+            const urlencoded = new URLSearchParams();
+            urlencoded.append("username", "john_doe");
+            urlencoded.append("email", "john.doe@gmail.com");
+            urlencoded.append("first_name", "John");
+            urlencoded.append("last_name", "Doe");
+            urlencoded.append("phone", "1234567890");
+
+            const requestOptions: RequestInit = {
+              method: "PATCH",
+              headers: myHeaders,
+              body: urlencoded,
+              redirect: "follow",
+            };
+
+            try {
+              const response = await fetch("http://localhost:3000/api/users/me", requestOptions);
+              const json = await response.json();
+              console.log(json);
+              const status = json.status;
+              if (status === "error") {
+                console.error(status)
+              } else if (status === "fail") {
+                console.log(status)
+              } else if (status === "success") {
+                console.error(status)
+              }
+            } catch (error) {
+              console.error("Error:", error);
+            }
   ### Auth Endpoints
   /signup:
     post:
@@ -1395,17 +1553,6 @@ components:
         picture_url:
           type: string
           description: URL of the picture.
-    UserAccount:
-      type: object
-      properties:
-        username:
-          type: string
-        email:
-          type: string
-        first_name:
-          type: string
-        last_name:
-          type: string
 
 security:
   - cookieAuth: []
