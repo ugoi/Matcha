@@ -1,54 +1,57 @@
 ---
-title: Instant Notifications
-description: Learn how to use the Matcha Real-Time API with Socket.IO for instant notifications.
+title: Instant Notifications with Matcha Real-Time API
+description: A detailed guide to using the Matcha Real-Time API with Socket.IO for implementing real-time notification features.
 ---
 
-## Introduction
+# Introduction
 
-The Matcha Real-Time API uses Socket.IO to enable real-time notification features.
+The Matcha Real-Time API provides **Socket.IO** support to enable instant notification capabilities.
 
-## Connection Details
+# Connection Details
 
 **Server URL:**  
 `wss://localhost:3000/api`
 
-**Transport:**  
+**Transport Protocols:**
+
 - WebSockets (via Socket.IO)
 
-**Namespace:**  
-- **Notifications:** `/notifications`
+**Namespace:**
 
-## Authentication
+- `/notifications`
 
-The Socket.IO connection typically requires authentication. Pass a JWT or similar token as part of the connection query parameters or a custom header.
+# Authentication
 
-### Example using Socket.IO client (JavaScript):
+To establish a secure connection, the Socket.IO client must provide a JWT or a similar authentication token as part of the connection query parameters or custom headers.
+
+### Example: Authentication with Socket.IO Client (JavaScript)
+
 ```javascript
 import { io } from "socket.io-client";
 
 const socket = io("wss://localhost:3000/api/notifications", {
   auth: {
-    token: "Bearer <your_jwt_token>"
-  }
+    token: "Bearer <your_jwt_token>",
+  },
 });
 
 socket.on("connect", () => {
-  console.log("Connected to the notifications namespace");
-});
-
-socket.on("error", (err) => {
-  console.error("Socket error:", err);
+  console.log("Connected to the notifications namespace.");
 });
 ```
 
-Ensure your server-side Socket.IO configuration checks and validates the provided token before establishing a connection.
+Ensure the server-side configuration validates the token before granting access.
 
-## Notification Events
+# Notification Events
 
-**Events Emitted by the Server:**
-- **notification:** Fired when there is a new notification for the user (e.g., someone liked their profile, or a new match is found).  
+## Events Emitted by the Server
 
-Payload Example:
+### 1. **`notification`**
+
+Triggered when a new notification is received.
+
+#### Payload Example:
+
 ```json
 {
   "type": "like",
@@ -58,19 +61,59 @@ Payload Example:
 }
 ```
 
-**Events Sent by the Client:**  
-Generally, for notifications, the client only listens. If your implementation requires the client to mark notifications as read or perform other actions, you can define additional events. For example:  
-- **ack notification:** The client acknowledges receipt of a notification.  
+#### Example Usage:
 
-Example:
 ```javascript
-socket.emit("ack notification", {
-  notification_id: "some_notification_id"
+socket.on("notification", (data) => {
+  console.log("New notification:", data);
 });
 ```
 
-## Best Practices
+### 2. **`error`**
 
-- **Reconnection:** Ensure your client-side logic handles reconnection events smoothly.
-- **Performance:** Optimize handling for frequent notifications to avoid performance bottlenecks.
-- **Security:** Always secure your tokens and use HTTPS/WSS in production.
+Triggered when an error occurs on the server.
+
+#### Payload Example:
+
+```text
+Invalid authentication token
+```
+
+#### Example Usage:
+
+```javascript
+socket.on("error", (error) => {
+  console.error("An error occurred:", error);
+});
+```
+
+### Acknowledgements
+
+Use acknowledgements to confirm receipt of a notification.
+
+#### Example:
+
+```javascript
+socket.on("notification", (data, ack) => {
+  console.log("New notification:", data);
+  ack("Notification received");
+});
+```
+
+## Events Sent by the Client
+
+### 1. **`ack notification`**
+
+Used to acknowledge receipt of a specific notification.
+
+#### Example Usage:
+
+```javascript
+socket.emit("ack notification", {
+  notification_id: "some_notification_id",
+});
+```
+
+# Notification Features
+
+By combining error handling, event listening, and acknowledgements, the Matcha Real-Time API enables smooth and reliable notification functionality in real-time applications.

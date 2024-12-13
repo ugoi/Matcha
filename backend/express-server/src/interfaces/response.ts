@@ -2,7 +2,11 @@ export class SuccessResponse {
   status: "success" = "success";
   data: object | null;
 
-  constructor(data: object | null) {
+  constructor(data?: object | null) {
+    if (data === undefined) {
+      this.data = null;
+      return;
+    }
     this.data = data;
   }
 }

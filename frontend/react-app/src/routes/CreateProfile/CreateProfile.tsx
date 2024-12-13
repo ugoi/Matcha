@@ -1,5 +1,5 @@
 // src/routes/CreateProfile/CreateProfile.tsx
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import './CreateProfile.css';
 
@@ -15,6 +15,57 @@ function CreateProfile() {
   const [errors, setErrors] = useState<{[key: string]: string}>({});
   const [uploadedPictures, setUploadedPictures] = useState<string[]>([]);
   const [isUploading, setIsUploading] = useState(false);
+  const [coordinates, setCoordinates] = useState({ latitude: 0, longitude: 0 });
+
+  const getLocationByIP = async () => {
+    try {
+      // Using ipapi.co as a free IP geolocation service
+      const response = await fetch('https://ipapi.co/json/');
+      const data = await response.json();
+      
+      if (data.latitude && data.longitude) {
+        setCoordinates({
+          latitude: data.latitude,
+          longitude: data.longitude
+        });
+      } else {
+        throw new Error('Location data not available');
+      }
+    } catch (error) {
+      console.error('Error getting IP location:', error);
+      // Fallback to a default location (you might want to adjust these coordinates)
+      setCoordinates({
+        latitude: 40.7128, // New York City coordinates as fallback
+        longitude: -74.0060
+      });
+      setErrors(prev => ({
+        ...prev,
+        location: 'Using approximate location. For better accuracy, please enable location services.'
+      }));
+    }
+  };
+
+  useEffect(() => {
+    if ("geolocation" in navigator) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          setCoordinates({
+            latitude: position.coords.latitude,
+            longitude: position.coords.longitude
+          });
+        },
+        async (error) => {
+          console.error("Error getting browser location:", error);
+          // Fallback to IP-based location
+          await getLocationByIP();
+        },
+        { timeout: 5000 } // 5 second timeout before trying IP geolocation
+      );
+    } else {
+      // Browser doesn't support geolocation, try IP-based location
+      getLocationByIP();
+    }
+  }, []);
 
   const nextStep = () => setStep(step + 1);
   const prevStep = () => setStep(step - 1);
@@ -24,7 +75,7 @@ function CreateProfile() {
       const newFiles = Array.from(e.target.files);
       
       if (uploadedPictures.length + newFiles.length > 5) {
-        setErrors({ pictures: 'Maximum  pictures allowed' });
+        setErrors({ pictures: 'Maximum 5 pictures allowed' });
         return;
       }
 
@@ -101,8 +152,8 @@ function CreateProfile() {
     setErrors({});
     
     try {
-      if (uploadedPictures.length === 0) {
-        setErrors({ pictures: 'At least one picture is required' });
+      if (uploadedPictures.length < 3) {
+        setErrors({ pictures: 'At least 3 pictures are required' });
         return;
       }
 
@@ -112,8 +163,8 @@ function CreateProfile() {
       formData.append('sexual_preference', sexualPreference);
       formData.append('biography', biography);
       formData.append('profile_picture', uploadedPictures[0]);
-      formData.append('gps_latitude', '0');
-      formData.append('gps_longitude', '0');
+      formData.append('gps_latitude', coordinates.latitude.toString());
+      formData.append('gps_longitude', coordinates.longitude.toString());
 
       const response = await fetch(`${window.location.origin}/api/profiles/me`, {
         method: 'POST',
@@ -300,7 +351,7 @@ function CreateProfile() {
         )}
         {step === 5 && (
           <div className="setting-item mb-3">
-            <label className="form-label">Upload up to 5 pictures</label>
+            <label className="form-label">Upload 3-5 pictures</label>
             <input
               type="file"
               className={`form-control ${errors.pictures ? 'is-invalid' : ''}`}
@@ -341,7 +392,7 @@ function CreateProfile() {
               ))}
             </div>
             <small className="text-muted d-block mt-2">
-              {uploadedPictures.length}/5 pictures uploaded. First picture will be your profile picture.
+              {uploadedPictures.length}/5 pictures uploaded (minimum 3 required). First picture will be your profile picture.
             </small>
             <div className="d-flex justify-content-center mt-4">
               <button className="btn btn-secondary me-3" onClick={prevStep}>
