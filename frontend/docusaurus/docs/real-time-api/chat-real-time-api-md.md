@@ -1,4 +1,3 @@
-
 ---
 title: Instant Messaging with Matcha Real-Time API
 description: A comprehensive guide to using the Matcha Real-Time API with Socket.IO for implementing instant messaging features.
