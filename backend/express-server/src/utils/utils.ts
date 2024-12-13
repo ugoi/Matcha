@@ -25,9 +25,9 @@ export async function arraySanitizer(value) {
     return value;
   }
   if (Array.isArray(value)) {
-    return value.map((interest) => interest.toLowerCase());
+    return value.map((interest) => interest);
   } else {
-    return [value.toLowerCase()];
+    return [value];
   }
 }
 
