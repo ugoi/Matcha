@@ -1,54 +1,55 @@
+
 ---
-title: Instant Messaging
-description: Learn how to use the Matcha Real-Time API with Socket.IO for instant messaging features.
+title: Instant Messaging with Matcha Real-Time API
+description: A comprehensive guide to using the Matcha Real-Time API with Socket.IO for implementing instant messaging features.
 ---
 
-## Introduction
+# Introduction
 
-The Matcha Real-Time API uses Socket.IO to enable real-time messaging features.
+The Matcha Real-Time API leverages **Socket.IO** to provide robust real-time messaging capabilities.
 
-## Connection Details
+# Connection Details
 
 **Server URL:**  
 `wss://localhost:3000/api`
 
-**Transport:**  
+**Transport Protocols:**  
 - WebSockets (via Socket.IO)
 
 **Namespace:**  
-- **Chat:** `/chat`
+- `/chat`
 
-## Authentication
+# Authentication
 
-The Socket.IO connection typically requires authentication. Pass a JWT or similar token as part of the connection query parameters or a custom header.
+The Socket.IO connection requires authentication. Pass a JWT or a similar token through the connection query parameters or custom headers.
 
-### Example using Socket.IO client (JavaScript):
+### Example: Authentication with Socket.IO Client (JavaScript)
+
 ```javascript
 import { io } from "socket.io-client";
 
 const socket = io("wss://localhost:3000/api/chat", {
   auth: {
-    token: "Bearer <your_jwt_token>"
-  }
+    token: "Bearer <your_jwt_token>",
+  },
 });
 
 socket.on("connect", () => {
-  console.log("Connected to the chat namespace");
-});
-
-socket.on("error", (err) => {
-  console.error("Socket error:", err);
+  console.log("Successfully connected to the chat namespace.");
 });
 ```
 
-Ensure your server-side Socket.IO configuration checks and validates the provided token before establishing a connection.
+Ensure the server-side Socket.IO configuration validates the provided token before establishing the connection.
 
-## Chat Events
+# Chat Events
 
-**Events Emitted by the Server:**
-- **chat message:** Fired when a new chat message is delivered to the user.  
+## Events Emitted by the Server
 
-Payload Example:
+### 1. **`chat message`**  
+Triggered when a new chat message is received.
+
+#### Payload Example:
+
 ```json
 {
   "from": "user_id_of_sender",
@@ -57,22 +58,54 @@ Payload Example:
 }
 ```
 
-**Events Sent by the Client:**
-- **chat message:** Send a new message to another user.  
+#### Example Usage:
 
-Example:
 ```javascript
-socket.emit("chat message", {
-  receiver: "user_id_of_recipient",
-  message: "Hi there!"
+socket.on("chat message", (data) => {
+  console.log("New chat message:", data);
 });
 ```
 
-**Acknowledgements:**  
-You can request server acknowledgements by passing a callback function to the emit call. This is useful for confirming that the message was received and processed by the server.
+### 2. **`error`**  
+Triggered when an error occurs on the server.
 
-## Best Practices
+#### Payload Example:
 
-- **Reconnection:** Ensure your client-side logic handles reconnection events smoothly.
-- **Performance:** For high-frequency events, consider batching updates or using acknowledgements carefully.
-- **Security:** Always secure your tokens and use HTTPS/WSS in production.
+```text
+Messaging not allowed
+```
+
+#### Example Usage:
+
+```javascript
+socket.on("error", (error) => {
+  console.error("An error occurred:", error);
+});
+```
+
+### Acknowledgements  
+
+To mark a message as delivered, acknowledgements can be used.
+
+#### Example:
+
+```javascript
+socket.on("chat message", (data, ack) => {
+  console.log("New chat message:", data);
+  ack("Message received");
+});
+```
+
+## Events Sent by the Client
+
+### 1. **`chat message`**  
+Send a new message to another user.
+
+#### Example Usage:
+
+```javascript
+socket.emit("chat message", {
+  msg: "Hello, how are you?",
+  receiver: "user_id_of_recipient",
+});
+```
