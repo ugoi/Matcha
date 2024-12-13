@@ -3,16 +3,6 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import './CreateProfile.css';
 
-interface CreateProfileInput {
-  gender: string;
-  age: string;
-  sexual_preference: string;
-  biography: string;
-  profile_picture: string;
-  gps_latitude: number;
-  gps_longitude: number;
-}
-
 function CreateProfile() {
   const [step, setStep] = useState(1);
   const [name, setName] = useState('');
@@ -21,40 +11,116 @@ function CreateProfile() {
   const [sexualPreference, setSexualPreference] = useState('');
   const [biography, setBiography] = useState('');
   const [interests, setInterests] = useState('');
-  const [pictures, setPictures] = useState<File[]>([]);
   const navigate = useNavigate();
   const [errors, setErrors] = useState<{[key: string]: string}>({});
+  const [uploadedPictures, setUploadedPictures] = useState<string[]>([]);
+  const [isUploading, setIsUploading] = useState(false);
 
   const nextStep = () => setStep(step + 1);
   const prevStep = () => setStep(step - 1);
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files) {
-      setPictures(Array.from(e.target.files));
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files.length > 0) {
+      const newFiles = Array.from(e.target.files);
+      
+      if (uploadedPictures.length + newFiles.length > 5) {
+        setErrors({ pictures: 'Maximum  pictures allowed' });
+        return;
+      }
+
+      setIsUploading(true);
+      
+      try {
+        for (const file of newFiles) {
+          const formData = new FormData();
+          formData.append('image', file);
+          const response = await fetch('https://api.imgbb.com/1/upload?key=90d36ad33552879ee7c36bb4ba197e92', {
+            method: 'POST',
+            body: formData,
+          });
+    
+          const result = await response.json();
+    
+          if (!response.ok) {
+            throw new Error(result.message || 'Failed to upload picture');
+          }
+          const backendResponse = await fetch(`${window.location.origin}/api/profiles/me/pictures`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              pictures: [result.data.url]
+            }),
+          });
+
+          if (!backendResponse.ok) {
+            const errorData = await backendResponse.json();
+            throw new Error(errorData.message || 'Failed to save picture URL to backend');
+          }
+
+          setUploadedPictures(prev => [...prev, result.data.url]);
+        }
+      } catch (error) {
+        console.error('Error uploading pictures:', error);
+        setErrors(prev => ({
+          ...prev,
+          pictures: error instanceof Error ? error.message : 'Failed to upload pictures'
+        }));
+      } finally {
+        setIsUploading(false);
+      }
+    }
+  };
+
+  const handleRemovePicture = async (urlToRemove: string, index: number) => {
+    try {
+      const response = await fetch(`${window.location.origin}/api/profiles/me/pictures`, {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ url: urlToRemove }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to remove picture');
+      }
+
+      setUploadedPictures(prev => prev.filter((_, i) => i !== index));
+    } catch (error) {
+      console.error('Error removing picture:', error);
+      setErrors(prev => ({
+        ...prev,
+        pictures: error instanceof Error ? error.message : 'Failed to remove picture'
+      }));
     }
   };
 
   const handleSubmit = async () => {
     setErrors({});
-    const profilePicture = pictures.length > 0 ? pictures[0].name : '';
-
-    const profileData: CreateProfileInput = {
-      gender,
-      age: age.toString(),
-      sexual_preference: sexualPreference,
-      biography,
-      profile_picture: profilePicture,
-      gps_latitude: 0,
-      gps_longitude: 0,
-    };
-
+    
     try {
+      if (uploadedPictures.length === 0) {
+        setErrors({ pictures: 'At least one picture is required' });
+        return;
+      }
+
+      const formData = new URLSearchParams();
+      formData.append('gender', gender);
+      formData.append('age', age.toString());
+      formData.append('sexual_preference', sexualPreference);
+      formData.append('biography', biography);
+      formData.append('profile_picture', uploadedPictures[0]);
+      formData.append('gps_latitude', '0');
+      formData.append('gps_longitude', '0');
+
       const response = await fetch(`${window.location.origin}/api/profiles/me`, {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json',
+          'Content-Type': 'application/x-www-form-urlencoded',
         },
-        body: JSON.stringify(profileData),
+        body: formData.toString(),
       });
 
       const result = await response.json();
@@ -70,21 +136,15 @@ function CreateProfile() {
         }
         throw new Error(result.data?.title || 'Something went wrong');
       }
-
-      await fetch(`${window.location.origin}/api/profiles/me/interests`, {
-        method: 'POST',
-        headers: { 
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ interests: interests.split(',').map(tag => tag.trim()) }),
-      });
-
-      const formData = new FormData();
-      pictures.forEach((picture) => formData.append('pictures', picture));
-      await fetch(`${window.location.origin}/api/profiles/me/pictures`, {
-        method: 'POST',
-        body: formData,
-      });
+      if (interests.length > 0) {
+        await fetch(`${window.location.origin}/api/profiles/me/interests`, {
+          method: 'POST',
+          headers: { 
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ interests: interests.split(',').map(tag => tag.trim()) }),
+        });
+      }
 
       navigate('/profile');
     } catch (error) {
@@ -101,7 +161,6 @@ function CreateProfile() {
   const isSexualPreferenceValid = sexualPreference !== '';
   const isBiographyValid = biography.length >= 15 && biography.length <= 300;
   const isInterestsValid = interests.length > 0 && interests.length <= 100;
-  const isPicturesValid = pictures.length > 0 && pictures.length <= 5;
 
   const canProceedToNext = () => {
     if (step === 1) {
@@ -113,7 +172,7 @@ function CreateProfile() {
     } else if (step === 4) {
       return isInterestsValid;
     } else if (step === 5) {
-      return isPicturesValid;
+      return uploadedPictures.length > 0;
     }
     return false;
   };
@@ -244,17 +303,55 @@ function CreateProfile() {
             <label className="form-label">Upload up to 5 pictures</label>
             <input
               type="file"
-              className="form-control"
+              className={`form-control ${errors.pictures ? 'is-invalid' : ''}`}
               accept="image/*"
               multiple
               onChange={handleFileChange}
+              disabled={isUploading || uploadedPictures.length >= 5}
             />
-            <small className="text-muted">Ensure one of these is a profile picture.</small>
+            {errors.pictures && (
+              <div className="invalid-feedback">
+                {errors.pictures}
+              </div>
+            )}
+            {isUploading && (
+              <div className="text-center mt-2">
+                <div className="spinner-border text-primary" role="status">
+                  <span className="visually-hidden">Uploading...</span>
+                </div>
+              </div>
+            )}
+            <div className="uploaded-pictures-grid mt-3">
+              {uploadedPictures.map((url, index) => (
+                <div key={index} className={`picture-container ${index === 0 ? 'profile-picture' : ''}`}>
+                  <img 
+                    src={url} 
+                    alt={`Upload ${index + 1}`} 
+                    className="uploaded-thumbnail"
+                  />
+                  <button
+                    className="remove-picture-btn"
+                    onClick={() => handleRemovePicture(url, index)}
+                    type="button"
+                  >
+                    ×
+                  </button>
+                  {index === 0 && <div className="profile-picture-badge">Profile</div>}
+                </div>
+              ))}
+            </div>
+            <small className="text-muted d-block mt-2">
+              {uploadedPictures.length}/5 pictures uploaded. First picture will be your profile picture.
+            </small>
             <div className="d-flex justify-content-center mt-4">
               <button className="btn btn-secondary me-3" onClick={prevStep}>
                 Back
               </button>
-              <button className="btn btn-success" onClick={handleSubmit} disabled={!canProceedToNext()}>
+              <button 
+                className="btn btn-success" 
+                onClick={handleSubmit} 
+                disabled={uploadedPictures.length === 0 || isUploading}
+              >
                 Submit
               </button>
             </div>
