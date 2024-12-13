@@ -11,6 +11,7 @@ interface UserProfile {
   profile_picture: string;
   gps_latitude: number;
   gps_longitude: number;
+  nearest_location?: string;
 }
 
 function Profile() {
@@ -40,6 +41,7 @@ function Profile() {
           profile_picture: data.profile_picture,
           gps_latitude: data.gps_latitude,
           gps_longitude: data.gps_longitude,
+          nearest_location: await fetchNearestLocation(data.gps_latitude, data.gps_longitude),
         };
 
         setUser(userProfile);
@@ -52,6 +54,26 @@ function Profile() {
 
     fetchProfileData();
   }, []);
+
+  const fetchNearestLocation = async (lat: number, lon: number) => {
+    try {
+      const response = await fetch(
+        `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}&zoom=10`,
+        {
+          headers: {
+            'Accept-Language': 'en-US,en;q=0.9',
+          },
+        }
+      );
+      const data = await response.json();
+      const city = data.address?.city || data.address?.town || data.address?.village || 'Unknown location';
+      const country = data.address?.country || '';
+      return `${city}${country ? `, ${country}` : ''}`;
+    } catch (error) {
+      console.error('Error fetching location:', error);
+      return 'Unknown location';
+    }
+  };
 
   const checkImage = async (url: string) => {
     try {
@@ -170,7 +192,9 @@ function Profile() {
               <p className="card-text text-muted mb-3">{user.biography}</p>
             )}
 
-            <p className="card-text text-muted mb-1">GPS Coordinates: {user.gps_latitude}, {user.gps_longitude}</p>
+            <p className="card-text text-muted mb-1">
+              📍 {user.nearest_location}
+            </p>
           </div>
         </div>
       </div>
