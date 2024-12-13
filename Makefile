@@ -13,7 +13,7 @@ build-backend:
 	cd $(BACKEND_DIR) && npm install
 
 start-backend-prod:
-	cd $(BACKEND_DIR) && npm run dev
+	cd $(BACKEND_DIR) && npm run db:up && npm run dev 
 
 prod: build-frontend build-backend start-backend-prod
 	@echo "App is running in production mode. Access it at http://localhost:3000"
@@ -28,6 +28,5 @@ start-backend-dev:
 dev: start-frontend-dev start-backend-dev
 	@echo "App is running in development mode with hot-reloading. Access the frontend at http://localhost:5173 and backend at http://localhost:3000"
 
-# Rule to shut down the database
 del:
 	@cd $(BACKEND_DIR) && npm run db:down
