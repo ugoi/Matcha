@@ -10,7 +10,7 @@ function About() {
           <h1 className="display-4 text-center mb-4">About Us</h1>
           <div className="team-photo mb-4">
             <img 
-              src='/src/assets/smiling-business-partners-with-digital-tablet_252847-4548.avif' 
+              src='https://i.ibb.co/3sH9kRy/smiling-business-partners-with-digital-tablet-252847-4548.jpg' 
               alt="Adrián and Stefan" 
               className="img-fluid rounded-circle shadow-lg"
             />
