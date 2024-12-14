@@ -2,6 +2,7 @@ import NavbarLogged from '../../components/NavbarLogged/NavbarLogged';
 import './settings.css';
 import { useState, useEffect } from 'react';
 import ReactSlider from 'react-slider';
+import $ from 'jquery';
 
 function Settings() {
   const [distance, setDistance] = useState<number>(50);
@@ -30,25 +31,22 @@ function Settings() {
     setDistance(Number(e.target.value));
   };
 
-  const handleLogout = async () => {
-    try {
-      const response = await fetch(`${window.location.origin}/api/logout`, {
-        method: 'POST',
-        credentials: 'include',
-      });
-  
-      if (response.ok) {
-        window.location.href = '/';
-      } else {
-        console.error('Logout failed:', response.statusText);
-      }
-    } catch (error) {
-      console.error('Error logging out:', error);
-    }
+  const handleLogout = () => {
+    var settings = {
+      "url": "http://localhost:3000/api/logout",
+      "method": "GET",
+      "timeout": 0,
+    };
+
+    $.ajax(settings).done(function (response) {
+      console.log(response);
+      window.location.href = '/';
+    }).fail(function (jqXHR) {
+      console.error('Logout failed:', jqXHR.statusText);
+    });
   };
 
   const handleSaveChanges = () => {
-    //call the api to send the data changed
     window.location.href = '/home';
   };
 
