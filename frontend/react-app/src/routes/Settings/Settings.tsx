@@ -8,16 +8,24 @@ function Settings() {
   const [distance, setDistance] = useState<number>(50);
   const [minAge, setMinAge] = useState<number>(18);
   const [maxAge, setMaxAge] = useState<number>(30);
+  const [email, setEmail] = useState<string>('');
+  const [gender, setGender] = useState<string>('');
+  const [sexualPreference, setSexualPreference] = useState<string>('');
 
   useEffect(() => {
     const checkProfile = async () => {
       try {
-        const response = await fetch(`${window.location.origin}/api/profiles/me`);
-        const result = await response.json();
-        
-        if (result.status === "fail" && result.data === "profile not found") {
-          window.location.href = '/create-profile';
-        }
+        const emailSettings = {
+          url: "http://localhost:3000/api/users/me",
+          method: "GET",
+          timeout: 0,
+        };
+
+        $.ajax(emailSettings).done(function (response) {
+          console.log(response);
+          setEmail(response.data.user.email);
+        });
+
       } catch (error) {
         console.error('Error checking profile:', error);
         window.location.href = '/create-profile';
@@ -31,23 +39,51 @@ function Settings() {
     setDistance(Number(e.target.value));
   };
 
-  const handleLogout = () => {
-    var settings = {
-      "url": "http://localhost:3000/api/logout",
-      "method": "GET",
-      "timeout": 0,
-    };
-
-    $.ajax(settings).done(function (response) {
-      console.log(response);
-      window.location.href = '/';
-    }).fail(function (jqXHR) {
-      console.error('Logout failed:', jqXHR.statusText);
-    });
+  const handleEmailChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setEmail(e.target.value);
   };
 
   const handleSaveChanges = () => {
-    window.location.href = '/home';
+    const emailSettings = {
+      url: "http://localhost:3000/api/users/me",
+      method: "PATCH",
+      timeout: 0,
+      headers: {
+        "Content-Type": "application/x-www-form-urlencoded"
+      },
+      data: {
+        email: email,
+      }
+    };
+
+    $.ajax(emailSettings).done(function (response) {
+      console.log(response);
+      window.location.href = '/home';
+    });
+
+    const genderSettings: any = {
+      url: "http://localhost:3000/api/profiles/me",
+      method: "PATCH",
+      timeout: 0,
+      headers: {
+        "Content-Type": "application/x-www-form-urlencoded"
+      },
+      data: {}
+    };
+
+    if (gender) {
+      genderSettings.data.gender = gender;
+    }
+
+    if (sexualPreference) {
+      genderSettings.data.sexual_preference = sexualPreference;
+    }
+
+    if (Object.keys(genderSettings.data).length > 0) {
+      $.ajax(genderSettings).done(function (response) {
+        console.log(response);
+      });
+    }
   };
 
   return (
@@ -90,13 +126,53 @@ function Settings() {
             <p className="slider-value">{minAge} - {maxAge} years</p>
           </div>
 
+          <div className="setting-item mb-3">
+            <label htmlFor="Gender" className="form-label">Select your gender</label>
+            <select
+              id="Gender"
+              className="form-control"
+              value={gender}
+              onChange={(e) => setGender(e.target.value)}
+            >
+              <option value="">Select...</option>
+              <option value="male">Male</option>
+              <option value="female">Female</option>
+              <option value="other">Other</option>
+            </select>
+          </div>
+
+          <div className="setting-item mb-3">
+            <label htmlFor="Preferences" className="form-label">Select your sexual preference</label>
+            <select
+              id="Preferences"
+              className="form-control"
+              value={sexualPreference}
+              onChange={(e) => setSexualPreference(e.target.value)}
+            >
+              <option value="">Select...</option>
+              <option value="heterosexual">Heterosexual</option>
+              <option value="homosexual">Homosexual</option>
+              <option value="bisexual">Bisexual</option>
+              <option value="other">Other</option>
+            </select>
+          </div>
+          <div className="setting-item mb-3">
+            <label htmlFor="email" className="form-label">Email</label>
+            <input
+              type="email"
+              id="email"
+              value={email}
+              onChange={handleEmailChange}
+              className="form-control"
+            />
+          </div>
+
           <button 
             className="btn btn-primary mt-3" 
             onClick={handleSaveChanges}
           >
             Save Changes
           </button>
-          <button className="btn btn-danger mt-3" onClick={handleLogout}>Logout</button>
         </div>
       </div>
     </>

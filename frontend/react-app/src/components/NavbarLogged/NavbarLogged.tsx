@@ -2,8 +2,23 @@
 import Container from 'react-bootstrap/Container';
 import Nav from 'react-bootstrap/Nav';
 import Navbar from 'react-bootstrap/Navbar';
-import NavDropdown from 'react-bootstrap/NavDropdown';
+import $ from 'jquery';
 import './NavbarLogged.css';
+
+const handleLogout = () => {
+  var settings = {
+    "url": "http://localhost:3000/api/logout",
+    "method": "GET",
+    "timeout": 0,
+  };
+
+  $.ajax(settings).done(function (response) {
+    console.log(response);
+    window.location.href = '/';
+  }).fail(function (jqXHR) {
+    console.error('Logout failed:', jqXHR.statusText);
+  });
+};
 
 function NavbarLogged() {
   return (
@@ -18,9 +33,7 @@ function NavbarLogged() {
                 <Nav.Link href="/profile">Profile</Nav.Link>
                 <Nav.Link href="/chat">Chat</Nav.Link>
                 <Nav.Link href="/settings">Settings</Nav.Link>
-                <NavDropdown title="Language" id="collapsible-nav-dropdown">
-                  <NavDropdown.Item href="">English</NavDropdown.Item>
-                </NavDropdown>
+                <Nav.Link onClick={handleLogout} className="logout-link">Logout</Nav.Link>
               </Nav>
             </Navbar.Collapse>
           </Container>
