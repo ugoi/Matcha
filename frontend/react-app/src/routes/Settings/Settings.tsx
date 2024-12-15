@@ -86,6 +86,68 @@ function Settings() {
     }
   };
 
+  const handleUpdateGPS = async () => {
+    try {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          const { latitude, longitude } = position.coords;
+          var settings = {
+            url: "http://localhost:3000/api/profiles/me",
+            method: "PATCH",
+            timeout: 0,
+            headers: {
+              "Content-Type": "application/x-www-form-urlencoded"
+            },
+            data: {
+              gps_longitude: longitude.toString(),
+              gps_latitude: latitude.toString()
+            }
+          };
+          $.ajax(settings).done(function (response) {
+            console.log(response);
+          });
+        },
+        async (error) => {
+          console.error("Error getting browser location:", error);
+          await getLocationByIP();
+        },
+        { timeout: 5000 }
+      );
+    } catch (error) {
+      console.error("Error accessing geolocation:", error);
+      await getLocationByIP();
+    }
+  };
+
+  const getLocationByIP = async () => {
+    try {
+      const response = await fetch('https://ipapi.co/json/');
+      const data = await response.json();
+      
+      if (data.latitude && data.longitude) {
+        var settings = {
+          url: "http://localhost:3000/api/profiles/me",
+          method: "PATCH",
+          timeout: 0,
+          headers: {
+            "Content-Type": "application/x-www-form-urlencoded"
+          },
+          data: {
+            gps_longitude: data.longitude.toString(),
+            gps_latitude: data.latitude.toString()
+          }
+        };
+        $.ajax(settings).done(function (response) {
+          console.log(response);
+        });
+      } else {
+        throw new Error('Location data not available');
+      }
+    } catch (error) {
+      console.error('Error getting IP location:', error);
+    }
+  };
+
   return (
     <>
       <NavbarLogged />
@@ -172,6 +234,12 @@ function Settings() {
             onClick={handleSaveChanges}
           >
             Save Changes
+          </button>
+          <button 
+            className="btn btn-secondary mt-3" 
+            onClick={handleUpdateGPS}
+          >
+            Update location
           </button>
         </div>
       </div>

@@ -16,6 +16,7 @@ export interface UserProfile {
     picture_id: string;
     picture_url: string;
   }>;
+  fame_rating: number;
 }
 
 function Profile() {
@@ -50,6 +51,7 @@ function Profile() {
           gps_longitude: data.gps_longitude,
           nearest_location: await fetchNearestLocation(data.gps_latitude, data.gps_longitude),
           pictures: data.pictures,
+          fame_rating: data.fame_rating,
         };
 
         setUser(userProfile);
@@ -394,6 +396,7 @@ function Profile() {
             <p className="card-text text-muted mb-1">
               📍 {user.nearest_location}
             </p>
+            <p className="card-text text-muted mb-1">Fame Rating: {user.fame_rating}</p>
           </div>
         </article>
       </section>

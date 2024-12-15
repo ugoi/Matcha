@@ -111,6 +111,7 @@ function Home() {
             <div className="card-body">
               <h4 className="card-title mb-2">{currentUser.name}, {currentUser.age}</h4>
               <p className="card-text text-muted mb-3">{currentUser.biography}</p>
+              <p className="card-text text-muted mb-1">Fame Rating: {currentUser.fame_rating}</p>
               <div className="d-flex justify-content-around">
                 <button
                   className="btn dislike-button rounded-circle shadow-sm"
