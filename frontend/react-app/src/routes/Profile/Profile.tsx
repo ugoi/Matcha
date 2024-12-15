@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import NavbarLogged from '../../components/NavbarLogged/NavbarLogged';
 import './profile.css';
 
-interface UserProfile {
+export interface UserProfile {
   name: string;
   age: number;
   gender: string;
