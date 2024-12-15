@@ -1,5 +1,5 @@
 .card {
-    width: 22rem;
+    width: clamp(17rem, 50vw, 22rem);
     border-radius: 15px;
     position: relative;
 }
