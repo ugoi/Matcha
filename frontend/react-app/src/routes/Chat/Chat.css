@@ -28,8 +28,13 @@
 
 .chat-list {
     width: 100%;
+    min-height: 50vh;
     max-height: 80vh;
     overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
 }
 
 .chat-item {
@@ -56,4 +61,15 @@
 
 .chat-timestamp {
     font-size: 0.8rem;
+}
+
+.no-data-message {
+    font-size: 1rem;
+    color: #6c757d;
+    text-align: center;
+    margin: 20px 0;
+}
+
+.likes-views-section { 
+    min-height: 50vh;
 }

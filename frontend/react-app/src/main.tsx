@@ -18,7 +18,7 @@ const App = () => {
   const [isLoggedIn, setIsLoggedIn] = useState<boolean | null>(null);
 
   useEffect(() => {
-    const apiUrl = `${window.location.origin}/api/check-auth`; // Dynamically set the API URL
+    const apiUrl = `${window.location.origin}/api/check-auth`;
 
     fetch(apiUrl, {
       method: "GET",
@@ -46,19 +46,19 @@ const App = () => {
   const router = createBrowserRouter([
     {
       path: "/",
-      element: <Root />,
+      element: isLoggedIn ? <Navigate to="/home" /> : <Root />,
     },
     {
       path: "/signup",
-      element: <Signup />,
+      element: isLoggedIn ? <Navigate to="/home" /> : <Signup />,
     },
     {
       path: "/login",
-      element: <Login />,
+      element: isLoggedIn ? <Navigate to="/home" /> : <Login />,
     },
     {
       path: "/about",
-      element: <About />,
+      element: isLoggedIn ? <Navigate to="/home" /> : <About />,
     },
     {
       path: "/confirmemail",

@@ -27,7 +27,7 @@
 }
 
 .slider-track.slider-track-1 {
-    background: #0d6efd;
+    background: #424242;
 }
 
 .form-range::-webkit-slider-thumb,
@@ -36,7 +36,7 @@
     appearance: none;
     width: 20px;
     height: 20px;
-    background: #0d6efd;
+    background: #424242;
     border-radius: 50%;
     cursor: pointer;
     outline: none;
@@ -48,14 +48,14 @@
 .slider-thumb {
     width: 20px;
     height: 20px;
-    background: #0d6efd;
+    background: #424242;
     border-radius: 50%;
     cursor: pointer;
     border: none;
 }
 
 .btn-primary {
-    background-color: #007bff;
+    background-color: #000000;
     border: none;
 }
 
@@ -63,4 +63,26 @@
     text-align: right;
     margin-top: 5px;
     color: #666;
+}
+
+.photo-arrow {
+    background-color: transparent;
+    border: none;
+    color: #000000;
+    font-size: 24px;
+    cursor: pointer;
+    transition: transform 0.2s;
+}
+
+.photo-arrow:hover {
+    color: #424242;
+    transform: scale(1.1);
+}
+
+.left-arrow::before {
+    content: '←';
+}
+
+.right-arrow::before {
+    content: '→';
 }

@@ -19,7 +19,6 @@ function CreateProfile() {
 
   const getLocationByIP = async () => {
     try {
-      // Using ipapi.co as a free IP geolocation service
       const response = await fetch('https://ipapi.co/json/');
       const data = await response.json();
       
@@ -33,9 +32,8 @@ function CreateProfile() {
       }
     } catch (error) {
       console.error('Error getting IP location:', error);
-      // Fallback to a default location (you might want to adjust these coordinates)
       setCoordinates({
-        latitude: 40.7128, // New York City coordinates as fallback
+        latitude: 40.7128,
         longitude: -74.0060
       });
       setErrors(prev => ({
@@ -56,13 +54,11 @@ function CreateProfile() {
         },
         async (error) => {
           console.error("Error getting browser location:", error);
-          // Fallback to IP-based location
           await getLocationByIP();
         },
-        { timeout: 5000 } // 5 second timeout before trying IP geolocation
+        { timeout: 5000 }
       );
     } else {
-      // Browser doesn't support geolocation, try IP-based location
       getLocationByIP();
     }
   }, []);
