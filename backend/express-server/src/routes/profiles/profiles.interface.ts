@@ -87,6 +87,7 @@ export interface SortValue {
 }
 
 export class SortBy {
+  user_id?: SortItem;
   age?: SortItem;
   distance?: SortItem;
   fame_rating?: SortItem;
@@ -94,6 +95,7 @@ export class SortBy {
   tags?: SortItem;
 
   constructor(sortBy: SortBy) {
+    this.user_id = sortBy.user_id;
     this.age = sortBy.age;
     this.distance = sortBy.distance;
     this.fame_rating = sortBy.fame_rating;
@@ -120,6 +122,7 @@ export interface FilterItem {
 }
 
 export class FilterBy {
+  user_id?: FilterItem;
   age?: FilterItem;
   distance?: FilterItem;
   fame_rating?: FilterItem;
