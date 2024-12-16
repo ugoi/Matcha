@@ -87,20 +87,16 @@ export interface SortValue {
 }
 
 export class SortBy {
-  user_id?: SortItem;
   age?: SortItem;
   distance?: SortItem;
   fame_rating?: SortItem;
-  common_tags?: SortItem;
-  tags?: SortItem;
+  common_interests?: SortItem;
 
   constructor(sortBy: SortBy) {
-    this.user_id = sortBy.user_id;
     this.age = sortBy.age;
     this.distance = sortBy.distance;
     this.fame_rating = sortBy.fame_rating;
-    this.common_tags = sortBy.common_tags;
-    this.tags = sortBy.tags;
+    this.common_interests = sortBy.common_interests;
   }
 }
 
@@ -127,21 +123,21 @@ export class FilterBy {
   distance?: FilterItem;
   fame_rating?: FilterItem;
   common_interests?: FilterItem;
+  interests?: FilterItem;
   username?: FilterItem;
   email?: FilterItem;
   gender?: FilterItem;
-  // common tags is number of tags in common
-  tags?: FilterItem;
 
   constructor(filterBy: FilterBy) {
     this.user_id = filterBy.user_id;
-    this.username = filterBy.username;
-    this.email = filterBy.email;
     this.age = filterBy.age;
     this.distance = filterBy.distance;
     this.fame_rating = filterBy.fame_rating;
     this.common_interests = filterBy.common_interests;
-    this.tags = filterBy.tags;
+    this.interests = filterBy.interests;
+    this.username = filterBy.username;
+    this.email = filterBy.email;
+    this.gender = filterBy.gender;
   }
 }
 

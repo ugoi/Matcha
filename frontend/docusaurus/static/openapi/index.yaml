@@ -110,34 +110,38 @@ paths:
           schema:
             type: object
             properties:
-              field:
-                type: enum
-                description: Field to sort by
-                enum:
-                  - username
-                  - email
-                  - age
-                  - distance
-                  - fame_rating
-                  - gender
-                  - common_interests
-                  
-                
-              order:
-                type: string
-                description: Sort order (asc/desc)
+              age:
+                $ref: "#/components/schemas/SortItem"
+              distance:
+                $ref: "#/components/schemas/SortItem"
+              fame_rating:
+                $ref: "#/components/schemas/SortItem"
+              common_interests:
+                $ref: "#/components/schemas/SortItem"
         - in: query
           name: filter_by
           description: Filter criteria (JSON)
           schema:
             type: object
             properties:
-              field:
-                type: string
-                description: Field to filter by
-              value:
-                type: string
-                description: Value to filter by
+              user_id:
+                $ref: "#/components/schemas/FilterItem"
+              age:
+                $ref: "#/components/schemas/FilterItem"
+              distance:
+                $ref: "#/components/schemas/FilterItem"
+              fame_rating:
+                $ref: "#/components/schemas/FilterItem"
+              common_interests:
+                $ref: "#/components/schemas/FilterItem"
+              interests:
+                $ref: "#/components/schemas/FilterItem"
+              username:
+                $ref: "#/components/schemas/FilterItem"
+              email:
+                $ref: "#/components/schemas/FilterItem"
+              gender:
+                $ref: "#/components/schemas/FilterItem"
       responses:
         "200":
           description: A list of profiles
@@ -147,6 +151,39 @@ paths:
                 type: array
                 items:
                   $ref: "#/components/schemas/PublicProfile"
+      x-codeSamples:
+        - lang: cURL
+          source: |
+            curl --location --globoff 'http://localhost:3000/api/profiles?sort_by={%22distance%22%3A%20{%22%24order%22%3A%20%22desc%22}%2C%20%22age%22%3A%20{%22%24order%22%3A%20%22asc%22}}&filter_by={%22age%22%3A%20{%22%24lt%22%3A%20%2219%22}}'
+        - lang: typescript
+          source: |
+            const requestOptions: RequestInit = {
+              method: "GET",
+              redirect: "follow",
+            };
+
+            const sort_by = {
+              distance: { $order: "desc" },
+              age: { $order: "asc" },
+            };
+
+            const filter_by = {
+              age: { $lt: "19" },
+            };
+
+            const url = new URL("http://localhost:3000/api/profiles");
+
+            url.searchParams.append("sort_by", JSON.stringify(sort_by));
+
+            url.searchParams.append("filter_by", JSON.stringify(filter_by));
+
+            try {
+              const response = await fetch(url.toString(), requestOptions);
+              const json = await response.json();
+              console.log(json);
+            } catch (error) {
+              console.error("Error:", error);
+            }
 
   /profiles/{user_id}:
     get:
@@ -219,8 +256,68 @@ paths:
                 gps_longitude:
                   type: string
       responses:
-        "201":
+        "200":
           description: Profile created or updated successfully
+          content: 
+            application/json:
+              schema:
+                oneOf:
+                  - allOf:
+                      - $ref: "#/components/schemas/SuccessResponse"
+                    title: SuccessResponse
+                    type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          title:
+                            type: string
+                          profile:
+                            $ref: "#/components/schemas/PublicProfile"
+                  - $ref: "#/components/schemas/FailResponse"
+                  - $ref: "#/components/schemas/ErrorResponse"
+      x-codeSamples:
+        - lang: cURL
+          source: |
+            curl --location 'http://localhost:3000/api/profiles/me' \
+            --header 'Content-Type: application/x-www-form-urlencoded' \
+            --header 'Cookie: jwt=some_jwt_token' \
+            --data-urlencode 'gender=female' \
+            --data-urlencode 'age=19' \
+            --data-urlencode 'sexual_preference=heterosexual' \
+            --data-urlencode 'biography=Hello' \
+            --data-urlencode 'profile_picture=https://picsum.photos/id/19/200/200' \
+            --data-urlencode 'gps_latitude=-20.946823' \
+            --data-urlencode 'gps_longitude=210.807416'
+        - lang: typescript
+          source: |
+            const myHeaders = new Headers();
+            myHeaders.append("Content-Type", "application/x-www-form-urlencoded");
+            myHeaders.append("Cookie", "jwt=some_jwt_token");
+
+            const urlencoded = new URLSearchParams();
+            urlencoded.append("gender", "female");
+            urlencoded.append("age", "19");
+            urlencoded.append("sexual_preference", "heterosexual");
+            urlencoded.append("biography", "Hello");
+            urlencoded.append("profile_picture", "https://picsum.photos/id/19/200/200");
+            urlencoded.append("gps_latitude", "-20.946823");
+            urlencoded.append("gps_longitude", "210.807416");
+
+            const requestOptions: RequestInit = {
+              method: "POST",
+              headers: myHeaders,
+              body: urlencoded,
+              redirect: "follow",
+            };
+
+            try {
+              const response = await fetch("http://localhost:3000/api/profiles/me", requestOptions);
+              const json = await response.json();
+              console.log(json);
+            } catch (error) {
+              console.error("Error:", error);
+            }
 
   ### Profile Visits
   /profiles/{user_id}/visits:
@@ -507,7 +604,7 @@ paths:
               schema:
                 oneOf:
                   - allOf:
-                    - $ref: "#/components/schemas/SuccessResponse"
+                      - $ref: "#/components/schemas/SuccessResponse"
                     title: SuccessResponse
                     type: object
                     properties:
@@ -559,7 +656,7 @@ paths:
               schema:
                 oneOf:
                   - allOf:
-                    - $ref: "#/components/schemas/SuccessResponse"
+                      - $ref: "#/components/schemas/SuccessResponse"
                     title: SuccessResponse
                     type: object
                     properties:
@@ -628,7 +725,7 @@ paths:
               schema:
                 oneOf:
                   - allOf:
-                    - $ref: "#/components/schemas/SuccessResponse"
+                      - $ref: "#/components/schemas/SuccessResponse"
                     title: SuccessResponse
                     type: object
                     properties:
@@ -718,7 +815,7 @@ paths:
               schema:
                 oneOf:
                   - allOf:
-                    - $ref: "#/components/schemas/SuccessResponse"
+                      - $ref: "#/components/schemas/SuccessResponse"
                     title: SuccessResponse
                     type: object
                     properties:
@@ -805,7 +902,7 @@ paths:
               schema:
                 oneOf:
                   - allOf:
-                    - $ref: "#/components/schemas/SuccessResponse"
+                      - $ref: "#/components/schemas/SuccessResponse"
                     title: SuccessResponse
                     type: object
                     properties:
@@ -822,42 +919,42 @@ paths:
                   - $ref: "#/components/schemas/FailResponse"
                   - $ref: "#/components/schemas/ErrorResponse"
       x-codeSamples:
-          - lang: cURL
-            source: |
-              curl --location 'http://localhost:3000/api/login' \
-              --header 'Content-Type: application/x-www-form-urlencoded' \
-              --data-urlencode 'username=john_doe' \
-              --data-urlencode 'password=Password123...'
-          - lang: typescript
-            source: |
-              const myHeaders = new Headers();
-              myHeaders.append("Content-Type", "application/x-www-form-urlencoded");
+        - lang: cURL
+          source: |
+            curl --location 'http://localhost:3000/api/login' \
+            --header 'Content-Type: application/x-www-form-urlencoded' \
+            --data-urlencode 'username=john_doe' \
+            --data-urlencode 'password=Password123...'
+        - lang: typescript
+          source: |
+            const myHeaders = new Headers();
+            myHeaders.append("Content-Type", "application/x-www-form-urlencoded");
 
-              const urlencoded = new URLSearchParams();
-              urlencoded.append("username", "john_doe");
-              urlencoded.append("password", "Password123...");
+            const urlencoded = new URLSearchParams();
+            urlencoded.append("username", "john_doe");
+            urlencoded.append("password", "Password123...");
 
-              const requestOptions: RequestInit = {
-                method: "POST",
-                headers: myHeaders,
-                body: urlencoded,
-                redirect: "follow",
-              };
+            const requestOptions: RequestInit = {
+              method: "POST",
+              headers: myHeaders,
+              body: urlencoded,
+              redirect: "follow",
+            };
 
-              try {
-                const response = await fetch("http://localhost:3000/api/login", requestOptions);
-                const json = await response.json();
-                const status = json.status;
-                if (status === "error") {
-                  console.error(status, json);
-                } else if (status === "fail") {
-                  console.log(status, json.data.errors);
-                } else if (status === "success") {
-                  console.log("Logged in successfully!", json.data);
-                }
-              } catch (error) {
-                console.error("Error:", error);
+            try {
+              const response = await fetch("http://localhost:3000/api/login", requestOptions);
+              const json = await response.json();
+              const status = json.status;
+              if (status === "error") {
+                console.error(status, json);
+              } else if (status === "fail") {
+                console.log(status, json.data.errors);
+              } else if (status === "success") {
+                console.log("Logged in successfully!", json.data);
               }
+            } catch (error) {
+              console.error("Error:", error);
+            }
 
   /logout:
     get:
@@ -872,7 +969,7 @@ paths:
               schema:
                 oneOf:
                   - allOf:
-                    - $ref: "#/components/schemas/SuccessResponse"
+                      - $ref: "#/components/schemas/SuccessResponse"
                     title: SuccessResponse
                     properties:
                       data:
@@ -921,7 +1018,7 @@ paths:
               schema:
                 oneOf:
                   - allOf:
-                    - $ref: "#/components/schemas/SuccessResponse"
+                      - $ref: "#/components/schemas/SuccessResponse"
                     title: SuccessResponse
                     properties:
                       data:
@@ -987,7 +1084,7 @@ paths:
               schema:
                 oneOf:
                   - allOf:
-                    - $ref: "#/components/schemas/SuccessResponse"
+                      - $ref: "#/components/schemas/SuccessResponse"
                     title: SuccessResponse
                     properties:
                       data:
@@ -1062,7 +1159,7 @@ paths:
               schema:
                 oneOf:
                   - allOf:
-                    - $ref: "#/components/schemas/SuccessResponse"
+                      - $ref: "#/components/schemas/SuccessResponse"
                     title: SuccessResponse
                     properties:
                       data:
@@ -1138,7 +1235,7 @@ paths:
               schema:
                 oneOf:
                   - allOf:
-                    - $ref: "#/components/schemas/SuccessResponse"
+                      - $ref: "#/components/schemas/SuccessResponse"
                     title: SuccessResponse
                     properties:
                       data:
@@ -1212,7 +1309,7 @@ paths:
               schema:
                 oneOf:
                   - allOf:
-                    - $ref: "#/components/schemas/SuccessResponse"
+                      - $ref: "#/components/schemas/SuccessResponse"
                     title: SuccessResponse
                     properties:
                       data:
@@ -1375,6 +1472,62 @@ components:
       name: jwt
 
   schemas:
+    SortItem:
+      type: object
+      properties:
+        $order:
+          type: string
+          enum: [asc, desc]
+          description: The sort order.
+    FilterItem:
+      type: object
+      properties:
+        $eq:
+          type: string
+          description: The value to match.
+        $neq:
+          type: string
+          description: The value to exclude.
+        $gt:
+          type: string
+          description: The value to be greater than.
+        $gte:
+          type: string
+          description: The value to be greater than or equal to.
+        $lt:
+          type: string
+          description: The value to be less than.
+        $lte:
+          type: string
+          description: The value to be less than or equal to.
+        $like:
+          type: string
+          description: The value to match using a wildcard.
+        $in:
+          type: array
+          items:
+            type: string
+          description: The values to match.
+        $nin:
+          type: array
+          items:
+            type: string
+          description: The values to exclude.
+        $contains:
+          type: string
+          description: The value to contain.
+        $contained:
+          type: string
+          description: The value to be contained in.
+        $overlap:
+          type: string
+          description: The value to overlap.
+        $exists:
+          type: boolean
+          description: The value to exist.
+        $nexits:
+          type: boolean
+          description: The value to not exist.
     FieldError:
       type: object
       properties:
