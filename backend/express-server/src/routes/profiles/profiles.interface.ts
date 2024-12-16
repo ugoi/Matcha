@@ -88,19 +88,15 @@ export interface SortValue {
 
 export class SortBy {
   age?: SortItem;
-  age_gap?: SortItem;
   distance?: SortItem;
   fame_rating?: SortItem;
-  fame_rating_gap?: SortItem;
   common_tags?: SortItem;
   tags?: SortItem;
 
   constructor(sortBy: SortBy) {
     this.age = sortBy.age;
-    this.age_gap = sortBy.age_gap;
     this.distance = sortBy.distance;
     this.fame_rating = sortBy.fame_rating;
-    this.fame_rating_gap = sortBy.fame_rating_gap;
     this.common_tags = sortBy.common_tags;
     this.tags = sortBy.tags;
   }
@@ -124,17 +120,14 @@ export interface FilterItem {
 }
 
 export class FilterBy {
-  user_id?: FilterItem;
-  username?: FilterItem;
-  email?: FilterItem;
   age?: FilterItem;
-  age_gap?: FilterItem;
   distance?: FilterItem;
   fame_rating?: FilterItem;
-  fame_rating_gap?: FilterItem;
+  common_interests?: FilterItem;
+  username?: FilterItem;
+  email?: FilterItem;
   gender?: FilterItem;
   // common tags is number of tags in common
-  common_interests?: FilterItem;
   tags?: FilterItem;
 
   constructor(filterBy: FilterBy) {
@@ -142,10 +135,8 @@ export class FilterBy {
     this.username = filterBy.username;
     this.email = filterBy.email;
     this.age = filterBy.age;
-    this.age_gap = filterBy.age_gap;
     this.distance = filterBy.distance;
     this.fame_rating = filterBy.fame_rating;
-    this.fame_rating_gap = filterBy.fame_rating_gap;
     this.common_interests = filterBy.common_interests;
     this.tags = filterBy.tags;
   }

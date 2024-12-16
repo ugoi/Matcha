@@ -41,6 +41,7 @@ export const profilesService = {
 
     return profile;
   },
+  
 
   async createProfile(input: CreateProfileInput): Promise<Profile> {
     const { user_id, data } = input;

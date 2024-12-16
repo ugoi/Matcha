@@ -28,7 +28,41 @@ router.use("/", blocksRouter);
 
 router.use("/", picturesRouter);
 
-//#region Profile routes
+/* Get list of profiles */
+router.get(
+  "/",
+  passport.authenticate("jwt", { session: false }),
+  profileExists,
+  query("sort_by").optional(),
+  query("filter_by").optional(),
+  async function (req, res, next) {
+    const result = validationResult(req);
+    if (!result.isEmpty()) {
+      const errors = escapeErrors(result.array());
+      next(new JFail({ title: "invalid input", errors }));
+      return;
+    }
+
+    try {
+      const profiles = await profilesService.searchProfiles({
+        user_id: req.user.user_id,
+        filter_by: req.query.filter_by
+          ? JSON.parse(req.query.filter_by)
+          : undefined,
+        sort_by: req.query.sort_by ? JSON.parse(req.query.sort_by) : undefined,
+      });
+
+      const publicProfiles = profiles.map(
+        (profile) => new PublicProfile(profile)
+      );
+
+      res.json({ message: "success", data: { profiles: publicProfiles } });
+    } catch (error) {
+      next(error);
+    }
+  }
+);
+
 /* Get my user profile*/
 router.get(
   "/me",
@@ -125,40 +159,6 @@ router.patch(
     }
   }
 );
-
-/* Get list of profiles */
-router.get(
-  "/",
-  passport.authenticate("jwt", { session: false }),
-  profileExists,
-  query("sort_by").optional(),
-  query("filter_by").optional(),
-  async function (req, res, next) {
-    const result = validationResult(req);
-    if (!result.isEmpty()) {
-      const errors = escapeErrors(result.array());
-      next(new JFail({ title: "invalid input", errors }));
-      return;
-    }
-
-    try {
-      const profiles = await profilesService.searchProfiles({
-        user_id: req.user.user_id,
-        filter_by: req.query.filter_by
-          ? JSON.parse(req.query.filter_by)
-          : undefined,
-        sort_by: req.query.sort_by ? JSON.parse(req.query.sort_by) : undefined,
-      });
-
-      const publicProfiles = profiles.map((profile) => new PublicProfile(profile));
-
-      res.json({ message: "success", data: { profiles: publicProfiles } });
-    } catch (error) {
-      next(error);
-    }
-  }
-);
-//#endregion
 
 //#region reports routes
 /* Get profiles that I reported */

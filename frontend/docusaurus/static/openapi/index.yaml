@@ -108,12 +108,36 @@ paths:
           name: sort_by
           description: Sort criteria (JSON)
           schema:
-            type: string
+            type: object
+            properties:
+              field:
+                type: enum
+                description: Field to sort by
+                enum:
+                  - username
+                  - email
+                  - age
+                  - distance
+                  - fame_rating
+                  - gender
+                  - common_interests
+                  
+                
+              order:
+                type: string
+                description: Sort order (asc/desc)
         - in: query
           name: filter_by
           description: Filter criteria (JSON)
           schema:
-            type: string
+            type: object
+            properties:
+              field:
+                type: string
+                description: Field to filter by
+              value:
+                type: string
+                description: Value to filter by
       responses:
         "200":
           description: A list of profiles
