@@ -39,7 +39,7 @@ function Home() {
       $.ajax(settings).done(function (response) {
         console.log(response);
         const formattedUsers = response.data.profiles.map((data: any) => ({
-          profile_id: data.profile_id,
+          profile_id: data.user_id,
           name: `${data.first_name} ${data.last_name}`,
           age: data.age,
           gender: data.gender,
@@ -76,12 +76,36 @@ function Home() {
     checkProfile();
   }, []);
 
-  const handleNextUser = () => {
+  const handleLikeUser = async () => {
+    const userId = users[currentIndex].profile_id;
+    try {
+      await fetch(`http://localhost:3000/api/profiles/${userId}/like`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+    } catch (error) {
+      console.error('Error liking user:', error);
+    }
+    
     setCurrentIndex((prevIndex) => (prevIndex + 1) % users.length);
     setPhotoIndex(0);
   };
 
-  const handlePreviousUser = () => {
+  const handleDislikeUser = async () => {
+    const userId = users[currentIndex].profile_id;
+    try {
+      await fetch(`http://localhost:3000/api/profiles/${userId}/dislike`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+    } catch (error) {
+      console.error('Error disliking user:', error);
+    }
+    
     setCurrentIndex((prevIndex) => (prevIndex - 1 + users.length) % users.length);
     setPhotoIndex(0);
   };
@@ -115,13 +139,13 @@ function Home() {
               <div className="d-flex justify-content-around">
                 <button
                   className="btn dislike-button rounded-circle shadow-sm"
-                  onClick={handlePreviousUser}
+                  onClick={handleDislikeUser}
                 >
                   <i className="bi bi-x"></i>
                 </button>
                 <button
                   className="btn like-button rounded-circle shadow-sm"
-                  onClick={handleNextUser}
+                  onClick={handleLikeUser}
                 >
                   <i className="bi bi-heart-fill"></i>
                 </button>
