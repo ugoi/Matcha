@@ -5,6 +5,7 @@ import {
   likeExists,
   profileExists,
   profileExistsValidator,
+  profileNotDisliked,
   profileNotLiked,
 } from "../../../utils/utils.js";
 import { likesRepository } from "./likes.repository.js";
@@ -113,7 +114,7 @@ router.post(
   "/:user_id/dislike",
   passport.authenticate("jwt", { session: false }),
   profileExists,
-  param("user_id").isUUID().custom(profileExistsValidator),
+  param("user_id").isUUID().custom(profileExistsValidator).custom(profileNotDisliked),
   async function (req, res, next) {
     const result = validationResult(req);
     if (!result.isEmpty()) {

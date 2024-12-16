@@ -75,6 +75,17 @@ export async function profileNotLiked(value, { req }) {
   }
 }
 
+export async function profileNotDisliked(value, { req }) {
+  // Check if the block already exists
+  const existingLikedUser = await likesService.hasDisliked(
+    req.user.user_id,
+    value
+  );
+  if (existingLikedUser) {
+    throw new Error("You already disliked this user");
+  }
+}
+
 export async function likeExists(value, { req }) {
   // Check if the block already exists
   const existingLike = await likesRepository.findLike(req.user.user_id, value);

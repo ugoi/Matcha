@@ -21,6 +21,18 @@ export const likesService = {
     return existingLike?.is_like === true;
   },
 
+  hasDisliked: async function hasDisliked(
+    liker_user_id: string,
+    likee_user_id: string
+  ): Promise<boolean> {
+    const existingLike = await likesRepository.findLike(
+      liker_user_id,
+      likee_user_id
+    );
+
+    return existingLike?.is_like === false;
+  },
+
   like: async function like(
     liker_user_id: string,
     likee_user_id: string
@@ -98,15 +110,10 @@ export const likesService = {
       throw new Error("You cannot dislike yourself");
     }
 
-    const existingLike = await likesRepository.findLike(
+    let existingLike = await likesRepository.findLike(
       liker_user_id,
       likee_user_id
     );
-
-    // Check if you already unliked the user
-    if (existingLike.is_like === false) {
-      throw new Error("You already unliked this user");
-    }
 
     let match = null;
     if (existingLike) {
