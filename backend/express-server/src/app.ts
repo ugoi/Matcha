@@ -10,11 +10,10 @@ import { clientErrorHandler } from "./error-handlers/client-error-handler.js";
 import { defaultErrorHandler } from "./error-handlers/default-error-handler.js";
 import { up } from "./migrations/up.js";
 import { initPassport } from "./config/passport-config.js";
+import { app } from "./express-app.js";
 
 // run migrations
 up();
-
-var app = express();
 
 // view engine setup
 app.set("views", join(__dirname, "../views"));

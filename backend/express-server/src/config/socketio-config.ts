@@ -5,9 +5,9 @@
 import { Server } from "socket.io";
 import passport from "passport";
 import { createServer } from "http";
-import { server } from "./server-config.js";
+import { app } from "../express-app.js";
 
-
+var server = createServer(app);
 
 const io = new Server(server);
 

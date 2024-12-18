@@ -149,7 +149,7 @@ describe("utils", () => {
 
     test("with wrong set", () => {
       var filterSet = new FilterSet({
-        username: { $gg: "stefan12" },
+        username: { $gg: "stefan12" } as any,
         age: { $gte: 18 },
       });
 
@@ -172,7 +172,7 @@ describe("utils", () => {
     test("with wrong set", () => {
       var wholeTest = () => {
         var filterSet = new FilterSet({
-          username: "stefan12",
+          username: "stefan12" as any,
           age: { $gte: 18 },
         });
 
@@ -223,7 +223,7 @@ describe("utils", () => {
     test("with wrong set", () => {
       var wholeTest = () => {
         var filterSet = new SortSet({
-          fame_rating: { $order: "lol" },
+          fame_rating: { $order: "lol" } as any,
           age: { $order: SortOrder.Asc },
         });
 
@@ -234,11 +234,10 @@ describe("utils", () => {
     });
 
     test("with wrong set", () => {
-      
       var filterSet = new SortSet({
         email: {},
         age: { $order: "asc" },
-      });
+      } as any);
 
       var where = pgp.as.format("ORDER BY $1", filterSet);
 
@@ -246,17 +245,14 @@ describe("utils", () => {
     });
 
     test("with wrong set", () => {
-
       var wholeTest = () => {
+        var filterSet = new SortSet({
+          email: "asc",
+          age: { $order: "asc" },
+        } as any);
 
-      var filterSet = new SortSet({
-        email: "asc",
-        age: { $order: "asc" },
-      });
-
-      var where = pgp.as.format("ORDER BY $1", filterSet);
-
-    }
+        var where = pgp.as.format("ORDER BY $1", filterSet);
+      };
 
       expect(wholeTest).toThrowError();
     });
