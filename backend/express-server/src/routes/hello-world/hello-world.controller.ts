@@ -6,7 +6,7 @@ router.get(
   "/",
   function (req, res) {
     const response = "Hello World";
-    res.json(response);
+    res.send(response);
   }
 );
 
