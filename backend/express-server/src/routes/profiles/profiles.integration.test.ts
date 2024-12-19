@@ -9,3 +9,11 @@ describe("hello-world", () => {
     expect(response.text).toBe("Hello World");
   });
 });
+
+// describe("profiles", () => {
+//   test("GET /api/profiles", async () => {
+//     const response = await supertest(app).get("/api/profiles");
+//     expect(response.status).toBe(200);
+//     expect(response.body).toEqual([]);
+//   });
+// });

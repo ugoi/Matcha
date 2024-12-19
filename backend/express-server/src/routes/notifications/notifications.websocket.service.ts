@@ -1,9 +1,11 @@
 import { Server } from "socket.io";
 import { socketioDefaultErrorHandlerIO } from "../../error-handlers/socketio-default-error-handler.js";
-import { io } from "../../config/socketio-config.js";
 import { NotificationResponse } from "./notification.response.interface.js";
 import { NOTIFICATION_STATUS } from "./notification.interface.js";
 import { notificationRepository } from "./notification.repository.js";
+
+let io;
+let notificationsWebsocketService;
 
 /**
  * NotificationsWebsocketService class
@@ -44,7 +46,7 @@ import { notificationRepository } from "./notification.repository.js";
  * @category Services
  */
 export class NotificationsWebsocketService {
-  private io: Server;
+  public io: Server;
 
   constructor(io: Server) {
     this.io = io;
@@ -106,7 +108,9 @@ export class NotificationsWebsocketService {
   }
 }
 
-// Create an instance of the NotificationsWebsocketService
-export const notificationsWebsocketService = new NotificationsWebsocketService(
-  io
-);
+export const init = (ioInstance: Server) => {
+  io = ioInstance;
+  notificationsWebsocketService = new NotificationsWebsocketService(io);
+};
+
+export { notificationsWebsocketService };
