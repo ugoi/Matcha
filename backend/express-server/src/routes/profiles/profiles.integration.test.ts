@@ -30,7 +30,6 @@ describe("profiles", () => {
 
   test("GET /api/profiles", async () => {
     const response = await agent.get("/api/profiles");
-    console.log(response.body.data.profiles[0]);
     expect(response.status).toBe(200);
   });
 });
