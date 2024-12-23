@@ -101,7 +101,7 @@ router.post(
       // Set token in cookie
       res.cookie("jwt", result.token, {
         httpOnly: true,
-        secure: true,
+        secure: process.env.SECURE_COOKIE === "true",
         sameSite: "strict",
       });
 

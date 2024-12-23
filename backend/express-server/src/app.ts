@@ -11,49 +11,54 @@ import { defaultErrorHandler } from "./error-handlers/default-error-handler.js";
 import { up } from "./migrations/up.js";
 import { initPassport } from "./config/passport-config.js";
 
-var app = express();
+function createApp() {
+  var app = express();
 
-// run migrations
-up();
+  // run migrations
+  up();
 
-// view engine setup
-app.set("views", join(__dirname, "../views"));
-app.set("view engine", "pug");
+  // view engine setup
+  app.set("views", join(__dirname, "../views"));
+  app.set("view engine", "pug");
 
-app.use(cors());
-app.use(logger("dev"));
-app.use(json());
-app.use(urlencoded({ extended: false }));
+  app.use(cors());
+  app.use(logger("dev"));
+  app.use(json());
+  app.use(urlencoded({ extended: false }));
 
-app.use(
-  cookieParser(process.env.COOKIE_SECRET)
-);
+  app.use(cookieParser(process.env.COOKIE_SECRET));
 
-app.get("/chat_example", function (req, res) {
-  res.sendFile("index.html", {
-    root: join(__dirname, "../public/chat_example/"),
+  app.get("/chat_example", function (req, res) {
+    res.sendFile("index.html", {
+      root: join(__dirname, "../public/chat_example/"),
+    });
   });
-});
 
-app.use("/api", apiRouter);
-app.use(express.static(join(__dirname, "../../../frontend/react-app/dist")));
-app.get("*", function (req, res) {
-  res.sendFile("index.html", {
-    root: join(__dirname, "../../../frontend/react-app/dist/"),
+  app.use("/api", apiRouter);
+  app.use(express.static(join(__dirname, "../../../frontend/react-app/dist")));
+  app.get("*", function (req, res) {
+    res.sendFile("index.html", {
+      root: join(__dirname, "../../../frontend/react-app/dist/"),
+    });
   });
-});
 
-initPassport();
+  initPassport();
 
-// catch 404 and forward to error handler
-app.use(function (req, res, next) {
-  next(createError(404));
-});
+  // catch 404 and forward to error handler
+  app.use(function (req, res, next) {
+    next(createError(404));
+  });
 
-// client error handler
-app.use(clientErrorHandler);
+  // client error handler
+  app.use(clientErrorHandler);
 
-// default error handler
-app.use(defaultErrorHandler);
+  // default error handler
+  app.use(defaultErrorHandler);
 
+  return app;
+}
+
+const app = createApp();
+
+export { createApp };
 export default app;
