@@ -9,6 +9,8 @@ import {
 } from "../../../utils/utils.js";
 import { JFail } from "../../../error-handlers/custom-errors.js";
 import { picturesRepository } from "./pictures.repository.js";
+import { SuccessResponse } from "../../../interfaces/response.js";
+// Import your SuccessResponse class. Adjust the import path as needed.
 
 var router = Router();
 
@@ -18,7 +20,10 @@ router.get(
   async function (req, res, next) {
     try {
       const profile = await picturesRepository.find(req.user.user_id);
-      res.json({ message: "success", data: { pictures: profile } });
+
+      // Return as SuccessResponse
+      const response = new SuccessResponse({ pictures: profile });
+      res.json(response);
     } catch (error) {
       next(error);
       return;
@@ -36,7 +41,6 @@ router.post(
     .isArray({ max: 5 })
     .custom(picturesNotExists)
     .custom(pictureCount),
-
   async function (req, res, next) {
     const result = validationResult(req);
     if (!result.isEmpty()) {
@@ -45,13 +49,16 @@ router.post(
       next(new JFail({ title: "invalid input", errors: errors }));
       return;
     }
+
     try {
       const profile = await picturesRepository.add(
         req.user.user_id,
         req.body.pictures
       );
-      // console.log(req.body["interests[]"]);
-      res.json({ message: "success", data: profile });
+
+      // Return as SuccessResponse
+      const response = new SuccessResponse(profile);
+      res.json(response);
     } catch (error) {
       next(error);
       return;
@@ -64,7 +71,6 @@ router.delete(
   "/me/pictures",
   passport.authenticate("jwt", { session: false }),
   body("pictures").customSanitizer(arraySanitizer).isArray({ max: 5 }),
-
   async function (req, res, next) {
     const result = validationResult(req);
     if (!result.isEmpty()) {
@@ -73,13 +79,16 @@ router.delete(
       next(new JFail({ title: "invalid input", errors: errors }));
       return;
     }
+
     try {
       const profile = await picturesRepository.remove(
         req.user.user_id,
         req.body.pictures
       );
-      // console.log(req.body["interests[]"]);
-      res.json({ message: "success", data: profile });
+
+      // Return as SuccessResponse
+      const response = new SuccessResponse(profile);
+      res.json(response);
     } catch (error) {
       next(error);
       return;
