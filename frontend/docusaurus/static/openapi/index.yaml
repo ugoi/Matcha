@@ -151,14 +151,49 @@ paths:
                 type: array
                 items:
                   $ref: "#/components/schemas/PublicProfile"
+              examples:
+                success:
+                  summary: Example success response
+                  value:
+                    - profile_id: "e8686b2e-a7f2-45e4-9f3c-e11c7952d600"
+                      user_id: "20b62f13-3d03-4c8c-8c65-3a99c71a2bf1"
+                      username: "alice_123"
+                      first_name: "Alice"
+                      last_name: "Doe"
+                      gender: "female"
+                      age: 25
+                      sexual_preference: "heterosexual"
+                      biography: "Loves hiking and cooking"
+                      fame_rating: 42
+                      distance: 100
+                      pictures: []
+                fail:
+                  summary: Example fail response
+                  value:
+                    status: "fail"
+                    data:
+                      title: "Invalid Input"
+                      errors:
+                        - msg: "Parameter 'sort_by' must be valid JSON"
+                          path: "sort_by"
+                error:
+                  summary: Example error response
+                  value:
+                    status: "error"
+                    message: "Database connection failed"
+                    data: null
       x-codeSamples:
         - lang: cURL
           source: |
-            curl --location --globoff 'http://localhost:3000/api/profiles?sort_by={%22distance%22%3A%20{%22%24order%22%3A%20%22desc%22}%2C%20%22age%22%3A%20{%22%24order%22%3A%20%22asc%22}}&filter_by={%22age%22%3A%20{%22%24lt%22%3A%20%2219%22}}'
+            curl --location --globoff 'http://localhost:3000/api/profiles?sort_by={%22distance%22%3A%20{%22%24order%22%3A%20%22desc%22}%2C%20%22age%22%3A%20{%22%24order%22%3A%20%22asc%22}}&filter_by={%22age%22%3A%20{%22%24lt%22%3A%20%2219%22}}' \
+            --header 'Authorization: Bearer YOUR_JWT_TOKEN'
         - lang: typescript
           source: |
             const requestOptions: RequestInit = {
               method: "GET",
+              headers: {
+                Authorization: "Bearer YOUR_JWT_TOKEN",
+              },
               redirect: "follow",
             };
 
@@ -172,15 +207,13 @@ paths:
             };
 
             const url = new URL("http://localhost:3000/api/profiles");
-
             url.searchParams.append("sort_by", JSON.stringify(sort_by));
-
             url.searchParams.append("filter_by", JSON.stringify(filter_by));
 
             try {
               const response = await fetch(url.toString(), requestOptions);
-              const json = await response.json();
-              console.log(json);
+              const data = await response.json();
+              console.log("Profiles:", data);
             } catch (error) {
               console.error("Error:", error);
             }
@@ -200,6 +233,54 @@ paths:
       responses:
         "200":
           description: A single profile
+          content:
+            application/json:
+              schema:
+                type: object
+                $ref: "#/components/schemas/PublicProfile"
+              examples:
+                success:
+                  summary: Example success response
+                  value:
+                    profile_id: "66f2f0a0-ade9-412f-9678-383d9f887123"
+                    user_id: "8721ac37-2bd6-4bb6-8051-7858653ae77f"
+                    username: "bob_456"
+                    first_name: "Bob"
+                    last_name: "Smith"
+                    gender: "male"
+                    age: 29
+                    sexual_preference: "bisexual"
+                    biography: "Tech enthusiast"
+                    fame_rating: 10
+                    distance: 300
+                    pictures: []
+                error:
+                  summary: Example error response
+                  value:
+                    status: "error"
+                    message: "Profile not found"
+                    data: null
+        x-codeSamples:
+          - lang: cURL
+            source: |
+              curl --location --request GET 'http://localhost:3000/api/profiles/1234' \
+              --header 'Authorization: Bearer YOUR_JWT_TOKEN'
+          - lang: typescript
+            source: |
+              const requestOptions: RequestInit = {
+                method: "GET",
+                headers: {
+                  Authorization: "Bearer YOUR_JWT_TOKEN",
+                },
+              };
+
+              try {
+                const response = await fetch("http://localhost:3000/api/profiles/1234", requestOptions);
+                const data = await response.json();
+                console.log("Profile:", data);
+              } catch (error) {
+                console.error("Error:", error);
+              }
 
   /profiles/me:
     get:
@@ -210,6 +291,52 @@ paths:
       responses:
         "200":
           description: The authenticated user's profile
+          content:
+            application/json:
+              schema:
+                type: object
+                $ref: "#/components/schemas/PublicProfile"
+              examples:
+                success:
+                  summary: Example success response
+                  value:
+                    profile_id: "f241db89-e483-4c54-96e2-0cd2d043cadd"
+                    user_id: "e7ad562b-3d82-45eb-8bc0-30f158681f9f"
+                    username: "my_username"
+                    first_name: "MyFirstName"
+                    last_name: "MyLastName"
+                    age: 22
+                    gender: "female"
+                    biography: "Hello! This is my profile."
+                    pictures: []
+                error:
+                  summary: Example error response
+                  value:
+                    status: "error"
+                    message: "Could not fetch your profile"
+                    data: null
+      x-codeSamples:
+        - lang: cURL
+          source: |
+            curl --location --request GET 'http://localhost:3000/api/profiles/me' \
+            --header 'Authorization: Bearer YOUR_JWT_TOKEN'
+        - lang: typescript
+          source: |
+            const requestOptions: RequestInit = {
+              method: "GET",
+              headers: {
+                Authorization: "Bearer YOUR_JWT_TOKEN",
+              },
+            };
+
+            try {
+              const response = await fetch("http://localhost:3000/api/profiles/me", requestOptions);
+              const data = await response.json();
+              console.log("My profile:", data);
+            } catch (error) {
+              console.error("Error:", error);
+            }
+
     patch:
       tags:
         - profile
@@ -229,6 +356,80 @@ paths:
       responses:
         "200":
           description: Profile updated successfully
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - allOf:
+                      - $ref: "#/components/schemas/SuccessResponse"
+                    title: SuccessResponse
+                    type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          profile:
+                            $ref: "#/components/schemas/PublicProfile"
+                  - $ref: "#/components/schemas/FailResponse"
+                  - $ref: "#/components/schemas/ErrorResponse"
+              examples:
+                success:
+                  summary: Example success response
+                  value:
+                    status: "success"
+                    data:
+                      profile:
+                        profile_id: "f241db89-e483-4c54-96e2-0cd2d043cadd"
+                        user_id: "e7ad562b-3d82-45eb-8bc0-30f158681f9f"
+                        gps_latitude: "37.7749"
+                        gps_longitude: "-122.4194"
+                fail:
+                  summary: Example fail response
+                  value:
+                    status: "fail"
+                    data:
+                      title: "Invalid input"
+                      errors:
+                        - msg: "gps_longitude must be numeric"
+                          path: "gps_longitude"
+                error:
+                  summary: Example error response
+                  value:
+                    status: "error"
+                    message: "An unexpected error occurred"
+                    data: null
+      x-codeSamples:
+        - lang: cURL
+          source: |
+            curl --location --request PATCH 'http://localhost:3000/api/profiles/me' \
+            --header 'Authorization: Bearer YOUR_JWT_TOKEN' \
+            --header 'Content-Type: application/x-www-form-urlencoded' \
+            --data-urlencode 'gps_longitude=-122.4194' \
+            --data-urlencode 'gps_latitude=37.7749'
+        - lang: typescript
+          source: |
+            const myHeaders = new Headers();
+            myHeaders.append("Authorization", "Bearer YOUR_JWT_TOKEN");
+            myHeaders.append("Content-Type", "application/x-www-form-urlencoded");
+
+            const urlencoded = new URLSearchParams();
+            urlencoded.append("gps_longitude", "-122.4194");
+            urlencoded.append("gps_latitude", "37.7749");
+
+            const requestOptions: RequestInit = {
+              method: "PATCH",
+              headers: myHeaders,
+              body: urlencoded,
+            };
+
+            try {
+              const response = await fetch("http://localhost:3000/api/profiles/me", requestOptions);
+              const data = await response.json();
+              console.log("Profile updated:", data);
+            } catch (error) {
+              console.error("Error:", error);
+            }
+
     post:
       tags:
         - profile
@@ -276,12 +477,40 @@ paths:
                             $ref: "#/components/schemas/PublicProfile"
                   - $ref: "#/components/schemas/FailResponse"
                   - $ref: "#/components/schemas/ErrorResponse"
+              examples:
+                success:
+                  summary: Example success response
+                  value:
+                    status: "success"
+                    data:
+                      title: "Profile created"
+                      profile:
+                        profile_id: "f241db89-e483-4c54-96e2-0cd2d043cadd"
+                        user_id: "e7ad562b-3d82-45eb-8bc0-30f158681f9f"
+                        username: "my_username"
+                        gender: "female"
+                        age: 19
+                fail:
+                  summary: Example fail response
+                  value:
+                    status: "fail"
+                    data:
+                      title: "Invalid input"
+                      errors:
+                        - msg: "gender is required"
+                          path: "gender"
+                error:
+                  summary: Example error response
+                  value:
+                    status: "error"
+                    message: "Database error"
+                    data: null
       x-codeSamples:
         - lang: cURL
           source: |
             curl --location 'http://localhost:3000/api/profiles/me' \
+            --header 'Authorization: Bearer YOUR_JWT_TOKEN' \
             --header 'Content-Type: application/x-www-form-urlencoded' \
-            --header 'Cookie: jwt=some_jwt_token' \
             --data-urlencode 'gender=female' \
             --data-urlencode 'age=19' \
             --data-urlencode 'sexual_preference=heterosexual' \
@@ -292,8 +521,8 @@ paths:
         - lang: typescript
           source: |
             const myHeaders = new Headers();
+            myHeaders.append("Authorization", "Bearer YOUR_JWT_TOKEN");
             myHeaders.append("Content-Type", "application/x-www-form-urlencoded");
-            myHeaders.append("Cookie", "jwt=some_jwt_token");
 
             const urlencoded = new URLSearchParams();
             urlencoded.append("gender", "female");
@@ -308,13 +537,12 @@ paths:
               method: "POST",
               headers: myHeaders,
               body: urlencoded,
-              redirect: "follow",
             };
 
             try {
               const response = await fetch("http://localhost:3000/api/profiles/me", requestOptions);
-              const json = await response.json();
-              console.log(json);
+              const data = await response.json();
+              console.log("Created/updated profile:", data);
             } catch (error) {
               console.error("Error:", error);
             }
@@ -334,6 +562,62 @@ paths:
       responses:
         "201":
           description: Visit recorded successfully
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - allOf:
+                      - $ref: "#/components/schemas/SuccessResponse"
+                    title: SuccessResponse
+                    type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          visit_id:
+                            type: string
+                          visited_user_id:
+                            type: string
+                          visitor_user_id:
+                            type: string
+                  - $ref: "#/components/schemas/FailResponse"
+                  - $ref: "#/components/schemas/ErrorResponse"
+              examples:
+                success:
+                  summary: Example success response
+                  value:
+                    status: "success"
+                    data:
+                      visit_id: "5f09591c-69ec-4ad3-9506-a69a517d60d2"
+                      visited_user_id: "1234"
+                      visitor_user_id: "5678"
+                error:
+                  summary: Example error response
+                  value:
+                    status: "error"
+                    message: "Could not record visit"
+                    data: null
+      x-codeSamples:
+        - lang: cURL
+          source: |
+            curl --location --request POST 'http://localhost:3000/api/profiles/1234/visits' \
+            --header 'Authorization: Bearer YOUR_JWT_TOKEN'
+        - lang: typescript
+          source: |
+            const requestOptions: RequestInit = {
+              method: "POST",
+              headers: {
+                Authorization: "Bearer YOUR_JWT_TOKEN",
+              },
+            };
+
+            try {
+              const response = await fetch("http://localhost:3000/api/profiles/1234/visits", requestOptions);
+              const data = await response.json();
+              console.log("Visit result:", data);
+            } catch (error) {
+              console.error("Error:", error);
+            }
 
   /profiles/visits:
     get:
@@ -343,6 +627,67 @@ paths:
       responses:
         "200":
           description: List of visited profiles
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - allOf:
+                      - $ref: "#/components/schemas/SuccessResponse"
+                    title: SuccessResponse
+                    type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          visits:
+                            type: array
+                            items:
+                              type: object
+                              properties:
+                                visited_user_id:
+                                  type: string
+                                visited_at:
+                                  type: string
+                  - $ref: "#/components/schemas/FailResponse"
+                  - $ref: "#/components/schemas/ErrorResponse"
+              examples:
+                success:
+                  summary: Example success response
+                  value:
+                    status: "success"
+                    data:
+                      visits:
+                        - visited_user_id: "abcd-1234"
+                          visited_at: "2024-04-10T15:30:00.000Z"
+                        - visited_user_id: "efgh-5678"
+                          visited_at: "2024-04-11T10:15:00.000Z"
+                error:
+                  summary: Example error response
+                  value:
+                    status: "error"
+                    message: "Could not retrieve visited profiles"
+                    data: null
+      x-codeSamples:
+        - lang: cURL
+          source: |
+            curl --location 'http://localhost:3000/api/profiles/visits' \
+            --header 'Authorization: Bearer YOUR_JWT_TOKEN'
+        - lang: typescript
+          source: |
+            const requestOptions: RequestInit = {
+              method: "GET",
+              headers: {
+                Authorization: "Bearer YOUR_JWT_TOKEN",
+              },
+            };
+
+            try {
+              const response = await fetch("http://localhost:3000/api/profiles/visits", requestOptions);
+              const data = await response.json();
+              console.log("Visited profiles:", data);
+            } catch (error) {
+              console.error("Error:", error);
+            }
 
   ### Profile Interests
   /profiles/me/interests:
@@ -364,6 +709,78 @@ paths:
       responses:
         "200":
           description: Interests added
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - allOf:
+                      - $ref: "#/components/schemas/SuccessResponse"
+                    title: SuccessResponse
+                    type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          interests:
+                            type: array
+                            items:
+                              type: string
+                  - $ref: "#/components/schemas/FailResponse"
+                  - $ref: "#/components/schemas/ErrorResponse"
+              examples:
+                success:
+                  summary: Example success response
+                  value:
+                    status: "success"
+                    data:
+                      interests: ["football", "hiking"]
+                fail:
+                  summary: Example fail response
+                  value:
+                    status: "fail"
+                    data:
+                      title: "Invalid input"
+                      errors:
+                        - msg: "interests must be an array of strings"
+                          path: "interests"
+                error:
+                  summary: Example error response
+                  value:
+                    status: "error"
+                    message: "Database error"
+                    data: null
+      x-codeSamples:
+        - lang: cURL
+          source: |
+            curl --location --request POST 'http://localhost:3000/api/profiles/me/interests' \
+            --header 'Authorization: Bearer YOUR_JWT_TOKEN' \
+            --header 'Content-Type: application/x-www-form-urlencoded' \
+            --data-urlencode 'interests=football' \
+            --data-urlencode 'interests=hiking'
+        - lang: typescript
+          source: |
+            const myHeaders = new Headers();
+            myHeaders.append("Authorization", "Bearer YOUR_JWT_TOKEN");
+            myHeaders.append("Content-Type", "application/x-www-form-urlencoded");
+
+            const urlencoded = new URLSearchParams();
+            urlencoded.append("interests", "football");
+            urlencoded.append("interests", "hiking");
+
+            const requestOptions: RequestInit = {
+              method: "POST",
+              headers: myHeaders,
+              body: urlencoded,
+            };
+
+            try {
+              const response = await fetch("http://localhost:3000/api/profiles/me/interests", requestOptions);
+              const data = await response.json();
+              console.log("Interests added:", data);
+            } catch (error) {
+              console.error("Error:", error);
+            }
+
     get:
       tags:
         - profile
@@ -371,6 +788,59 @@ paths:
       responses:
         "200":
           description: List of interests
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - allOf:
+                      - $ref: "#/components/schemas/SuccessResponse"
+                    title: SuccessResponse
+                    type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          interests:
+                            type: array
+                            items:
+                              type: string
+                  - $ref: "#/components/schemas/FailResponse"
+                  - $ref: "#/components/schemas/ErrorResponse"
+              examples:
+                success:
+                  summary: Example success response
+                  value:
+                    status: "success"
+                    data:
+                      interests: ["football", "hiking", "coding"]
+                error:
+                  summary: Example error response
+                  value:
+                    status: "error"
+                    message: "Unable to retrieve interests"
+                    data: null
+      x-codeSamples:
+        - lang: cURL
+          source: |
+            curl --location --request GET 'http://localhost:3000/api/profiles/me/interests' \
+            --header 'Authorization: Bearer YOUR_JWT_TOKEN'
+        - lang: typescript
+          source: |
+            const requestOptions: RequestInit = {
+              method: "GET",
+              headers: {
+                Authorization: "Bearer YOUR_JWT_TOKEN",
+              },
+            };
+
+            try {
+              const response = await fetch("http://localhost:3000/api/profiles/me/interests", requestOptions);
+              const data = await response.json();
+              console.log("My interests:", data);
+            } catch (error) {
+              console.error("Error:", error);
+            }
+
     delete:
       tags:
         - profile
@@ -388,6 +858,62 @@ paths:
       responses:
         "200":
           description: Interests removed
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - allOf:
+                      - $ref: "#/components/schemas/SuccessResponse"
+                    title: SuccessResponse
+                    type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          removed:
+                            type: array
+                            items:
+                              type: string
+                  - $ref: "#/components/schemas/FailResponse"
+                  - $ref: "#/components/schemas/ErrorResponse"
+              examples:
+                success:
+                  summary: Example success response
+                  value:
+                    status: "success"
+                    data:
+                      removed: ["football", "hiking"]
+                error:
+                  summary: Example error response
+                  value:
+                    status: "error"
+                    message: "Unable to remove interests"
+                    data: null
+      x-codeSamples:
+        - lang: cURL
+          source: |
+            curl --location --request DELETE 'http://localhost:3000/api/profiles/me/interests?interests=football&interests=hiking' \
+            --header 'Authorization: Bearer YOUR_JWT_TOKEN'
+        - lang: typescript
+          source: |
+            const requestOptions: RequestInit = {
+              method: "DELETE",
+              headers: {
+                Authorization: "Bearer YOUR_JWT_TOKEN",
+              },
+            };
+
+            const url = new URL("http://localhost:3000/api/profiles/me/interests");
+            url.searchParams.append("interests", "football");
+            url.searchParams.append("interests", "hiking");
+
+            try {
+              const response = await fetch(url.toString(), requestOptions);
+              const data = await response.json();
+              console.log("Removed interests:", data);
+            } catch (error) {
+              console.error("Error:", error);
+            }
 
   /profiles/{user_id}/interests:
     get:
@@ -403,6 +929,58 @@ paths:
       responses:
         "200":
           description: List of user's interests
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - allOf:
+                      - $ref: "#/components/schemas/SuccessResponse"
+                    title: SuccessResponse
+                    type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          interests:
+                            type: array
+                            items:
+                              type: string
+                  - $ref: "#/components/schemas/FailResponse"
+                  - $ref: "#/components/schemas/ErrorResponse"
+              examples:
+                success:
+                  summary: Example success response
+                  value:
+                    status: "success"
+                    data:
+                      interests: ["swimming", "gaming"]
+                error:
+                  summary: Example error response
+                  value:
+                    status: "error"
+                    message: "User interests not found"
+                    data: null
+      x-codeSamples:
+        - lang: cURL
+          source: |
+            curl --location --request GET 'http://localhost:3000/api/profiles/1234/interests' \
+            --header 'Authorization: Bearer YOUR_JWT_TOKEN'
+        - lang: typescript
+          source: |
+            const requestOptions: RequestInit = {
+              method: "GET",
+              headers: {
+                Authorization: "Bearer YOUR_JWT_TOKEN",
+              },
+            };
+
+            try {
+              const response = await fetch("http://localhost:3000/api/profiles/1234/interests", requestOptions);
+              const data = await response.json();
+              console.log("User interests:", data);
+            } catch (error) {
+              console.error("Error:", error);
+            }
 
   ### Profile Pictures
   /profiles/me/pictures:
@@ -424,6 +1002,71 @@ paths:
       responses:
         "200":
           description: Pictures added
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - allOf:
+                      - $ref: "#/components/schemas/SuccessResponse"
+                    title: SuccessResponse
+                    type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          pictures:
+                            type: array
+                            items:
+                              type: string
+                  - $ref: "#/components/schemas/FailResponse"
+                  - $ref: "#/components/schemas/ErrorResponse"
+              examples:
+                success:
+                  summary: Example success response
+                  value:
+                    status: "success"
+                    data:
+                      pictures:
+                        - "https://picsum.photos/id/1/200/200"
+                        - "https://picsum.photos/id/2/200/200"
+                error:
+                  summary: Example error response
+                  value:
+                    status: "error"
+                    message: "Cannot add pictures"
+                    data: null
+      x-codeSamples:
+        - lang: cURL
+          source: |
+            curl --location --request POST 'http://localhost:3000/api/profiles/me/pictures' \
+            --header 'Authorization: Bearer YOUR_JWT_TOKEN' \
+            --header 'Content-Type: application/x-www-form-urlencoded' \
+            --data-urlencode 'pictures=https://picsum.photos/id/1/200/200' \
+            --data-urlencode 'pictures=https://picsum.photos/id/2/200/200'
+        - lang: typescript
+          source: |
+            const myHeaders = new Headers();
+            myHeaders.append("Authorization", "Bearer YOUR_JWT_TOKEN");
+            myHeaders.append("Content-Type", "application/x-www-form-urlencoded");
+
+            const urlencoded = new URLSearchParams();
+            urlencoded.append("pictures", "https://picsum.photos/id/1/200/200");
+            urlencoded.append("pictures", "https://picsum.photos/id/2/200/200");
+
+            const requestOptions: RequestInit = {
+              method: "POST",
+              headers: myHeaders,
+              body: urlencoded,
+            };
+
+            try {
+              const response = await fetch("http://localhost:3000/api/profiles/me/pictures", requestOptions);
+              const data = await response.json();
+              console.log("Pictures added:", data);
+            } catch (error) {
+              console.error("Error:", error);
+            }
+
     get:
       tags:
         - profile
@@ -431,6 +1074,65 @@ paths:
       responses:
         "200":
           description: List of pictures
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - allOf:
+                      - $ref: "#/components/schemas/SuccessResponse"
+                    title: SuccessResponse
+                    type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          pictures:
+                            type: array
+                            items:
+                              $ref: "#/components/schemas/Picture"
+                  - $ref: "#/components/schemas/FailResponse"
+                  - $ref: "#/components/schemas/ErrorResponse"
+              examples:
+                success:
+                  summary: Example success response
+                  value:
+                    status: "success"
+                    data:
+                      pictures:
+                        - picture_id: "abc-123"
+                          user_id: "me-123"
+                          picture_url: "https://picsum.photos/id/1/200/200"
+                        - picture_id: "def-456"
+                          user_id: "me-123"
+                          picture_url: "https://picsum.photos/id/2/200/200"
+                error:
+                  summary: Example error response
+                  value:
+                    status: "error"
+                    message: "No pictures found"
+                    data: null
+      x-codeSamples:
+        - lang: cURL
+          source: |
+            curl --location --request GET 'http://localhost:3000/api/profiles/me/pictures' \
+            --header 'Authorization: Bearer YOUR_JWT_TOKEN'
+        - lang: typescript
+          source: |
+            const requestOptions: RequestInit = {
+              method: "GET",
+              headers: {
+                Authorization: "Bearer YOUR_JWT_TOKEN",
+              },
+            };
+
+            try {
+              const response = await fetch("http://localhost:3000/api/profiles/me/pictures", requestOptions);
+              const data = await response.json();
+              console.log("My pictures:", data);
+            } catch (error) {
+              console.error("Error:", error);
+            }
+
     delete:
       tags:
         - profile
@@ -448,148 +1150,64 @@ paths:
       responses:
         "200":
           description: Pictures removed
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - allOf:
+                      - $ref: "#/components/schemas/SuccessResponse"
+                    title: SuccessResponse
+                    type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          removed:
+                            type: array
+                            items:
+                              type: string
+                  - $ref: "#/components/schemas/FailResponse"
+                  - $ref: "#/components/schemas/ErrorResponse"
+              examples:
+                success:
+                  summary: Example success response
+                  value:
+                    status: "success"
+                    data:
+                      removed:
+                        - "https://picsum.photos/id/1/200/200"
+                        - "https://picsum.photos/id/2/200/200"
+                error:
+                  summary: Example error response
+                  value:
+                    status: "error"
+                    message: "Could not remove pictures"
+                    data: null
+      x-codeSamples:
+        - lang: cURL
+          source: |
+            curl --location --request DELETE 'http://localhost:3000/api/profiles/me/pictures?pictures=https://picsum.photos/id/1/200/200&pictures=https://picsum.photos/id/2/200/200' \
+            --header 'Authorization: Bearer YOUR_JWT_TOKEN'
+        - lang: typescript
+          source: |
+            const requestOptions: RequestInit = {
+              method: "DELETE",
+              headers: {
+                Authorization: "Bearer YOUR_JWT_TOKEN",
+              },
+            };
 
-  ### Profile Likes & Matches
-  /profiles/{user_id}/like:
-    post:
-      tags:
-        - profile
-      summary: Like a user
-      parameters:
-        - in: path
-          name: user_id
-          required: true
-          schema:
-            type: string
-      responses:
-        "201":
-          description: User liked
-    delete:
-      tags:
-        - profile
-      summary: Remove like from a user
-      parameters:
-        - in: path
-          name: user_id
-          required: true
-          schema:
-            type: string
-      responses:
-        "200":
-          description: Like removed
+            const url = new URL("http://localhost:3000/api/profiles/me/pictures");
+            url.searchParams.append("pictures", "https://picsum.photos/id/1/200/200");
+            url.searchParams.append("pictures", "https://picsum.photos/id/2/200/200");
 
-  /profiles/{user_id}/dislike:
-    post:
-      tags:
-        - profile
-      summary: Dislike a user
-      parameters:
-        - in: path
-          name: user_id
-          required: true
-          schema:
-            type: string
-      responses:
-        "201":
-          description: User disliked
-
-  /profiles/likes:
-    get:
-      tags:
-        - profile
-      summary: Get my likes
-      responses:
-        "200":
-          description: List of liked profiles
-
-  /profiles/matched:
-    get:
-      tags:
-        - profile
-      summary: Get my matches
-      responses:
-        "200":
-          description: List of matched profiles
-
-  ### Profile Blocks
-  /profiles/blocks:
-    get:
-      tags:
-        - profile
-      summary: Get blocked profiles
-      responses:
-        "200":
-          description: List of blocked profiles
-
-  /profiles/{user_id}/block:
-    post:
-      tags:
-        - profile
-      summary: Block a user
-      parameters:
-        - in: path
-          name: user_id
-          required: true
-          schema:
-            type: string
-      responses:
-        "201":
-          description: User blocked
-    delete:
-      tags:
-        - profile
-      summary: Unblock a user
-      description: Provide a reason via query parameter if needed.
-      parameters:
-        - in: path
-          name: user_id
-          required: true
-          schema:
-            type: string
-        - in: query
-          name: reason
-          description: Reason for unblocking (optional)
-          required: false
-          schema:
-            type: string
-      responses:
-        "200":
-          description: User unblocked
-
-  ### Profile Reports
-  /profiles/reports:
-    get:
-      tags:
-        - profile
-      summary: Get reported profiles
-      responses:
-        "200":
-          description: List of reported profiles
-
-  /profiles/{user_id}/report:
-    post:
-      tags:
-        - profile
-      summary: Report a user
-      parameters:
-        - in: path
-          name: user_id
-          required: true
-          schema:
-            type: string
-      requestBody:
-        required: true
-        content:
-          application/x-www-form-urlencoded:
-            schema:
-              type: object
-              properties:
-                reason:
-                  type: string
-      responses:
-        "201":
-          description: User reported
-
+            try {
+              const response = await fetch(url.toString(), requestOptions);
+              const data = await response.json();
+              console.log("Pictures removed:", data);
+            } catch (error) {
+              console.error("Error:", error);
+            }
   ### User Endpoints
   /users/me:
     get:
