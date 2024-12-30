@@ -38,7 +38,7 @@ export const chatRepository = {
       ]
     );
 
-    const chats = await db.many(preparedStatment);
+    const chats = await db.manyOrNone(preparedStatment);
 
     return chats;
   },

@@ -5,11 +5,11 @@ import passport, { Profile } from "passport";
 import { escapeErrors, profileExists } from "../../utils/utils.js";
 import { JFail } from "../../error-handlers/custom-errors.js";
 import { chatRepository } from "./chats.repository.js";
-
+import { SuccessResponse } from "../../interfaces/response.js";
 
 /* 
 Send a message to a user
-You probbably want to use chats.websocket.ts to send messages in real time.
+You probably want to use chats.websocket.ts to send messages in real time.
 This endpoint is for consumers who want to send messages to users without using websockets
 */
 router.post(
@@ -27,17 +27,15 @@ router.post(
       return;
     }
     try {
-      const profile = await chatRepository.create({
+      await chatRepository.create({
         sender_user_id: req.user.user_id,
         receiver_user_id: req.params.user_id,
         message: req.body.message,
       });
-      res.json({
-        message: "success",
-        data: {
-          message: "Message sent successfully",
-        },
-      });
+
+      // Return the SuccessResponse here
+      const response = new SuccessResponse({ message: "Message sent successfully" });
+      res.json(response);
     } catch (error) {
       next(error);
       return;
@@ -68,12 +66,10 @@ router.get(
         limit: req.query.limit || 10,
         next_cursor: req.query.next_cursor ? new Date(req.query.next_cursor) : null,
       });
-      res.json({
-        message: "success",
-        data: {
-          chats: profile,
-        },
-      });
+
+      // Return the SuccessResponse here
+      const response = new SuccessResponse({ chats: profile });
+      res.json(response);
     } catch (error) {
       next(error);
       return;
