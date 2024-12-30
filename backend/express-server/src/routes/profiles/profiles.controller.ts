@@ -17,15 +17,14 @@ import likesRouter from "./likes/likes.controller.js";
 import blocksRouter from "./blocks/blocks.controller.js";
 import picturesRouter from "./pictures/pictures.controller.js";
 import { PublicProfile } from "./profiles.interface.js";
+import { SuccessResponse } from "../../interfaces/response.js";
+// Import your SuccessResponse class (adjust path as needed)
 
+// Sub-routes
 router.use("/", visitsRouter);
-
 router.use("/", interestsRouter);
-
 router.use("/", likesRouter);
-
 router.use("/", blocksRouter);
-
 router.use("/", picturesRouter);
 
 /* Get list of profiles */
@@ -47,16 +46,20 @@ router.get(
       const profiles = await profilesService.searchProfiles({
         user_id: req.user.user_id,
         filter_by: req.query.filter_by
-          ? JSON.parse(req.query.filter_by)
+          ? JSON.parse(req.query.filter_by as string)
           : undefined,
-        sort_by: req.query.sort_by ? JSON.parse(req.query.sort_by) : undefined,
+        sort_by: req.query.sort_by
+          ? JSON.parse(req.query.sort_by as string)
+          : undefined,
       });
 
       const publicProfiles = profiles.map(
         (profile) => new PublicProfile(profile)
       );
 
-      res.json({ message: "success", data: { profiles: publicProfiles } });
+      // Wrap result in SuccessResponse
+      const response = new SuccessResponse({ profiles: publicProfiles });
+      res.json(response);
     } catch (error) {
       next(error);
     }
@@ -71,7 +74,10 @@ router.get(
   async function (req, res, next) {
     try {
       const profile = await profilesService.getProfile(req.user.user_id);
-      res.json({ message: "success", data: profile });
+
+      // Wrap result in SuccessResponse
+      const response = new SuccessResponse(profile);
+      res.json(response);
     } catch (error) {
       next(error);
       return;
@@ -91,22 +97,24 @@ router.post(
   body("profile_picture").isURL().custom(pictureExists),
   body("gps_latitude").escape().isNumeric(),
   body("gps_longitude").escape().isNumeric(),
-
   async function (req, res, next) {
     const result = validationResult(req);
     if (!result.isEmpty()) {
       // Escape html tags in error messages for security
       const errors = escapeErrors(result.array());
-      next(new JFail({ title: "invalid input", errors: errors }));
+      next(new JFail({ title: "invalid input", errors }));
       return;
     }
+
     try {
       await profilesService.createProfile({
         user_id: req.user.user_id,
         data: req.body,
       });
-      // console.log(req.body["interests[]"]);
-      res.json({ message: "success", data: { title: "Profile created" } });
+
+      // Wrap result in SuccessResponse
+      const response = new SuccessResponse({ title: "Profile created" });
+      res.json(response);
     } catch (error) {
       next(error);
       return;
@@ -126,13 +134,12 @@ router.patch(
   body("profile_picture").optional().escape().isString(),
   body("gps_latitude").optional().escape().isNumeric(),
   body("gps_longitude").optional().escape().isNumeric(),
-
   async function (req, res, next) {
     const result = validationResult(req);
     if (!result.isEmpty()) {
       // Escape html tags in error messages for security
       const errors = escapeErrors(result.array());
-      next(new JFail({ title: "invalid input", errors: errors }));
+      next(new JFail({ title: "invalid input", errors }));
       return;
     }
     try {
@@ -151,8 +158,10 @@ router.patch(
         user_id: req.user.user_id,
         data: req.body,
       });
-      // console.log(req.body["interests[]"]);
-      res.json({ message: "success", data: profile });
+
+      // Wrap result in SuccessResponse
+      const response = new SuccessResponse(profile);
+      res.json(response);
     } catch (error) {
       next(error);
       return;
@@ -170,18 +179,18 @@ router.get(
     try {
       const profile = await userReportsRepository.find(req.user.user_id);
 
-      res.json({ message: "success", data: { reports: profile } });
+      // Wrap result in SuccessResponse
+      const response = new SuccessResponse({ reports: profile });
+      res.json(response);
     } catch (error) {
       next(error);
       return;
     }
   }
 );
-
 //#endregion
 
 //#region :user_id routes
-
 /* Get user profile*/
 router.get(
   "/:user_id",
@@ -193,13 +202,16 @@ router.get(
     if (!result.isEmpty()) {
       // Escape html tags in error messages for security
       const errors = escapeErrors(result.array());
-      next(new JFail({ title: "invalid input", errors: errors }));
+      next(new JFail({ title: "invalid input", errors }));
       return;
     }
     try {
       const profile = await profilesService.getProfile(req.params.user_id);
       const publicProfile = new PublicProfile(profile);
-      res.json({ message: "success", data: publicProfile });
+
+      // Wrap result in SuccessResponse
+      const response = new SuccessResponse(publicProfile);
+      res.json(response);
     } catch (error) {
       next(error);
       return;
@@ -219,7 +231,7 @@ router.post(
     if (!result.isEmpty()) {
       // Escape html tags in error messages for security
       const errors = escapeErrors(result.array());
-      next(new JFail({ title: "invalid input", errors: errors }));
+      next(new JFail({ title: "invalid input", errors }));
       return;
     }
     try {
@@ -228,13 +240,16 @@ router.post(
         req.params.user_id,
         req.body.reason
       );
-      res.json({ message: "success" });
+
+      // Wrap result in SuccessResponse
+      const response = new SuccessResponse({ title: "User reported" });
+      res.json(response);
     } catch (error) {
       next(error);
       return;
     }
   }
 );
-
 //#endregion
+
 export default router;
