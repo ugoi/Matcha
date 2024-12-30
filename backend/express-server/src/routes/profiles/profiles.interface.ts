@@ -159,7 +159,7 @@ export const mockProfile: Profile = {
   username: "johndoe",
   gender: "male",
   age: 25,
-  sexual_preference: "female",
+  sexual_preference: "heterosexual",
   biography: "I am a cool guy",
   interests: [
     { interest_id: "1", user_id: "1", interest_tag: "music" },
