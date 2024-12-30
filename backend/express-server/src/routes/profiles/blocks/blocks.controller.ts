@@ -10,8 +10,8 @@ import {
 import { blockedUsersRepository } from "./blocks.repository.js";
 import { param, validationResult } from "express-validator";
 import { JFail } from "../../../error-handlers/custom-errors.js";
-import exp from "constants";
 import { blockedUsersService } from "./blocks.service.js";
+import { SuccessResponse } from "../../../interfaces/response.js";
 
 var router = Router();
 
@@ -22,7 +22,10 @@ router.get(
   async function (req, res, next) {
     try {
       const profile = await blockedUsersRepository.find(req.user.user_id);
-      res.json({ message: "success", data: { blocks: profile } });
+
+      // Wrap in SuccessResponse
+      const response = new SuccessResponse({ blocks: profile });
+      res.json(response);
     } catch (error) {
       next(error);
       return;
@@ -49,7 +52,10 @@ router.post(
 
     try {
       await blockedUsersService.blockUser(req.user.user_id, req.params.user_id);
-      res.json({ message: "success" });
+      
+      // Wrap in SuccessResponse
+      const response = new SuccessResponse({ message: "User blocked" });
+      res.json(response);
     } catch (error) {
       next(error);
     }
@@ -78,7 +84,10 @@ router.delete(
         req.user.user_id,
         req.params.user_id
       );
-      res.json({ message: "success" });
+
+      // Wrap in SuccessResponse
+      const response = new SuccessResponse({ message: "User unblocked" });
+      res.json(response);
     } catch (error) {
       next(error);
     }
