@@ -9,10 +9,11 @@ import {
   NOTIFICATION_ENTITY_TYPE,
   NOTIFICATION_STATUS,
 } from "../../notifications/notification.interface.js";
+import { SuccessResponse } from "../../../interfaces/response.js";
 
 var router = Router();
 
-/* Get likes */
+/* Get visits */
 router.get(
   "/visits",
   passport.authenticate("jwt", { session: false }),
@@ -25,11 +26,15 @@ router.get(
       next(new JFail({ title: "invalid input", errors: errors }));
       return;
     }
+
     try {
       const visit = await visitsRepository.find({
         visited_user_id: req.user.user_id,
       });
-      res.json({ message: "success", data: { visits: visit } });
+
+      // Return as SuccessResponse
+      const response = new SuccessResponse({ visits: visit });
+      res.json(response);
     } catch (error) {
       next(error);
       return;
@@ -55,6 +60,7 @@ router.post(
         visitor_user_id: req.user.user_id,
         visited_user_id: req.params.user_id,
       });
+
       // Notify the visited user
       await notificationService.create({
         entity_type: NOTIFICATION_ENTITY_TYPE.PROFILE_VIEW,
@@ -63,7 +69,10 @@ router.post(
         receivers: [visit.visited_user_id],
         sender: visit.visitor_user_id,
       });
-      res.json({ message: "success", data: { visit: visit } });
+
+      // Return as SuccessResponse
+      const response = new SuccessResponse({ visit: visit });
+      res.json(response);
     } catch (error) {
       next(error);
       return;
