@@ -12,6 +12,8 @@ import { likesRepository } from "./likes.repository.js";
 import { param, validationResult } from "express-validator";
 import { JFail } from "../../../error-handlers/custom-errors.js";
 import { likesService } from "./likes.service.js";
+import { SuccessResponse } from "../../../interfaces/response.js";
+// Make sure to adjust the import path to your SuccessResponse definition
 
 var router = Router();
 
@@ -22,7 +24,10 @@ router.get(
   async function (req, res, next) {
     try {
       const matches = await likesRepository.findMatches(req.user.user_id);
-      res.json({ message: "success", data: { matches: matches } });
+      
+      // Return SuccessResponse
+      const response = new SuccessResponse({ matches });
+      res.json(response);
     } catch (error) {
       next(error);
       return;
@@ -45,7 +50,10 @@ router.get(
     }
     try {
       const match = await likesRepository.find(req.user.user_id);
-      res.json({ message: "success", data: { likes: match } });
+
+      // Return SuccessResponse
+      const response = new SuccessResponse({ likes: match });
+      res.json(response);
     } catch (error) {
       next(error);
       return;
@@ -75,7 +83,10 @@ router.post(
         req.user.user_id,
         req.params.user_id
       );
-      res.json({ message: "success", data: { match: match } });
+      
+      // Return SuccessResponse
+      const response = new SuccessResponse({ match });
+      res.json(response);
     } catch (error) {
       next(error);
       return;
@@ -102,7 +113,10 @@ router.delete(
         req.user.user_id,
         req.params.user_id
       );
-      res.json({ message: "success", data: { match } });
+      
+      // Return SuccessResponse
+      const response = new SuccessResponse({ match });
+      res.json(response);
     } catch (error) {
       next(error);
     }
@@ -114,7 +128,10 @@ router.post(
   "/:user_id/dislike",
   passport.authenticate("jwt", { session: false }),
   profileExists,
-  param("user_id").isUUID().custom(profileExistsValidator).custom(profileNotDisliked),
+  param("user_id")
+    .isUUID()
+    .custom(profileExistsValidator)
+    .custom(profileNotDisliked),
   async function (req, res, next) {
     const result = validationResult(req);
     if (!result.isEmpty()) {
@@ -128,7 +145,10 @@ router.post(
         req.user.user_id,
         req.params.user_id
       );
-      res.json({ message: "success", data: { match: match } });
+
+      // Return SuccessResponse
+      const response = new SuccessResponse({ match });
+      res.json(response);
     } catch (error) {
       next(error);
       return;
