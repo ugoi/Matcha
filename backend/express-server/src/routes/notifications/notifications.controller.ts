@@ -5,6 +5,7 @@ import passport, { Profile } from "passport";
 import { arraySanitizer, escapeErrors } from "../../utils/utils.js";
 import { JFail } from "../../error-handlers/custom-errors.js";
 import { notificationRepository } from "./notification.repository.js";
+import { SuccessResponse } from "../../interfaces/response.js";
 
 /* Get user notifications*/
 router.get(
@@ -22,7 +23,10 @@ router.get(
       const notifications = await notificationRepository.findByNotifierId(
         req.user.user_id
       );
-      res.json(notifications);
+
+      // Return the SuccessResponse
+      const response = new SuccessResponse({ notifications });
+      res.json(response);
     } catch (error) {
       next(error);
       return;
@@ -49,7 +53,10 @@ router.patch(
           status: req.body.status,
           notification_object_ids: req.body.ids,
         });
-      res.json(updatedNotification);
+
+      // Return the SuccessResponse
+      const response = new SuccessResponse({ updatedNotification });
+      res.json(response);
     } catch (error) {
       next(error);
       return;
