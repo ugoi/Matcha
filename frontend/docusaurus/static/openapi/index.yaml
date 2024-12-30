@@ -258,7 +258,7 @@ paths:
       responses:
         "200":
           description: Profile created or updated successfully
-          content: 
+          content:
             application/json:
               schema:
                 oneOf:
@@ -1400,31 +1400,6 @@ paths:
         "302":
           description: Redirect after Facebook auth flow completes
 
-  ### Chat Endpoints
-  /chat/{user_id}:
-    post:
-      tags:
-        - chat
-      summary: Send a chat message
-      parameters:
-        - in: path
-          name: user_id
-          required: true
-          schema:
-            type: string
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                message:
-                  type: string
-      responses:
-        "201":
-          description: Message sent
-
   /chats/{user_id}:
     get:
       tags:
@@ -1437,6 +1412,7 @@ paths:
           required: true
           schema:
             type: string
+          description: The ID of the user you want to retrieve chat messages with
         - in: query
           name: next_cursor
           required: false
@@ -1453,16 +1429,213 @@ paths:
       responses:
         "200":
           description: List of chat messages
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - allOf:
+                      - $ref: "#/components/schemas/SuccessResponse"
+                    title: SuccessResponse
+                    type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          chats:
+                            type: array
+                            items:
+                              $ref: "#/components/schemas/Chat"
+                  - $ref: "#/components/schemas/FailResponse"
+                  - $ref: "#/components/schemas/ErrorResponse"
+      x-codeSamples:
+        - lang: cURL
+          source: |
+            curl --location --request GET "http://localhost:3000/api/chats/1234?limit=20&next_cursor=2023-10-01T12%3A00%3A00.000Z" \
+            --header "Authorization: Bearer YOUR_JWT_TOKEN"
+        - lang: typescript
+          source: |
+            const myHeaders = new Headers();
+            myHeaders.append("Authorization", "Bearer YOUR_JWT_TOKEN");
 
+            const requestOptions: RequestInit = {
+              method: "GET",
+              headers: myHeaders,
+              redirect: "follow",
+            };
+
+            try {
+              // Replace "1234" with the desired user ID
+              const response = await fetch("http://localhost:3000/api/chats/1234?limit=20&next_cursor=2023-10-01T12%3A00%3A00.000Z", requestOptions);
+              const json = await response.json();
+              switch (json.status) {
+                case "error":
+                  console.error("Error Response:", json);
+                  break;
+                case "fail":
+                  console.warn("Validation Fail:", json.data.errors);
+                  break;
+                case "success":
+                  console.log("Chat messages:", json.data.chats);
+                  break;
+                default:
+                  console.log("Unexpected response:", json);
+              }
+            } catch (error) {
+              console.error("Fetch error:", error);
+            }
+
+    post:
+      tags:
+        - chat
+      summary: Send a chat message
+      parameters:
+        - in: path
+          name: user_id
+          required: true
+          schema:
+            type: string
+          description: The ID of the user you want to send a message to
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                message:
+                  type: string
+                  description: The content of the chat message
+              required:
+                - message
+      responses:
+        "201":
+          description: Chat messages (including the newly sent message) returned
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - allOf:
+                      - $ref: "#/components/schemas/SuccessResponse"
+                    title: SuccessResponse
+                    type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          chat:
+                            $ref: "#/components/schemas/Chat"
+                  - $ref: "#/components/schemas/FailResponse"
+                  - $ref: "#/components/schemas/ErrorResponse"
+      x-codeSamples:
+        - lang: cURL
+          source: |
+            curl --location --request POST "http://localhost:3000/api/chats/1234" \
+            --header "Content-Type: application/json" \
+            --header "Authorization: Bearer YOUR_JWT_TOKEN" \
+            --data-raw '{
+              "message": "Hey there!"
+            }'
+        - lang: typescript
+          source: |
+            const myHeaders = new Headers();
+            myHeaders.append("Content-Type", "application/json");
+            myHeaders.append("Authorization", "Bearer YOUR_JWT_TOKEN");
+
+            const body = JSON.stringify({
+              message: "Hey there!",
+            });
+
+            const requestOptions: RequestInit = {
+              method: "POST",
+              headers: myHeaders,
+              body,
+            };
+
+            try {
+              // Replace "1234" with the desired user ID
+              const response = await fetch("http://localhost:3000/api/chats/1234", requestOptions);
+              const json = await response.json();
+
+              switch (json.status) {
+                case "error":
+                  console.error("Error response:", json);
+                  break;
+                case "fail":
+                  console.warn("Validation failed:", json.data.errors);
+                  break;
+                case "success":
+                  console.log("Chats:", json.data.chats);
+                  break;
+                default:
+                  console.log("Unexpected response:", json);
+              }
+            } catch (error) {
+              console.error("Fetch error:", error);
+            }
   ### Notifications Endpoints
   /notifications:
     get:
       tags:
         - notifications
       summary: Get notifications
+      description: Retrieve a list of notifications for the authenticated user.
       responses:
         "200":
           description: List of notifications
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - allOf:
+                      - $ref: "#/components/schemas/SuccessResponse"
+                    title: SuccessResponse
+                    type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          notifications:
+                            type: array
+                            items:
+                              $ref: "#/components/schemas/Notification"
+                  - $ref: "#/components/schemas/FailResponse"
+                  - $ref: "#/components/schemas/ErrorResponse"
+      x-codeSamples:
+        - lang: cURL
+          source: |
+            curl --location --request GET "http://localhost:3000/api/notifications" \
+            --header "Authorization: Bearer YOUR_JWT_TOKEN"
+        - lang: typescript
+          source: |
+            const myHeaders = new Headers();
+            myHeaders.append("Authorization", "Bearer YOUR_JWT_TOKEN");
+
+            const requestOptions: RequestInit = {
+              method: "GET",
+              headers: myHeaders,
+              redirect: "follow",
+            };
+
+            try {
+              const response = await fetch("http://localhost:3000/api/notifications", requestOptions);
+              const json = await response.json();
+
+              switch (json.status) {
+                case "error":
+                  console.error("Error response:", json);
+                  break;
+                case "fail":
+                  console.warn("Validation failed:", json.data.errors);
+                  break;
+                case "success":
+                  console.log("Notifications:", json.data.notifications);
+                  break;
+                default:
+                  console.log("Unexpected response:", json);
+              }
+            } catch (error) {
+              console.error("Fetch error:", error);
+            }
 
 components:
   securitySchemes:
@@ -1614,11 +1787,28 @@ components:
           type: string
           format: email
           description: Email address of the user.
-    Message:
+    Chat:
       type: object
       properties:
+        chat_id:
+          type: string
+          format: uuid
+          description: Unique identifier for the chat message.
+        sender_user_id:
+          type: string
+          format: uuid
+          description: Unique identifier for the sender.
+        receiver_user_id:
+          type: string
+          format: uuid
+          description: Unique identifier for the receiver.
         message:
           type: string
+          description: Chat message.
+        sent_at:
+          type: string
+          format: date-time
+          description: Timestamp when the message was sent.
     Notification:
       type: object
       properties:

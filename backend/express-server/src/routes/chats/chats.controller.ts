@@ -60,7 +60,7 @@ router.get(
       return;
     }
     try {
-      const profile = await chatRepository.find({
+      const chats = await chatRepository.find({
         sender_user_id: req.user.user_id,
         receiver_user_id: req.params.user_id,
         limit: req.query.limit || 10,
@@ -68,7 +68,7 @@ router.get(
       });
 
       // Return the SuccessResponse here
-      const response = new SuccessResponse({ chats: profile });
+      const response = new SuccessResponse({ chats });
       res.json(response);
     } catch (error) {
       next(error);
