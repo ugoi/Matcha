@@ -5,23 +5,28 @@ import { body, validationResult } from "express-validator";
 import { arraySanitizer, escapeErrors } from "../../../utils/utils.js";
 import { JFail } from "../../../error-handlers/custom-errors.js";
 import { interestsService } from "./interests.service.js";
+import { SuccessResponse } from "../../../interfaces/response.js";
 
 var router = Router();
 
-/* Get user interests*/
+/* Get user interests */
 router.get(
   "/me/interests",
   passport.authenticate("jwt", { session: false }),
   async function (req, res, next) {
     try {
       const interests = await interestsRepository.find(req.user.user_id);
-      res.json({ message: "success", data: { interests } });
+
+      // Return as SuccessResponse
+      const response = new SuccessResponse({ interests });
+      res.json(response);
     } catch (error) {
       next(error);
       return;
     }
   }
 );
+
 /* Create user interests */
 router.post(
   "/me/interests",
@@ -44,13 +49,17 @@ router.post(
         req.user.user_id,
         req.body.interests
       );
-      res.json({ message: "success", data: profile });
+
+      // Return as SuccessResponse
+      const response = new SuccessResponse(profile);
+      res.json(response);
     } catch (error) {
       next(error);
     }
   }
 );
-/* Delete user interests*/
+
+/* Delete user interests */
 router.delete(
   "/me/interests",
   passport.authenticate("jwt", { session: false }),
@@ -59,7 +68,6 @@ router.delete(
     .escape()
     .customSanitizer(arraySanitizer)
     .isArray({ max: 30 }),
-
   async function (req, res, next) {
     const result = validationResult(req);
     if (!result.isEmpty()) {
@@ -73,8 +81,10 @@ router.delete(
         req.user.user_id,
         req.body.interests
       );
-      // console.log(req.body["interests[]"]);
-      res.json({ message: "success", data: profile });
+
+      // Return as SuccessResponse
+      const response = new SuccessResponse(profile);
+      res.json(response);
     } catch (error) {
       next(error);
       return;
@@ -92,7 +102,10 @@ router.get("/:user_id/interests", async function (req, res, next) {
   }
   try {
     const profile = await interestsRepository.find(req.params.user_id);
-    res.json({ message: "success", data: { interests: profile } });
+
+    // Return as SuccessResponse
+    const response = new SuccessResponse({ interests: profile });
+    res.json(response);
   } catch (error) {
     next(error);
     return;
