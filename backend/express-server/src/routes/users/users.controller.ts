@@ -4,14 +4,20 @@ var router = Router();
 import passport from "passport";
 import { mockUser, ProtectedUser, User } from "./users.interface.js";
 import {
-  emailNotExists,
+  emailNotExistsValidator,
   escapeErrors,
-  isHtmlTagFree,
-  usernameNotExists,
+  isHtmlTagFreeValidator,
+  usernameNotExistsValidator,
 } from "../../utils/utils.js";
 import { userRepository } from "./users.repository.js";
 import { JFail } from "../../error-handlers/custom-errors.js";
 import { SuccessResponse } from "../../interfaces/response.js";
+import {
+  initiateEmailVerification,
+  sendVerificationEmail,
+} from "../auth/auth.service.js";
+import { createToken } from "../token/token.repository.js";
+import { TokenType } from "../token/token.interface.js";
 
 // TODO: Move this into profile and rename everything in profile to user
 
@@ -38,8 +44,12 @@ router.get(
 router.patch(
   "/me",
   passport.authenticate("jwt", { session: false }),
-  body("username").optional().isString().custom(isHtmlTagFree),
-  body("email").optional().isEmail().custom(isHtmlTagFree),
+  body("username").optional().isString().custom(isHtmlTagFreeValidator),
+  body("email")
+    .optional()
+    .isEmail()
+    .custom(isHtmlTagFreeValidator)
+    .custom(emailNotExistsValidator),
   body("first_name").optional().escape().isString(),
   body("last_name").optional().escape().isString(),
   body("phone").optional().escape().isString(),
@@ -51,12 +61,35 @@ router.patch(
       next(new JFail({ title: "invalid input", errors: errors }));
       return;
     }
+
     try {
-      const user = await userRepository.update({
-        user_id: req.user.user_id,
-        data: req.body,
-      });
-      // const protectedUser = new ProtectedUser(mockUser)
+      let user = undefined;
+      if (req.body.email) {
+        // If email is updated, set is_email_verified to false
+        user = await userRepository.update({
+          user_id: req.user.user_id,
+          data: {
+            username: req.body.username,
+            email: req.body.email,
+            first_name: req.body.first_name,
+            last_name: req.body.last_name,
+            phone: req.body.phone,
+            is_email_verified: false,
+          },
+        });
+        initiateEmailVerification(req.body.email);
+      } else {
+        user = await userRepository.update({
+          user_id: req.user.user_id,
+          data: {
+            username: req.body.username,
+            email: req.body.email,
+            first_name: req.body.first_name,
+            last_name: req.body.last_name,
+            phone: req.body.phone,
+          },
+        });
+      }
 
       const protectedUser = new ProtectedUser(user);
 

@@ -4,8 +4,9 @@ var router = Router();
 import passport from "passport";
 import {
   escapeErrors,
+  isAuthorized,
+  isEmailVerified,
   pictureExists,
-  profileExists,
   profileNotExists,
 } from "../../utils/utils.js";
 import { JFail } from "../../error-handlers/custom-errors.js";
@@ -31,7 +32,7 @@ router.use("/", picturesRouter);
 router.get(
   "/",
   passport.authenticate("jwt", { session: false }),
-  profileExists,
+  isAuthorized,
   query("sort_by").optional(),
   query("filter_by").optional(),
   async function (req, res, next) {
@@ -70,7 +71,7 @@ router.get(
 router.get(
   "/me",
   passport.authenticate("jwt", { session: false }),
-  profileExists,
+  isAuthorized,
   async function (req, res, next) {
     try {
       const profile = await profilesService.getProfile(req.user.user_id);
@@ -126,7 +127,7 @@ router.post(
 router.patch(
   "/me",
   passport.authenticate("jwt", { session: false }),
-  profileExists,
+  isAuthorized,
   body("gender").optional().escape().isString(),
   body("age").optional().escape().isNumeric(),
   body("sexual_preference").optional().escape().isString(),
@@ -174,7 +175,7 @@ router.patch(
 router.get(
   "/reports",
   passport.authenticate("jwt", { session: false }),
-  profileExists,
+  isAuthorized,
   async function (req, res, next) {
     try {
       const profile = await userReportsRepository.find(req.user.user_id);
@@ -195,7 +196,7 @@ router.get(
 router.get(
   "/:user_id",
   passport.authenticate("jwt", { session: false }),
-  profileExists,
+  isAuthorized,
   param("user_id").isUUID(),
   async function (req, res, next) {
     const result = validationResult(req);
@@ -223,7 +224,7 @@ router.get(
 router.post(
   "/:user_id/report",
   passport.authenticate("jwt", { session: false }),
-  profileExists,
+  isAuthorized,
   param("user_id").isUUID(),
   body("reason").isString(),
   async function (req, res, next) {

@@ -2,7 +2,7 @@ import { Router } from "express";
 import { body, param, query, validationResult } from "express-validator";
 var router = Router();
 import passport, { Profile } from "passport";
-import { escapeErrors, profileExists } from "../../utils/utils.js";
+import { escapeErrors, isAuthorized } from "../../utils/utils.js";
 import { JFail } from "../../error-handlers/custom-errors.js";
 import { chatRepository } from "./chats.repository.js";
 import { SuccessResponse } from "../../interfaces/response.js";
@@ -15,7 +15,7 @@ This endpoint is for consumers who want to send messages to users without using 
 router.post(
   "/:user_id",
   passport.authenticate("jwt", { session: false }),
-  profileExists,
+  isAuthorized,
   param("user_id").isString(),
   body("message").escape().isString(),
   async function (req, res, next) {
@@ -34,7 +34,9 @@ router.post(
       });
 
       // Return the SuccessResponse here
-      const response = new SuccessResponse({ message: "Message sent successfully" });
+      const response = new SuccessResponse({
+        message: "Message sent successfully",
+      });
       res.json(response);
     } catch (error) {
       next(error);
@@ -47,7 +49,7 @@ router.post(
 router.get(
   "/:user_id",
   passport.authenticate("jwt", { session: false }),
-  profileExists,
+  isAuthorized,
   param("user_id").isString(),
   query("next_cursor").optional().isString(),
   query("limit").optional().isInt(),
@@ -64,7 +66,9 @@ router.get(
         sender_user_id: req.user.user_id,
         receiver_user_id: req.params.user_id,
         limit: req.query.limit || 10,
-        next_cursor: req.query.next_cursor ? new Date(req.query.next_cursor) : null,
+        next_cursor: req.query.next_cursor
+          ? new Date(req.query.next_cursor)
+          : null,
       });
 
       // Return the SuccessResponse here

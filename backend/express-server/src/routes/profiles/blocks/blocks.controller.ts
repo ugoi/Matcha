@@ -3,7 +3,7 @@ import passport from "passport";
 import {
   escapeErrors,
   profileBlocked,
-  profileExists,
+  isAuthorized,
   profileExistsValidator,
   profileNotBlocked,
 } from "../../../utils/utils.js";
@@ -18,7 +18,7 @@ var router = Router();
 router.get(
   "/blocks",
   passport.authenticate("jwt", { session: false }),
-  profileExists,
+  isAuthorized,
   async function (req, res, next) {
     try {
       const profile = await blockedUsersRepository.find(req.user.user_id);
@@ -37,7 +37,7 @@ router.get(
 router.post(
   "/:user_id/block",
   passport.authenticate("jwt", { session: false }),
-  profileExists,
+  isAuthorized,
   param("user_id")
     .isUUID()
     .custom(profileExistsValidator)
@@ -52,7 +52,7 @@ router.post(
 
     try {
       await blockedUsersService.blockUser(req.user.user_id, req.params.user_id);
-      
+
       // Wrap in SuccessResponse
       const response = new SuccessResponse({ message: "User blocked" });
       res.json(response);
@@ -66,7 +66,7 @@ router.post(
 router.delete(
   "/:user_id/block",
   passport.authenticate("jwt", { session: false }),
-  profileExists,
+  isAuthorized,
   param("user_id")
     .isUUID()
     .custom(profileExistsValidator)

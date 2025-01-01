@@ -3,7 +3,7 @@ import passport from "passport";
 import {
   escapeErrors,
   likeExists,
-  profileExists,
+  isAuthorized,
   profileExistsValidator,
   profileNotDisliked,
   profileNotLiked,
@@ -20,11 +20,11 @@ var router = Router();
 router.get(
   "/matched",
   passport.authenticate("jwt", { session: false }),
-  profileExists,
+  isAuthorized,
   async function (req, res, next) {
     try {
       const matches = await likesRepository.findMatches(req.user.user_id);
-      
+
       // Return SuccessResponse
       const response = new SuccessResponse({ matches });
       res.json(response);
@@ -39,7 +39,7 @@ router.get(
 router.get(
   "/likes",
   passport.authenticate("jwt", { session: false }),
-  profileExists,
+  isAuthorized,
   async function (req, res, next) {
     const result = validationResult(req);
     if (!result.isEmpty()) {
@@ -65,7 +65,7 @@ router.get(
 router.post(
   "/:user_id/like",
   passport.authenticate("jwt", { session: false }),
-  profileExists,
+  isAuthorized,
   param("user_id")
     .isUUID()
     .custom(profileExistsValidator)
@@ -83,7 +83,7 @@ router.post(
         req.user.user_id,
         req.params.user_id
       );
-      
+
       // Return SuccessResponse
       const response = new SuccessResponse({ match });
       res.json(response);
@@ -98,7 +98,7 @@ router.post(
 router.delete(
   "/:user_id/like",
   passport.authenticate("jwt", { session: false }),
-  profileExists,
+  isAuthorized,
   param("user_id").isUUID().custom(profileExistsValidator).custom(likeExists),
   async function (req, res, next) {
     const result = validationResult(req);
@@ -113,7 +113,7 @@ router.delete(
         req.user.user_id,
         req.params.user_id
       );
-      
+
       // Return SuccessResponse
       const response = new SuccessResponse({ match });
       res.json(response);
@@ -127,7 +127,7 @@ router.delete(
 router.post(
   "/:user_id/dislike",
   passport.authenticate("jwt", { session: false }),
-  profileExists,
+  isAuthorized,
   param("user_id")
     .isUUID()
     .custom(profileExistsValidator)

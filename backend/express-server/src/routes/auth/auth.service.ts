@@ -309,8 +309,19 @@ export async function authenticateWithCredentials(
     created_at: new Date(),
   });
 
+  initiateEmailVerification(input.email);
+
+  return userData;
+}
+
+export async function initiateEmailVerification(email: string): Promise<void> {
+  // Check if user already exists
   const nextMonth = new Date();
   nextMonth.setDate(new Date().getDate() + Number(process.env.JWT_EXPIRES_IN));
+
+  let userData = await userRepository.findOne({
+    email: email,
+  });
 
   let tokenData = await createToken({
     user_id: userData.user_id,
@@ -326,5 +337,5 @@ export async function authenticateWithCredentials(
     `${process.env.BASE_URL}/verify-email?token=${tokenData.token_id}`
   );
 
-  return userData;
+  return;
 }

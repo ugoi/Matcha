@@ -2,8 +2,8 @@
 import { describe, expect, test, vi } from "vitest";
 import {
   escapeErrors,
-  emailVerified,
-  isHtmlTagFree,
+  emailVerifiedValidator,
+  isHtmlTagFreeValidator,
   FilterSet,
   SortSet,
 } from "./utils.js";
@@ -17,18 +17,20 @@ const pgp = pgPromise({
 });
 
 describe("utils", () => {
-  test("isHtmlTagFree", () => {
-    expect(() => isHtmlTagFree("<script>alert('hi')</script>")).toThrowError();
-    expect(() => isHtmlTagFree("<p>hello</p>")).toThrowError();
-    expect(isHtmlTagFree("hello")).toBe(true);
-    expect(isHtmlTagFree("")).toBe(true);
-    expect(isHtmlTagFree(null)).toBe(true);
-    expect(isHtmlTagFree(undefined)).toBe(true);
-    expect(isHtmlTagFree(123)).toBe(true);
-    expect(isHtmlTagFree({})).toBe(true);
-    expect(isHtmlTagFree([])).toBe(true);
-    expect(isHtmlTagFree(true)).toBe(true);
-    expect(isHtmlTagFree(false)).toBe(true);
+  test("isHtmlTagFreeValidator", () => {
+    expect(() =>
+      isHtmlTagFreeValidator("<script>alert('hi')</script>")
+    ).toThrowError();
+    expect(() => isHtmlTagFreeValidator("<p>hello</p>")).toThrowError();
+    expect(isHtmlTagFreeValidator("hello")).toBe(true);
+    expect(isHtmlTagFreeValidator("")).toBe(true);
+    expect(isHtmlTagFreeValidator(null)).toBe(true);
+    expect(isHtmlTagFreeValidator(undefined)).toBe(true);
+    expect(isHtmlTagFreeValidator(123)).toBe(true);
+    expect(isHtmlTagFreeValidator({})).toBe(true);
+    expect(isHtmlTagFreeValidator([])).toBe(true);
+    expect(isHtmlTagFreeValidator(true)).toBe(true);
+    expect(isHtmlTagFreeValidator(false)).toBe(true);
   });
 
   test("escapeErrors", () => {
@@ -65,7 +67,7 @@ describe("utils", () => {
     ]);
   });
 
-  test("emailVerified", async () => {
+  test("emailVerifiedValidator", async () => {
     const findOneSpy = vi
       .spyOn(userRepository, "findOne")
       .mockImplementation(async (value) => {
@@ -107,12 +109,12 @@ describe("utils", () => {
       });
 
     if (process.env.EMAIL_VERIFICATION === "false") {
-      expect(() => emailVerified("test")).not.toThrowError();
-      expect(() => emailVerified("unverified")).not.toThrowError();
+      expect(() => emailVerifiedValidator("test")).not.toThrowError();
+      expect(() => emailVerifiedValidator("unverified")).not.toThrowError();
     } else {
-      expect(() => emailVerified("test")).not.toThrowError();
+      expect(() => emailVerifiedValidator("test")).not.toThrowError();
       expect(
-        async () => await emailVerified("unverified")
+        async () => await emailVerifiedValidator("unverified")
       ).rejects.toThrowError();
     }
   });

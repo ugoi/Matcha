@@ -1,6 +1,6 @@
 import { Router } from "express";
 import passport from "passport";
-import { escapeErrors, profileExists } from "../../../utils/utils.js";
+import { escapeErrors, isAuthorized } from "../../../utils/utils.js";
 import { validationResult } from "express-validator";
 import { JFail } from "../../../error-handlers/custom-errors.js";
 import { visitsRepository } from "./visits.repository.js";
@@ -17,7 +17,7 @@ var router = Router();
 router.get(
   "/visits",
   passport.authenticate("jwt", { session: false }),
-  profileExists,
+  isAuthorized,
   async function (req, res, next) {
     const result = validationResult(req);
     if (!result.isEmpty()) {
@@ -46,7 +46,7 @@ router.get(
 router.post(
   "/:user_id/visits",
   passport.authenticate("jwt", { session: false }),
-  profileExists,
+  isAuthorized,
   async function (req, res, next) {
     const result = validationResult(req);
     if (!result.isEmpty()) {

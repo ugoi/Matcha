@@ -11,13 +11,13 @@ import {
   sendVerificationEmail,
 } from "./auth.service.js";
 import {
-  emailNotExists,
+  emailNotExistsValidator,
   escapeErrors,
-  emailVerified,
-  isHtmlTagFree,
-  usernameNotExists,
+  emailVerifiedValidator,
+  isHtmlTagFreeValidator,
+  usernameNotExistsValidator,
   userExistsValidator,
-  tokenIsValid,
+  tokenIsValidValidator,
 } from "../../utils/utils.js";
 import { authenticateWithCredentials } from "../auth/auth.service.js";
 import { createToken } from "../token/token.repository.js";
@@ -43,8 +43,14 @@ router.post(
   "/signup",
   body("firstName").notEmpty().escape(),
   body("lastName").notEmpty().escape(),
-  body("username").notEmpty().custom(isHtmlTagFree).custom(usernameNotExists),
-  body("email").isEmail().custom(isHtmlTagFree).custom(emailNotExists),
+  body("username")
+    .notEmpty()
+    .custom(isHtmlTagFreeValidator)
+    .custom(usernameNotExistsValidator),
+  body("email")
+    .isEmail()
+    .custom(isHtmlTagFreeValidator)
+    .custom(emailNotExistsValidator),
   body("password").isStrongPassword(),
 
   async function (req, res, next) {
@@ -78,7 +84,7 @@ router.post(
 /* Signs user in with existing user */
 router.post(
   "/login",
-  body("username").notEmpty().custom(emailVerified),
+  body("username").notEmpty().custom(emailVerifiedValidator),
   body("password").notEmpty(),
 
   async function (req, res, next) {
@@ -192,7 +198,7 @@ router.post(
 /* Verify email */
 router.patch(
   "/verify-email",
-  body("token").notEmpty().custom(tokenIsValid),
+  body("token").notEmpty().custom(tokenIsValidValidator),
   async function (req, res, next) {
     const result = validationResult(req);
     if (result.isEmpty()) {

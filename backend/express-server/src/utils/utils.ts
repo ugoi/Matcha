@@ -125,14 +125,45 @@ export async function profileNotExists(req, res, next) {
   }
   next();
 }
-
-export async function profileExists(req, res, next) {
-  const user_id = req.user.user_id;
+async function checkProfileExists(user_id) {
   const profile = await profilesRepository.findOne(user_id);
   if (!profile) {
-    next(new JFail("profile not found"));
+    throw new JFail("profile not found");
   }
-  next();
+}
+
+async function checkEmailVerified(is_email_verified) {
+  if (!is_email_verified) {
+    throw new JFail("email not verified");
+  }
+}
+
+export async function profileExists(req, res, next) {
+  try {
+    await checkProfileExists(req.user.user_id);
+    next();
+  } catch (error) {
+    next(error);
+  }
+}
+
+export async function isEmailVerified(req, res, next) {
+  try {
+    await checkEmailVerified(req.user.is_email_verified);
+    next();
+  } catch (error) {
+    next(error);
+  }
+}
+
+export async function isAuthorized(req, res, next) {
+  try {
+    await checkProfileExists(req.user.user_id);
+    await checkEmailVerified(req.user.is_email_verified);
+    next();
+  } catch (error) {
+    next(error);
+  }
 }
 
 export async function profileExistsValidator(value) {
@@ -142,7 +173,7 @@ export async function profileExistsValidator(value) {
   }
 }
 
-export async function usernameNotExists(value) {
+export async function usernameNotExistsValidator(value) {
   const user = await userRepository.findOne({ username: value });
   if (user) {
     throw new Error("username already exists");
@@ -150,7 +181,7 @@ export async function usernameNotExists(value) {
   return true;
 }
 
-export async function emailNotExists(value) {
+export async function emailNotExistsValidator(value) {
   const user = await userRepository.findOne({ email: value });
   if (user) {
     throw new Error("email already exists");
@@ -166,7 +197,7 @@ export async function userExistsValidator(value) {
   return true;
 }
 
-export function isHtmlTagFree(value) {
+export function isHtmlTagFreeValidator(value) {
   if (!value || typeof value !== "string" || value.length === 0) {
     return true;
   }
@@ -177,7 +208,7 @@ export function isHtmlTagFree(value) {
   return true;
 }
 
-export async function emailVerified(value: string) {
+export async function emailVerifiedValidator(value: string) {
   const EmailVerificationDisabled = process.env.EMAIL_VERIFICATION === "false";
   if (EmailVerificationDisabled) {
     return true;
@@ -199,7 +230,7 @@ export async function emailVerified(value: string) {
   return true;
 }
 
-export async function tokenIsValid(value: string) {
+export async function tokenIsValidValidator(value: string) {
   const token = await findToken(value);
   if (!token) {
     throw new Error("invalid token");

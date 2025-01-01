@@ -48,11 +48,12 @@ export interface CreateUserInput {
 export interface UpdateUserInput {
   user_id: string;
   data: {
-    username: string;
-    email: string;
-    first_name: string;
-    last_name: string;
-    phone: string;
+    username?: string;
+    email?: string;
+    first_name?: string;
+    last_name?: string;
+    phone?: string;
+    is_email_verified?: boolean;
   };
 }
 
