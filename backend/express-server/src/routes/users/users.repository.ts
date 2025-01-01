@@ -1,6 +1,7 @@
 import { update } from "lodash";
 import db, { pgp } from "../../config/db-config.js";
-import { UpdateUserInput, User } from "./users.interface.js";
+import { CreateUserInput, UpdateUserInput, User } from "./users.interface.js";
+import { ColumnSet } from "pg-promise";
 
 interface FindOneInput {
   id?: string;
@@ -55,6 +56,15 @@ export const userRepository = {
     let user: User = data[0];
 
     return user;
+  },
+
+  create: async function create(input: CreateUserInput): Promise<User> {
+
+    const query = pgp.helpers.insert(input, null, "users") + "RETURNING *";
+
+    const userData = await db.one(query);
+
+    return userData;
   },
 
   update: async function update(input: UpdateUserInput): Promise<User> {

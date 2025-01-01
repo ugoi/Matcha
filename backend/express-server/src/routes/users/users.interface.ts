@@ -35,6 +35,16 @@ export class ProtectedUser {
   }
 }
 
+export interface CreateUserInput {
+  first_name?: string;
+  last_name?: string;
+  username?: string;
+  email: string;
+  password_hash?: string;
+  is_email_verified?: boolean;
+  created_at?: Date;
+}
+
 export interface UpdateUserInput {
   user_id: string;
   data: {

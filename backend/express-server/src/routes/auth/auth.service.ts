@@ -252,11 +252,13 @@ export async function authenticatedWithFederatedProvider(
         await db.none("DELETE FROM users WHERE user_id = $1", [
           userData.user_id,
         ]);
-        // Create a new user record
-        userData = await db.one(
-          "INSERT INTO users (first_name, last_name, email, is_email_verified) VALUES ($1, $2, $3, $4) RETURNING *",
-          [givenName, familyName, email, true]
-        );
+        userData = await userRepository.create({
+          first_name: givenName,
+          last_name: familyName,
+          email: email,
+          is_email_verified: true,
+          created_at: new Date(),
+        });
       }
 
       await db.none(
@@ -264,10 +266,12 @@ export async function authenticatedWithFederatedProvider(
         [userData.user_id, issuer, profile.id]
       );
     } else {
-      userData = await db.one(
-        "INSERT INTO users (first_name, last_name, email, is_email_verified) VALUES ($1, $2, $3, $4) RETURNING *",
-        [givenName, familyName, email, true]
-      );
+      userData = await userRepository.create({
+        first_name: givenName,
+        last_name: familyName,
+        email: email,
+        is_email_verified: true,
+      });
     }
 
     return userData;
@@ -296,21 +300,14 @@ export async function authenticateWithCredentials(
     throw new ValidationError("Email already in use");
   }
 
-  userData = await db.one(
-    `
-        INSERT INTO users(first_name, last_name, username, email, password_hash, created_at) 
-        VALUES($1, $2, $3, $4, $5, $6)
-        RETURNING *
-        `,
-    [
-      input.firstName,
-      input.lastName,
-      input.username,
-      input.email,
-      hashedPassword,
-      new Date(),
-    ]
-  );
+  userData = await userRepository.create({
+    first_name: input.firstName,
+    last_name: input.lastName,
+    username: input.username,
+    email: input.email,
+    password_hash: hashedPassword,
+    created_at: new Date(),
+  });
 
   const nextMonth = new Date();
   nextMonth.setDate(new Date().getDate() + Number(process.env.JWT_EXPIRES_IN));
