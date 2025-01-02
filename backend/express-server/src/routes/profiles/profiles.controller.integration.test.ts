@@ -1,11 +1,9 @@
-import { beforeEach, describe, expect, test, vi } from "vitest";
+import { beforeEach, describe, expect, test } from "vitest";
 import app from "../../app.js";
 import supertest from "supertest";
 import { userRepository } from "../users/users.repository.js";
 import bcrypt from "bcrypt";
-import { CreateAccountInput } from "../auth/auth.interface.js";
 import { CreateUserInput, User } from "../users/users.interface.js";
-import { log, profile } from "console";
 import { profilesRepository } from "./profiles.repository.js";
 import { up } from "../../migrations/up.js";
 import { down } from "../../migrations/down.js";
@@ -14,7 +12,7 @@ import TestAgent from "supertest/lib/agent.js";
 import { interestsRepository } from "./interests/interests.repository.js";
 
 async function createTestUsers(numberOfUsers: number) {
-  let testUsers: { user: User; profile: Profile; password: string }[] = [];
+  const testUsers: { user: User; profile: Profile; password: string }[] = [];
 
   for (let i = 0; i < numberOfUsers; i++) {
     const password = "TestHola4242..";
@@ -32,18 +30,17 @@ async function createTestUsers(numberOfUsers: number) {
 
     const user = await userRepository.create(input);
 
-    // Create a profile for the user
-
     const profile = await profilesRepository.create({
       user_id: user.user_id,
       data: {
-        gender: Math.random() > 0.5 ? "male" : "female",
-        age: Math.floor(Math.random() * 100),
-        sexual_preference: Math.random() > 0.2 ? "heterosexual" : "bisexual",
+        // Using i from the outer loop that creates test users (0 to numberOfUsers-1)
+        gender: i % 2 === 0 ? "male" : "female", // Even indices are male, odd are female
+        age: 20 + i, // Ages will be 20, 21, 22, etc.
+        sexual_preference: i % 5 === 0 ? "bisexual" : "heterosexual", // Every 5th user is bisexual
         biography: "I am a cool guy",
         profile_picture: "https://picsum.photos/200",
-        gps_latitude: Math.random() * 90,
-        gps_longitude: Math.random() * 180,
+        gps_latitude: 40 + i, // Starting at 40°N, incrementing by 1 for each user
+        gps_longitude: -70 + i, // Starting at 70°W, incrementing by 1 for each user
       },
     });
 
@@ -60,9 +57,9 @@ async function createTestUsers(numberOfUsers: number) {
       "coding",
     ];
 
-    const interests = await interestsRepository.add(
+    await interestsRepository.add(
       user.user_id,
-      availableInterests.sort(() => 0.5 - Math.random()).slice(0, 3)
+      availableInterests.slice(i * 3 % availableInterests.length, (i * 3 % availableInterests.length) + 3)
     );
 
     testUsers.push({ user, profile, password });
@@ -73,6 +70,7 @@ async function createTestUsers(numberOfUsers: number) {
 
 describe("hello-world", () => {
   const agent = supertest.agent(app);
+
   test("GET /api/hello-world", async () => {
     const response = await agent.get("/api/hello-world");
     expect(response.status).toBe(200);
@@ -84,58 +82,40 @@ describe("profiles", () => {
   let agent: TestAgent;
 
   beforeEach(async () => {
-    // run migrations
     await down();
     await up();
     agent = supertest.agent(app);
   });
 
   describe("Logged in user with his own profile", () => {
-    test("should get other profiles.", async () => {
-      // Create a new user
+    const numberOfUsers = 10;
+    let testUsers: { user: User; profile: Profile; password: string }[];
 
-      const numberOfUsers = 10;
-      const testUsers = await createTestUsers(numberOfUsers);
+    beforeEach(async () => {
+      testUsers = await createTestUsers(numberOfUsers);
 
-      const testUser = testUsers[0];
-
-      const loginResponse = await agent
+      await agent
         .post("/api/login")
         .send(
-          `username=${testUser.user.username}&password=${testUser.password}`
+          `username=${testUsers[0].user.username}&password=${testUsers[0].password}`
         )
         .set("Content-Type", "application/x-www-form-urlencoded")
         .set("Accept", "application/json")
         .expect(200)
         .expect("Content-Type", /json/);
+    });
 
-      expect(loginResponse.status).toBe(200);
+    test("should get other profiles", async () => {
       const response = await agent.get("/api/profiles");
       expect(response.status).toBe(200);
       expect(response.body.data.profiles.length).toBe(numberOfUsers - 1);
     });
 
     test("should get other profiles sorted by distance", async () => {
-      // Create a new user
-      const numberOfUsers = 10;
+      const response = await agent.get(
+        '/api/profiles?sort_by={"distance": {"$order": "asc"}}'
+      );
 
-      const testUsers = await createTestUsers(numberOfUsers);
-
-      const testUser = testUsers[0];
-
-      const loginResponse = await agent
-        .post("/api/login")
-        .send(
-          `username=${testUser.user.username}&password=${testUser.password}`
-        )
-        .set("Content-Type", "application/x-www-form-urlencoded")
-        .set("Accept", "application/json")
-        .expect(200)
-        .expect("Content-Type", /json/);
-
-      const response = await agent.get('/api/profiles?sort_by={"distance": {"$order": "asc"}}');
-
-      // Check if profiles are sorted by distance
       let previousDistance = 0;
       response.body.data.profiles.forEach((profile: Profile) => {
         expect(profile.distance).toBeGreaterThanOrEqual(previousDistance);
@@ -144,30 +124,10 @@ describe("profiles", () => {
     });
 
     test("should get other profiles sorted by ascending age", async () => {
-      // Create a new user
-      const numberOfUsers = 10;
-
-      const testUsers = await createTestUsers(numberOfUsers);
-
-      const testUser = testUsers[0];
-
-      const loginResponse = await agent
-        .post("/api/login")
-        .send(
-          `username=${testUser.user.username}&password=${testUser.password}`
-        )
-        .set("Content-Type", "application/x-www-form-urlencoded")
-        .set("Accept", "application/json")
-        .expect(200)
-        .expect("Content-Type", /json/);
-
       const response = await agent.get(
         '/api/profiles?sort_by={"age": {"$order": "asc"}}'
       );
 
-      console.log(response.body.data.profiles);
-
-      // Check if profiles are sorted by age
       let previousAge = 0;
       response.body.data.profiles.forEach((profile: Profile) => {
         expect(profile.age).toBeGreaterThanOrEqual(previousAge);
@@ -176,28 +136,10 @@ describe("profiles", () => {
     });
 
     test("should get other profiles sorted by descending age", async () => {
-      // Create a new user
-      const numberOfUsers = 10;
-
-      const testUsers = await createTestUsers(numberOfUsers);
-
-      const testUser = testUsers[0];
-
-      const loginResponse = await agent
-        .post("/api/login")
-        .send(
-          `username=${testUser.user.username}&password=${testUser.password}`
-        )
-        .set("Content-Type", "application/x-www-form-urlencoded")
-        .set("Accept", "application/json")
-        .expect(200)
-        .expect("Content-Type", /json/);
-
       const response = await agent.get(
         '/api/profiles?sort_by={"age": {"$order": "desc"}}'
       );
 
-      // Check if profiles are sorted by age
       let previousAge = 100;
       response.body.data.profiles.forEach((profile: Profile) => {
         expect(profile.age).toBeLessThanOrEqual(previousAge);
@@ -206,28 +148,10 @@ describe("profiles", () => {
     });
 
     test("should get other profiles sorted by distance and age", async () => {
-      // Create a new user
-      const numberOfUsers = 10;
-
-      const testUsers = await createTestUsers(numberOfUsers);
-
-      const testUser = testUsers[0];
-
-      const loginResponse = await agent
-        .post("/api/login")
-        .send(
-          `username=${testUser.user.username}&password=${testUser.password}`
-        )
-        .set("Content-Type", "application/x-www-form-urlencoded")
-        .set("Accept", "application/json")
-        .expect(200)
-        .expect("Content-Type", /json/);
-
       const response = await agent.get(
         '/api/profiles?sort_by={"distance": {"$order": "asc"}, "age": {"$order": "asc"}}'
       );
 
-      // Check if profiles are sorted by distance and age
       let previousDistance = 0;
       let previousAge = 0;
       response.body.data.profiles.forEach((profile: Profile) => {
@@ -241,35 +165,12 @@ describe("profiles", () => {
     });
 
     test("should get other profiles sorted by common interests", async () => {
-      console.log("should get other profiles sorted by common interests");
-      // Create a new user
-      const numberOfUsers = 10;
-
-      const testUsers = await createTestUsers(numberOfUsers);
-
-      const testUser = testUsers[0];
-
-      const loginResponse = await agent
-        .post("/api/login")
-        .send(
-          `username=${testUser.user.username}&password=${testUser.password}`
-        )
-        .set("Content-Type", "application/x-www-form-urlencoded")
-        .set("Accept", "application/json")
-        .expect(200)
-        .expect("Content-Type", /json/);
-
       const response = await agent.get(
         '/api/profiles?sort_by={"common_interests": {"$order": "asc"}}'
       );
 
-      // Check if profiles are sorted by common interests
       let previousCommonInterests = 0;
-      
       response.body.data.profiles.forEach((profile: Profile) => {
-        console.log("profile.common_interests");
-        console.log(profile.common_interests);
-        
         expect(profile.common_interests).toBeGreaterThanOrEqual(
           previousCommonInterests
         );
