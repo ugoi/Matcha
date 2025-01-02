@@ -12,7 +12,7 @@ export interface Profile {
   sexual_preference: string;
   biography: string;
   interests: Interest[];
-  common_interests: Interest[];
+  common_interests: number;
   pictures: Picture[];
   search_preferences: SearchPreferences;
   fame_rating: number;
@@ -37,7 +37,7 @@ export class PublicProfile {
   sexual_preference: string;
   biography: string;
   interests: Interest[];
-  common_interests: Interest[];
+  common_interests: number;
   pictures: Picture[];
   fame_rating: number;
   profile_picture: string;
@@ -165,10 +165,7 @@ export const mockProfile: Profile = {
     { interest_id: "1", user_id: "1", interest_tag: "music" },
     { interest_id: "2", user_id: "1", interest_tag: "sports" },
   ],
-  common_interests: [
-    { interest_id: "1", user_id: "1", interest_tag: "music" },
-    { interest_id: "2", user_id: "1", interest_tag: "sports" },
-  ],
+  common_interests: 2,
   pictures: [
     { picture_id: "1", user_id: "1", picture_url: "https://www.google.com" },
     { picture_id: "2", user_id: "1", picture_url: "https://www.google.com" },

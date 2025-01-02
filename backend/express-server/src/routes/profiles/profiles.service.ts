@@ -41,7 +41,6 @@ export const profilesService = {
 
     return profile;
   },
-  
 
   async createProfile(input: CreateProfileInput): Promise<Profile> {
     const { user_id, data } = input;
@@ -113,6 +112,7 @@ export const profilesService = {
             },
             fame_rating: { $gte: 0 },
             common_interests: { $gte: 2 },
+            user_id: { $neq: currentUser.user_id },
           }
         : { user_id: { $neq: currentUser.user_id } };
 
@@ -126,24 +126,9 @@ export const profilesService = {
         : undefined;
     const where = filterSet ? pgp.as.format("WHERE $1", filterSet) : "";
 
-    // Set default sort if required
-    const defaultSortBy: SortBy =
-      process.env.DEFAULT_SORT === "true"
-        ? {
-            distance: {
-              $order: SortOrder.Asc,
-            },
-          }
-        : {};
-
-    // Merge default and custom sort options
-    const mergedSortBy = { ...defaultSortBy, ...sort_by };
-
     // Prepare sort set
     const sortSet =
-      Object.keys(mergedSortBy).length > 0
-        ? new SortSet(mergedSortBy)
-        : undefined;
+      Object.keys(sort_by).length > 0 ? new SortSet(sort_by) : undefined;
     const order = sortSet ? pgp.as.format("ORDER BY $1", sortSet) : "";
 
     // Call repository to get the list of profiles

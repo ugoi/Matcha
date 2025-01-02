@@ -60,23 +60,26 @@ export const profilesRepository = {
           ) AS distance,
           profiles.last_online,
           profiles.created_at,
-          array_length(
-            ARRAY(
-              SELECT 
-                interest_tag 
-              FROM 
-                user_interests AS ui 
-              WHERE 
-                ui.user_id = profiles.user_id 
-              INTERSECT 
-              SELECT 
-                interest_tag 
-              FROM 
-                user_interests AS uime 
-              WHERE 
-                uime.user_id = $1
+          COALESCE(
+            array_length(
+              ARRAY(
+                SELECT 
+                  interest_tag 
+                FROM 
+                  user_interests AS ui 
+                WHERE 
+                  ui.user_id = profiles.user_id 
+                  INTERSECT 
+                SELECT 
+                  interest_tag 
+                FROM 
+                  user_interests AS uime 
+                WHERE 
+                  uime.user_id = $1
+              ), 
+              1
             ), 
-            1
+            0
           ) AS common_interests, 
           (
             SELECT 
