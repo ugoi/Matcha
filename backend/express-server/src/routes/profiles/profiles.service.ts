@@ -17,6 +17,32 @@ import {
 import { interestsRepository } from "./interests/interests.repository.js";
 import { picturesRepository } from "./pictures/pictures.repository.js";
 import { Picture } from "./pictures/pictures.interface.js";
+import jsonSql from "json-sql";
+
+// Initialize json-sql with PostgreSQL dialect
+const builder = jsonSql({ dialect: "postgresql" });
+
+// Helper function to convert our operators to json-sql operators
+const convertOperators = (filter: any) => {
+  if (!filter) return filter;
+
+  const result = {};
+  for (const [key, value] of Object.entries(filter)) {
+    if (typeof value === "object") {
+      // Convert $neq to $ne for json-sql compatibility
+      const converted = Object.fromEntries(
+        Object.entries(value).map(([op, val]) => [
+          op === "$neq" ? "$ne" : op,
+          val,
+        ])
+      );
+      result[key] = converted;
+    } else {
+      result[key] = value;
+    }
+  }
+  return result;
+};
 
 export const profilesService = {
   getProfile: async function getProfile(user_id: string) {
@@ -119,20 +145,140 @@ export const profilesService = {
     // Merge default and custom filters
     const mergedFilter = { ...defaultFilter, ...filter_by };
 
-    // Prepare filter set
-    const filterSet =
-      Object.keys(mergedFilter).length > 0
-        ? new FilterSet(mergedFilter)
-        : undefined;
-    const where = filterSet ? pgp.as.format("WHERE $1", filterSet) : "";
+    // Convert our operators to json-sql compatible ones
+    const convertedFilter = convertOperators(mergedFilter);
 
-    // Prepare sort set
-    const sortSet =
-      Object.keys(sort_by).length > 0 ? new SortSet(sort_by) : undefined;
-    const order = sortSet ? pgp.as.format("ORDER BY $1", sortSet) : "";
+    // Convert sort_by to json-sql sort format
+    const sortClause = Object.entries(sort_by).reduce((acc, [field, item]) => {
+      acc[field] = item?.$order?.toLowerCase() === "desc" ? -1 : 1;
+      return acc;
+    }, {});
 
-    // Call repository to get the list of profiles
-    return profilesRepository.find(user_id, where, order);
+    // Build complete query using json-sql
+    const query = builder.build({
+      type: "select",
+      with: {
+        profile_with_interests: {
+          select: {
+            type: "select",
+            fields: [
+              "users.username",
+              "users.first_name",
+              "users.last_name",
+              "profiles.profile_id",
+              "profiles.user_id",
+              "profiles.gender",
+              "profiles.age",
+              "profiles.sexual_preference",
+              "profiles.biography",
+              "profiles.fame_rating",
+              "profiles.profile_picture",
+              {
+                expression: {
+                  pattern:
+                    "(profiles.location <-> (SELECT location FROM profiles WHERE user_id = {userId}))",
+                  values: { userId: user_id },
+                },
+                alias: "distance",
+              },
+              "profiles.last_online",
+              "profiles.created_at",
+              {
+                expression: {
+                  pattern: `COALESCE(
+                    array_length(
+                      ARRAY(
+                        SELECT interest_tag 
+                        FROM user_interests AS ui 
+                        WHERE ui.user_id = profiles.user_id 
+                        INTERSECT 
+                        SELECT interest_tag 
+                        FROM user_interests AS uime 
+                        WHERE uime.user_id = {userId}
+                      ), 
+                      1
+                    ), 
+                    0
+                  )`,
+                  values: { userId: user_id },
+                },
+                alias: "common_interests",
+              },
+              {
+                expression: {
+                  pattern: `(
+                    SELECT json_agg(i)
+                    FROM (
+                      SELECT *
+                      FROM user_interests
+                      WHERE user_interests.user_id = profiles.user_id
+                    ) i
+                  )`,
+                },
+                alias: "interests",
+              },
+              {
+                expression: {
+                  pattern: `(
+                    SELECT json_agg(i)
+                    FROM (
+                      SELECT *
+                      FROM user_pictures
+                      WHERE user_pictures.user_id = profiles.user_id
+                    ) i
+                  )`,
+                },
+                alias: "pictures",
+              },
+            ],
+            table: "profiles",
+            join: [
+              {
+                type: "inner",
+                table: "users",
+                on: { "profiles.user_id": "users.user_id" },
+              },
+              {
+                type: "left",
+                table: "likes",
+                on: {
+                  "profiles.user_id": "likes.likee_user_id",
+                  "likes.liker_user_id": { $eq: { value: user_id } },
+                },
+              },
+              {
+                type: "left",
+                table: "blocked_users",
+                on: {
+                  "profiles.user_id": "blocked_users.blocked_user_id",
+                  "blocked_users.blocker_user_id": { $eq: { value: user_id } },
+                },
+              },
+            ],
+            condition: {
+              "likes.liker_user_id": { $null: true },
+              "blocked_users.blocker_user_id": { $null: true },
+            },
+            limit: 20,
+          },
+        },
+      },
+      table: "profile_with_interests",
+      condition: convertedFilter,
+      sort: Object.keys(sortClause).length > 0 ? sortClause : undefined,
+    });
+
+    // Replace every $anything with ${anything} because pgp.as.format does not support $anything
+    const transformedQuery = query.query.replace(
+      /\$(\w+)/g,
+      (match, p1) => `\${${p1}}`
+    );
+
+    // Format the query using pgp
+    const statement = pgp.as.format(transformedQuery, query.values);
+
+    // Call repository with the query
+    return profilesRepository.find(user_id, statement);
   },
 
   updateLastOnline: async function updateLastOnline(user_id: string) {
