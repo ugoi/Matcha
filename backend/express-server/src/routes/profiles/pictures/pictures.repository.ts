@@ -20,7 +20,7 @@ export const picturesRepository = {
   add: async function add(
     user_id: string,
     pictures: string[]
-  ): Promise<Profile> {
+  ): Promise<Picture[]> {
     // Creating a reusable/static ColumnSet for generating INSERT queries:
     const cs = new pgp.helpers.ColumnSet(["user_id", "picture_url"], {
       table: "user_pictures",
@@ -35,7 +35,9 @@ export const picturesRepository = {
 
     await db.none(insert);
 
-    return await profilesService.getProfile(user_id);
+    const result = await picturesRepository.find(user_id);
+
+    return result;
   },
 
   remove: async function remove(

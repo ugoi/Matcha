@@ -10,7 +10,7 @@ import {
 import { JFail } from "../../../error-handlers/custom-errors.js";
 import { picturesRepository } from "./pictures.repository.js";
 import { SuccessResponse } from "../../../interfaces/response.js";
-// Import your SuccessResponse class. Adjust the import path as needed.
+import { upload, uploadToS3 } from "../../../utils/s3.js";
 
 var router = Router();
 
@@ -20,8 +20,6 @@ router.get(
   async function (req, res, next) {
     try {
       const profile = await picturesRepository.find(req.user.user_id);
-
-      // Return as SuccessResponse
       const response = new SuccessResponse({ pictures: profile });
       res.json(response);
     } catch (error) {
@@ -31,7 +29,7 @@ router.get(
   }
 );
 
-/* Create user pictures*/
+/* Create user pictures from URLs */
 router.post(
   "/me/pictures",
   passport.authenticate("jwt", { session: false }),
@@ -41,25 +39,62 @@ router.post(
     .isArray({ max: 5 })
     .custom(picturesNotExists)
     .custom(pictureCount),
+  body("pictures.*").isURL(),
   async function (req, res, next) {
     const result = validationResult(req);
     if (!result.isEmpty()) {
-      // Escape html tags in error messages for security
       const errors = escapeErrors(result.array());
       next(new JFail({ title: "invalid input", errors: errors }));
       return;
     }
 
     try {
-      const profile = await picturesRepository.add(
+      const pictures = await picturesRepository.add(
         req.user.user_id,
         req.body.pictures
       );
 
-      // Return as SuccessResponse
-      const response = new SuccessResponse(profile);
+      const response = new SuccessResponse({ pictures });
       res.json(response);
     } catch (error) {
+      next(error);
+      return;
+    }
+  }
+);
+
+/* Upload user pictures as files */
+router.post(
+  "/me/pictures/upload",
+  passport.authenticate("jwt", { session: false }),
+  upload.array("pictures", 5),
+  async function (req, res, next) {
+    try {
+      if (!req.files || !Array.isArray(req.files)) {
+        next(new JFail({ title: "No files uploaded" }));
+        return;
+      }
+
+      if (req.files.length > 5) {
+        next(new JFail({ title: "Maximum 5 pictures allowed" }));
+        return;
+      }
+
+      // Upload all files to S3 and get their URLs
+      const uploadPromises = (req.files as Express.Multer.File[]).map((file) =>
+        uploadToS3(file)
+      );
+      const pictureUrls = await Promise.all(uploadPromises);
+
+      const pictures = await picturesRepository.add(
+        req.user.user_id,
+        pictureUrls
+      );
+
+      const response = new SuccessResponse({ pictures });
+      res.json(response);
+    } catch (error) {
+      console.log(error);
       next(error);
       return;
     }
@@ -74,7 +109,6 @@ router.delete(
   async function (req, res, next) {
     const result = validationResult(req);
     if (!result.isEmpty()) {
-      // Escape html tags in error messages for security
       const errors = escapeErrors(result.array());
       next(new JFail({ title: "invalid input", errors: errors }));
       return;
@@ -86,7 +120,6 @@ router.delete(
         req.body.pictures
       );
 
-      // Return as SuccessResponse
       const response = new SuccessResponse(profile);
       res.json(response);
     } catch (error) {

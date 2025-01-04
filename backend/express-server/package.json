@@ -13,9 +13,13 @@
     "test": "vitest --config ./vitest.config.js"
   },
   "dependencies": {
+    "@aws-sdk/client-s3": "^3.722.0",
+    "@aws-sdk/s3-request-presigner": "^3.722.0",
     "@getbrevo/brevo": "^2.2.0",
+    "@types/multer": "^1.4.12",
     "@types/passport-facebook": "^3.0.3",
     "@types/supertest": "^6.0.2",
+    "@types/uuid": "^10.0.0",
     "bcrypt": "^5.1.1",
     "cookie-parser": "^1.4.7",
     "cors": "^2.8.5",
@@ -29,13 +33,15 @@
     "lodash": "^4.17.21",
     "mongo-sql": "^6.2.0",
     "morgan": "~1.9.1",
+    "multer": "^1.4.5-lts.1",
     "passport": "^0.7.0",
     "passport-facebook": "^3.0.0",
     "passport-google-oauth20": "^2.0.0",
     "passport-jwt": "^4.0.1",
     "pg-promise": "^11.9.1",
     "pug": "^3.0.3",
-    "socket.io": "^4.8.1"
+    "socket.io": "^4.8.1",
+    "uuid": "^11.0.3"
   },
   "devDependencies": {
     "@types/bcrypt": "^5.0.2",

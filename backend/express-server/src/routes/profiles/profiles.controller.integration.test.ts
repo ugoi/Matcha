@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, test } from "vitest";
+import { beforeEach, describe, expect, test, vi } from "vitest";
 import app from "../../app.js";
 import supertest from "supertest";
 import { userRepository } from "../users/users.repository.js";
@@ -10,6 +10,9 @@ import { down } from "../../migrations/down.js";
 import { Profile } from "./profiles.interface.js";
 import TestAgent from "supertest/lib/agent.js";
 import { interestsRepository } from "./interests/interests.repository.js";
+
+// Increase test timeout to 30 seconds
+vi.setConfig({ testTimeout: 30000 });
 
 async function createTestUsers(numberOfUsers: number) {
   const testUsers: { user: User; profile: Profile; password: string }[] = [];

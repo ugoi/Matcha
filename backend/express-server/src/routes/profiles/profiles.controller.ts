@@ -5,7 +5,6 @@ import passport from "passport";
 import {
   escapeErrors,
   isAuthorized,
-  isEmailVerified,
   pictureExists,
   profileNotExists,
   validateFilterOperators,
