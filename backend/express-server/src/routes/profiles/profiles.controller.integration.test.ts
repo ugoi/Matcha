@@ -59,7 +59,10 @@ async function createTestUsers(numberOfUsers: number) {
 
     await interestsRepository.add(
       user.user_id,
-      availableInterests.slice(i * 3 % availableInterests.length, (i * 3 % availableInterests.length) + 3)
+      availableInterests.slice(
+        (i * 3) % availableInterests.length,
+        ((i * 3) % availableInterests.length) + 3
+      )
     );
 
     testUsers.push({ user, profile, password });
@@ -67,16 +70,6 @@ async function createTestUsers(numberOfUsers: number) {
 
   return testUsers;
 }
-
-describe("hello-world", () => {
-  const agent = supertest.agent(app);
-
-  test("GET /api/hello-world", async () => {
-    const response = await agent.get("/api/hello-world");
-    expect(response.status).toBe(200);
-    expect(response.text).toBe("Hello World");
-  });
-});
 
 describe("profiles", () => {
   let agent: TestAgent;
@@ -87,13 +80,14 @@ describe("profiles", () => {
     agent = supertest.agent(app);
   });
 
-  describe("Logged in user with his own profile", () => {
-    const numberOfUsers = 10;
+  describe("GET /api/profiles", () => {
+    const numberOfUsers = 25;
     let testUsers: { user: User; profile: Profile; password: string }[];
 
     beforeEach(async () => {
       testUsers = await createTestUsers(numberOfUsers);
 
+      // Login as the first test user
       await agent
         .post("/api/login")
         .send(
@@ -105,76 +99,263 @@ describe("profiles", () => {
         .expect("Content-Type", /json/);
     });
 
-    test("should get other profiles", async () => {
-      const response = await agent.get("/api/profiles");
-      expect(response.status).toBe(200);
-      expect(response.body.data.profiles.length).toBe(numberOfUsers - 1);
-    });
-
-    test("should get other profiles sorted by distance", async () => {
-      const response = await agent.get(
-        '/api/profiles?sort_by={"distance": {"$order": "asc"}}'
-      );
-
-      let previousDistance = 0;
-      response.body.data.profiles.forEach((profile: Profile) => {
-        expect(profile.distance).toBeGreaterThanOrEqual(previousDistance);
-        previousDistance = profile.distance;
+    describe("Basic profile listing", () => {
+      test("should return profiles excluding the logged-in user", async () => {
+        const response = await agent.get("/api/profiles");
+        expect(response.status).toBe(200);
+        // Verify logged in user is not included in the results
+        expect(
+          response.body.data.profiles.some(
+            (profile) => profile.user_id === testUsers[0].user.user_id
+          )
+        ).toBe(false);
       });
     });
 
-    test("should get other profiles sorted by ascending age", async () => {
-      const response = await agent.get(
-        '/api/profiles?sort_by={"age": {"$order": "asc"}}'
-      );
+    describe("Pagination", () => {
+      test("should limit results to default of 20 profiles when no limit is specified", async () => {
+        const response = await agent.get("/api/profiles");
+        expect(response.status).toBe(200);
+        expect(response.body.data.profiles.length).toBe(20);
+      });
 
-      let previousAge = 0;
-      response.body.data.profiles.forEach((profile: Profile) => {
-        expect(profile.age).toBeGreaterThanOrEqual(previousAge);
-        previousAge = profile.age;
+      test("should respect custom limit when specified within valid range", async () => {
+        const limit = 5;
+        const response = await agent.get(`/api/profiles?limit=${limit}`);
+        expect(response.status).toBe(200);
+        expect(response.body.data.profiles.length).toBe(limit);
+      });
+
+      describe("Invalid limit validation", () => {
+        test("should reject limit below minimum (1)", async () => {
+          const response = await agent.get("/api/profiles?limit=0");
+          expect(response.body.status).toBe("fail");
+        });
+
+        test("should reject limit above maximum (100)", async () => {
+          const response = await agent.get("/api/profiles?limit=101");
+          expect(response.body.status).toBe("fail");
+        });
+
+        test("should reject non-numeric limit values", async () => {
+          const response = await agent.get("/api/profiles?limit=abc");
+          expect(response.body.status).toBe("fail");
+        });
       });
     });
 
-    test("should get other profiles sorted by descending age", async () => {
-      const response = await agent.get(
-        '/api/profiles?sort_by={"age": {"$order": "desc"}}'
-      );
+    describe("Sorting", () => {
+      describe("Single field sorting", () => {
+        test("should sort profiles by ascending distance", async () => {
+          const response = await agent.get(
+            '/api/profiles?sort_by={"distance": {"$order": "asc"}}'
+          );
 
-      let previousAge = 100;
-      response.body.data.profiles.forEach((profile: Profile) => {
-        expect(profile.age).toBeLessThanOrEqual(previousAge);
-        previousAge = profile.age;
+          let previousDistance = 0;
+          response.body.data.profiles.forEach((profile: Profile) => {
+            expect(profile.distance).toBeGreaterThanOrEqual(previousDistance);
+            previousDistance = profile.distance;
+          });
+        });
+
+        test("should sort profiles by ascending age", async () => {
+          const response = await agent.get(
+            '/api/profiles?sort_by={"age": {"$order": "asc"}}'
+          );
+
+          let previousAge = 0;
+          response.body.data.profiles.forEach((profile: Profile) => {
+            expect(profile.age).toBeGreaterThanOrEqual(previousAge);
+            previousAge = profile.age;
+          });
+        });
+
+        test("should sort profiles by descending age", async () => {
+          const response = await agent.get(
+            '/api/profiles?sort_by={"age": {"$order": "desc"}}'
+          );
+
+          let previousAge = 100;
+          response.body.data.profiles.forEach((profile: Profile) => {
+            expect(profile.age).toBeLessThanOrEqual(previousAge);
+            previousAge = profile.age;
+          });
+        });
+
+        test("should sort profiles by ascending common interests", async () => {
+          const response = await agent.get(
+            '/api/profiles?sort_by={"common_interests": {"$order": "asc"}}'
+          );
+
+          let previousCommonInterests = 0;
+          response.body.data.profiles.forEach((profile: Profile) => {
+            expect(profile.common_interests).toBeGreaterThanOrEqual(
+              previousCommonInterests
+            );
+            previousCommonInterests = profile.common_interests;
+          });
+        });
+      });
+
+      describe("Multi-field sorting", () => {
+        test("should sort profiles by distance and then age in ascending order", async () => {
+          const response = await agent.get(
+            '/api/profiles?sort_by={"distance": {"$order": "asc"}, "age": {"$order": "asc"}}'
+          );
+
+          let previousDistance = 0;
+          let previousAge = 0;
+          response.body.data.profiles.forEach((profile: Profile) => {
+            expect(profile.distance).toBeGreaterThanOrEqual(previousDistance);
+            if (profile.distance === previousDistance) {
+              expect(profile.age).toBeGreaterThanOrEqual(previousAge);
+            }
+            previousDistance = profile.distance;
+            previousAge = profile.age;
+          });
+        });
       });
     });
 
-    test("should get other profiles sorted by distance and age", async () => {
-      const response = await agent.get(
-        '/api/profiles?sort_by={"distance": {"$order": "asc"}, "age": {"$order": "asc"}}'
-      );
+    describe("Filtering", () => {
+      describe("Single field filtering", () => {
+        test("should filter profiles by gender", async () => {
+          const response = await agent.get(
+            '/api/profiles?filter_by={"gender": {"$eq": "female"}}'
+          );
 
-      let previousDistance = 0;
-      let previousAge = 0;
-      response.body.data.profiles.forEach((profile: Profile) => {
-        expect(profile.distance).toBeGreaterThanOrEqual(previousDistance);
-        if (profile.distance === previousDistance) {
-          expect(profile.age).toBeGreaterThanOrEqual(previousAge);
-        }
-        previousDistance = profile.distance;
-        previousAge = profile.age;
+          expect(response.status).toBe(200);
+          response.body.data.profiles.forEach((profile: Profile) => {
+            expect(profile.gender).toBe("female");
+          });
+        });
+
+        test("should filter profiles by age range", async () => {
+          const minAge = 25;
+          const maxAge = 30;
+          const response = await agent.get(
+            `/api/profiles?filter_by={"age": {"$gte": ${minAge}, "$lte": ${maxAge}}}`
+          );
+
+          expect(response.status).toBe(200);
+          response.body.data.profiles.forEach((profile: Profile) => {
+            expect(profile.age).toBeGreaterThanOrEqual(minAge);
+            expect(profile.age).toBeLessThanOrEqual(maxAge);
+          });
+        });
+
+        test("should filter profiles by sexual preference", async () => {
+          const response = await agent.get(
+            '/api/profiles?filter_by={"sexual_preference": {"$eq": "bisexual"}}'
+          );
+
+          expect(response.status).toBe(200);
+          response.body.data.profiles.forEach((profile: Profile) => {
+            expect(profile.sexual_preference).toBe("bisexual");
+          });
+        });
+
+        test("should filter profiles by maximum distance", async () => {
+          const maxDistance = 5;
+          const response = await agent.get(
+            `/api/profiles?filter_by={"distance": {"$lt": ${maxDistance}}}`
+          );
+
+          expect(response.status).toBe(200);
+          response.body.data.profiles.forEach((profile: Profile) => {
+            expect(profile.distance).toBeLessThan(maxDistance);
+          });
+        });
+
+        test("should filter profiles by minimum common interests", async () => {
+          const minCommonInterests = 2;
+          const response = await agent.get(
+            `/api/profiles?filter_by={"common_interests": {"$gte": ${minCommonInterests}}}`
+          );
+
+          expect(response.status).toBe(200);
+          response.body.data.profiles.forEach((profile: Profile) => {
+            expect(profile.common_interests).toBeGreaterThanOrEqual(
+              minCommonInterests
+            );
+          });
+        });
       });
-    });
 
-    test("should get other profiles sorted by common interests", async () => {
-      const response = await agent.get(
-        '/api/profiles?sort_by={"common_interests": {"$order": "asc"}}'
-      );
+      describe("Multi-field filtering", () => {
+        test("should filter profiles by age range and gender", async () => {
+          const minAge = 25;
+          const maxAge = 30;
+          const response = await agent.get(
+            `/api/profiles?filter_by={"age": {"$gte": ${minAge}, "$lte": ${maxAge}}, "gender": {"$eq": "female"}}`
+          );
 
-      let previousCommonInterests = 0;
-      response.body.data.profiles.forEach((profile: Profile) => {
-        expect(profile.common_interests).toBeGreaterThanOrEqual(
-          previousCommonInterests
-        );
-        previousCommonInterests = profile.common_interests;
+          expect(response.status).toBe(200);
+          response.body.data.profiles.forEach((profile: Profile) => {
+            expect(profile.age).toBeGreaterThanOrEqual(minAge);
+            expect(profile.age).toBeLessThanOrEqual(maxAge);
+            expect(profile.gender).toBe("female");
+          });
+        });
+
+        test("should filter profiles by distance and common interests", async () => {
+          const maxDistance = 10;
+          const minCommonInterests = 2;
+          const response = await agent.get(
+            `/api/profiles?filter_by={"distance": {"$lt": ${maxDistance}}, "common_interests": {"$gte": ${minCommonInterests}}}`
+          );
+
+          expect(response.status).toBe(200);
+          response.body.data.profiles.forEach((profile: Profile) => {
+            expect(profile.distance).toBeLessThan(maxDistance);
+            expect(profile.common_interests).toBeGreaterThanOrEqual(
+              minCommonInterests
+            );
+          });
+        });
+      });
+
+      describe("Invalid filter validation", () => {
+        test("should reject invalid filter operator", async () => {
+          const response = await agent.get(
+            '/api/profiles?filter_by={"age": {"$invalid": 25}}'
+          );
+          expect(response.body.status).toBe("fail");
+        });
+
+        test("should reject invalid filter field", async () => {
+          const response = await agent.get(
+            '/api/profiles?filter_by={"invalid_field": {"$eq": "value"}}'
+          );
+          expect(response.body.status).toBe("fail");
+        });
+
+        test("should reject malformed JSON in filter", async () => {
+          const response = await agent.get(
+            "/api/profiles?filter_by={malformed_json"
+          );
+          expect(response.body.status).toBe("fail");
+        });
+      });
+
+      describe("Combined filtering, sorting and pagination", () => {
+        test("should apply filter, sort and limit together", async () => {
+          const limit = 5;
+          const minAge = 25;
+          const response = await agent.get(
+            `/api/profiles?filter_by={"age": {"$gte": ${minAge}}}&sort_by={"distance": {"$order": "asc"}}&limit=${limit}`
+          );
+
+          expect(response.status).toBe(200);
+          expect(response.body.data.profiles.length).toBeLessThanOrEqual(limit);
+
+          let previousDistance = 0;
+          response.body.data.profiles.forEach((profile: Profile) => {
+            expect(profile.age).toBeGreaterThanOrEqual(minAge);
+            expect(profile.distance).toBeGreaterThanOrEqual(previousDistance);
+            previousDistance = profile.distance;
+          });
+        });
       });
     });
   });

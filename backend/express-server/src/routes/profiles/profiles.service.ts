@@ -1,5 +1,9 @@
 import db, { pgp } from "../../config/db-config.js";
-import { JError, ValidationError } from "../../error-handlers/custom-errors.js";
+import {
+  JError,
+  JFail,
+  ValidationError,
+} from "../../error-handlers/custom-errors.js";
 import { FilterSet, SortSet } from "../../utils/utils.js";
 import {
   CreateProfileInput,
@@ -123,7 +127,12 @@ export const profilesService = {
   },
 
   async searchProfiles(searchPreferences: SearchPreferences) {
-    const { user_id, filter_by = {}, sort_by = {} } = searchPreferences;
+    const {
+      user_id,
+      filter_by = {},
+      sort_by = {},
+      limit = 20,
+    } = searchPreferences;
 
     // Retrieve the current user's profile data for location and preference-based filtering
     const currentUser = await this.getProfile(user_id);
@@ -259,13 +268,14 @@ export const profilesService = {
               "likes.liker_user_id": { $null: true },
               "blocked_users.blocker_user_id": { $null: true },
             },
-            limit: 20,
+            limit: limit,
           },
         },
       },
       table: "profile_with_interests",
       condition: convertedFilter,
       sort: Object.keys(sortClause).length > 0 ? sortClause : undefined,
+      limit: limit,
     });
 
     // Replace every $anything with ${anything} because pgp.as.format does not support $anything

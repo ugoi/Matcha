@@ -145,6 +145,7 @@ export interface SearchPreferences {
   user_id: string;
   sort_by?: SortBy;
   filter_by?: FilterBy;
+  limit?: number;
 }
 
 export const mockSearchPreferences: SearchPreferences = {

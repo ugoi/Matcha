@@ -59,7 +59,6 @@ export const userRepository = {
   },
 
   create: async function create(input: CreateUserInput): Promise<User> {
-
     const query = pgp.helpers.insert(input, null, "users") + "RETURNING *";
 
     const userData = await db.one(query);

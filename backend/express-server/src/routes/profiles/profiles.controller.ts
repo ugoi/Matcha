@@ -8,6 +8,7 @@ import {
   isEmailVerified,
   pictureExists,
   profileNotExists,
+  validateFilterOperators,
 } from "../../utils/utils.js";
 import { JFail } from "../../error-handlers/custom-errors.js";
 import { userReportsRepository } from "./profiles.repository.js";
@@ -34,7 +35,14 @@ router.get(
   passport.authenticate("jwt", { session: false }),
   isAuthorized,
   query("sort_by").optional(),
-  query("filter_by").optional(),
+  query("filter_by")
+    .optional()
+    .custom(validateFilterOperators)
+    .withMessage(
+      (value) =>
+        `Invalid filter: ${value}. Valid fields are: user_id, age, distance, fame_rating, common_interests, interests, username, email, gender, sexual_preference. Valid operators are: $eq, $neq, $gt, $gte, $lt, $lte, $in, $not_in`
+    ),
+  query("limit").optional().isInt({ min: 1, max: 100 }).toInt(),
   async function (req, res, next) {
     const result = validationResult(req);
     if (!result.isEmpty()) {
@@ -52,6 +60,7 @@ router.get(
         sort_by: req.query.sort_by
           ? JSON.parse(req.query.sort_by as string)
           : undefined,
+        limit: req.query.limit || 20,
       });
 
       const publicProfiles = profiles.map(

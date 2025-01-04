@@ -252,6 +252,76 @@ export function escapeErrors(errors) {
   });
 }
 
+// Valid operators that json-sql supports
+const VALID_OPERATORS = [
+  "$eq",
+  "$neq",
+  "$gt",
+  "$gte",
+  "$lt",
+  "$lte",
+  "$in",
+  "$not_in",
+];
+
+// Valid fields that can be filtered on
+const VALID_FILTER_FIELDS = [
+  "user_id",
+  "age",
+  "distance",
+  "fame_rating",
+  "common_interests",
+  "interests",
+  "username",
+  "email",
+  "gender",
+  "sexual_preference",
+];
+
+export function validateFilterOperators(value: string) {
+  try {
+    const filter = JSON.parse(value);
+
+    // Check fields and their operators
+    for (const [field, value] of Object.entries(filter)) {
+      // Check if the field is valid
+      if (!VALID_FILTER_FIELDS.includes(field)) {
+        throw new Error(
+          `Invalid field: ${field}. Valid fields are: ${VALID_FILTER_FIELDS.join(
+            ", "
+          )}`
+        );
+      }
+
+      // Check operators if value is an object
+      if (typeof value === "object" && value !== null) {
+        const operators = Object.keys(value).filter((k) => k.startsWith("$"));
+        const invalidOperators = operators.filter(
+          (op) => !VALID_OPERATORS.includes(op)
+        );
+
+        if (invalidOperators.length > 0) {
+          throw new Error(
+            `Invalid operators: ${invalidOperators.join(
+              ", "
+            )}. Valid operators are: ${VALID_OPERATORS.join(", ")}`
+          );
+        }
+      }
+    }
+
+    return true;
+  } catch (error) {
+    if (
+      error.message.includes("Invalid operators") ||
+      error.message.includes("Invalid field")
+    ) {
+      throw new Error(error.message);
+    }
+    throw new Error("Invalid JSON format in filter");
+  }
+}
+
 export class FilterSet {
   private readonly filtersMap: Record<string, string> = {
     $eq: "=",
