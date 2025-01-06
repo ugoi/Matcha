@@ -1,6 +1,5 @@
 import db, { pgp } from "../../../config/db-config.js";
-import { Profile } from "../profiles.interface.js";
-import { profilesService } from "../profiles.service.js";
+import { ValidationError } from "../../../error-handlers/custom-errors.js";
 import { Picture } from "./pictures.interface.js";
 
 export const picturesRepository = {
@@ -33,17 +32,42 @@ export const picturesRepository = {
 
     const insert = pgp.helpers.insert(data, cs);
 
-    await db.none(insert);
+    return await db.tx(async (t) => {
+      // Check current picture count
+      const currentPictures = await t.manyOrNone(
+        `
+        SELECT COUNT(*) as count 
+        FROM user_pictures 
+        WHERE user_id = $1
+        `,
+        [user_id]
+      );
 
-    const result = await picturesRepository.find(user_id);
+      const currentCount = parseInt(currentPictures[0].count);
 
-    return result;
+      if (currentCount + pictures.length > 5) {
+        throw new ValidationError("Maximum 5 pictures allowed");
+      }
+
+      // Insert new pictures
+      await t.none(insert);
+
+      // Return updated pictures
+      return await t.manyOrNone(
+        `
+        SELECT * 
+        FROM user_pictures 
+        WHERE user_id = $1
+        `,
+        [user_id]
+      );
+    });
   },
 
   remove: async function remove(
     user_id: string,
     pictures: string[]
-  ): Promise<Profile> {
+  ): Promise<Picture[]> {
     // Creating a reusable/static ColumnSet for generating INSERT queries:
     const cs = new pgp.helpers.ColumnSet(["user_id", "picture_url"], {
       table: "user_pictures",
@@ -56,14 +80,17 @@ export const picturesRepository = {
 
     const values = pgp.helpers.values(data, cs);
 
-    await db.none(
-      `
-              DELETE FROM user_pictures
-              WHERE (user_id, picture_url) IN ($1:raw)
-          `,
+    const preparedStatement = pgp.as.format(
+      ` 
+      DELETE FROM user_pictures
+      WHERE (user_id, picture_url) IN ($1:raw)
+      RETURNING *
+      `,
       [values]
     );
 
-    return await profilesService.getProfile(user_id);
+    const result = await db.manyOrNone(preparedStatement);
+
+    return result;
   },
 };

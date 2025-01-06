@@ -10,6 +10,4 @@ export async function up() {
   );
 
   await db.none(createTablesSql);
-
-  console.log("Tables created");
 }

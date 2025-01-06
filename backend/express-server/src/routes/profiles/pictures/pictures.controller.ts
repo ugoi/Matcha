@@ -19,8 +19,8 @@ router.get(
   passport.authenticate("jwt", { session: false }),
   async function (req, res, next) {
     try {
-      const profile = await picturesRepository.find(req.user.user_id);
-      const response = new SuccessResponse({ pictures: profile });
+      const pictures = await picturesRepository.find(req.user.user_id);
+      const response = new SuccessResponse({ pictures });
       res.json(response);
     } catch (error) {
       next(error);
@@ -115,12 +115,12 @@ router.delete(
     }
 
     try {
-      const profile = await picturesRepository.remove(
+      const pictures = await picturesRepository.remove(
         req.user.user_id,
         req.body.pictures
       );
 
-      const response = new SuccessResponse(profile);
+      const response = new SuccessResponse({ pictures });
       res.json(response);
     } catch (error) {
       next(error);

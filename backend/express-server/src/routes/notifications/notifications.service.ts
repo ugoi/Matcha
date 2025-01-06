@@ -43,7 +43,6 @@ export const notificationService = {
       // Check if receiver exists in database
       const profile = await profilesRepository.findOne(receiver);
       if (!profile) {
-        console.log("Receiver does not exist");
         continue;
       }
       // Add the notifications to the database
@@ -69,7 +68,6 @@ export const notificationService = {
   ) {
     const { entity_type, entity_id, status, receivers, sender } = input;
     // Print debug message
-    console.log("You have a match!");
     const result = await notificationService.create({
       entity_type: entity_type,
       entity_id: entity_id,

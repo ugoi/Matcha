@@ -79,6 +79,8 @@ describe("profiles", () => {
 
   beforeEach(async () => {
     await down();
+    // Add small delay to ensure cleanup is complete
+    await new Promise((resolve) => setTimeout(resolve, 100));
     await up();
     agent = supertest.agent(app);
   });
@@ -88,9 +90,12 @@ describe("profiles", () => {
     let testUsers: { user: User; profile: Profile; password: string }[];
 
     beforeEach(async () => {
+      // Add delay before creating test users
+      await new Promise((resolve) => setTimeout(resolve, 100));
       testUsers = await createTestUsers(numberOfUsers);
 
-      // Login as the first test user
+      // Add delay before login
+      await new Promise((resolve) => setTimeout(resolve, 100));
       await agent
         .post("/api/login")
         .send(

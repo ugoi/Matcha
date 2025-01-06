@@ -36,8 +36,6 @@ export const profilesRepository = {
       statement = "";
     }
 
-    console.log(statement);
-
     const data = await db.manyOrNone(statement);
 
     return data;

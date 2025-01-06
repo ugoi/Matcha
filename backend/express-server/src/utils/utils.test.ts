@@ -128,7 +128,6 @@ describe("utils", () => {
 
       var where = pgp.as.format("WHERE $1", filterSet);
 
-      console.log(where);
 
       expect(where).toEqual(`WHERE "username" != 'stefan12' AND "age" >= 18`);
     });
@@ -142,7 +141,6 @@ describe("utils", () => {
 
       var where = pgp.as.format("WHERE $1", filterSet);
 
-      console.log(where);
 
       expect(where).toEqual(
         `WHERE "username" != 'stefan12' AND ("age" >= 18 AND "age" <= 30) AND ("fame_rating" > 20 AND "fame_rating" <= 100)`
@@ -192,7 +190,6 @@ describe("utils", () => {
 
       const where = pgp.as.format("WHERE $1", filterSet);
 
-      console.log(where);
 
       expect(where).toEqual(`WHERE "age" >= 18`);
     });
@@ -217,7 +214,6 @@ describe("utils", () => {
 
       var where = pgp.as.format("ORDER BY $1", filterSet);
 
-      console.log(where);
 
       expect(where).toEqual(`ORDER BY "fame_rating" ASC, "age" ASC`);
     });

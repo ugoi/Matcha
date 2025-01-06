@@ -16,7 +16,6 @@ export function initChatSocket(io: Server) {
    */
   io.of("/api/chat").on("connection", (socket) => {
     if (!socket.request.user) {
-      console.log("User not authenticated");
       socket.disconnect();
       return;
     }
@@ -26,7 +25,6 @@ export function initChatSocket(io: Server) {
     socket.join(`user:${userId}`);
 
     socket.on("disconnect", () => {
-      console.log("user disconnected");
     });
 
     socket.on("chat message", async ({ msg, receiver }) => {
@@ -40,7 +38,6 @@ export function initChatSocket(io: Server) {
         const profile = await profilesRepository.findOne(receiver);
 
         if (!profile) {
-          console.log("Receiver does not exist");
           socket.nsp
             .to(`user:${sender}`)
             .emit("error", "Receiver does not exist");

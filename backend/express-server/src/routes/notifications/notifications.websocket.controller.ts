@@ -24,7 +24,6 @@ export function initNotificationsSocket(io: Server) {
     const userId = socket.request.user.user_id;
     // the user ID is used as a room
     socket.join(`user:${userId}`);
-    console.log("a user connected");
 
     // TODO: Check if user has unreceived notifications and send them
     const sentNotifications = await notificationRepository.findByNotifierId(
@@ -74,7 +73,6 @@ export function initNotificationsSocket(io: Server) {
     }
 
     socket.on("disconnect", () => {
-      console.log("user disconnected");
     });
   });
 }

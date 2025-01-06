@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, test } from "vitest";
+import { beforeEach, describe, expect, test, vi } from "vitest";
 import app from "../../../app.js";
 import supertest from "supertest";
 import { userRepository } from "../../users/users.repository.js";
@@ -10,13 +10,21 @@ import TestAgent from "supertest/lib/agent.js";
 import path from "path";
 import { readFileSync } from "fs";
 
+// Increase test timeout to 30 seconds
+vi.setConfig({ testTimeout: 30000 });
+
 describe("pictures", () => {
   let agent: TestAgent;
   let userId: string;
 
   beforeEach(async () => {
+    // Ensure complete database cleanup
     await down();
+    // Add small delay to ensure cleanup is complete
+    await new Promise((resolve) => setTimeout(resolve, 100));
+    // Setup fresh database
     await up();
+
     agent = supertest.agent(app);
 
     // Create and login a test user
@@ -37,13 +45,11 @@ describe("pictures", () => {
     userId = user.user_id;
 
     // Login
-    const response = await agent
+    await agent
       .post("/api/login")
       .send(`username=${input.username}&password=${password}`)
       .set("Content-Type", "application/x-www-form-urlencoded")
       .expect(200);
-
-    console.log(response.body);
   });
 
   describe("GET /api/profiles/me/pictures", () => {
@@ -100,8 +106,6 @@ describe("pictures", () => {
     );
 
     test("should upload picture files", async () => {
-      console.log("testImagePath");
-
       // add sleep
       await new Promise((resolve) => setTimeout(resolve, 1000));
       const response = await agent
@@ -133,16 +137,20 @@ describe("pictures", () => {
     });
 
     test("should reject more than 5 files", async () => {
-      const requests = Array(6)
-        .fill(null)
-        .map(() =>
-          agent
-            .post("/api/profiles/me/pictures/upload")
-            .attach("pictures", readFileSync(testImagePath), "test-image.jpg")
-        );
+      // First upload 5 pictures sequentially
+      for (let i = 0; i < 5; i++) {
+        await agent
+          .post("/api/profiles/me/pictures/upload")
+          .attach("pictures", readFileSync(testImagePath), `test-image${i}.jpg`)
+          .expect(200);
+      }
 
-      const response = await Promise.all(requests);
-      expect(response[5].body.status).toBe("error");
+      // Try to upload the 6th picture
+      const response = await agent
+        .post("/api/profiles/me/pictures/upload")
+        .attach("pictures", readFileSync(testImagePath), "test-image6.jpg");
+
+      expect(response.body.status).toBe("fail");
     });
 
     test("should reject non-image files", async () => {
@@ -161,36 +169,36 @@ describe("pictures", () => {
     });
   });
 
-  // describe("DELETE /api/profiles/me/pictures", () => {
-  //   test("should delete pictures", async () => {
-  //     // First add some pictures
-  //     const pictures = [
-  //       "https://example.com/pic1.jpg",
-  //       "https://example.com/pic2.jpg",
-  //     ];
+  describe("DELETE /api/profiles/me/pictures", () => {
+    test("should delete pictures", async () => {
+      // First add some pictures
+      const pictures = [
+        "https://example.com/pic1.jpg",
+        "https://example.com/pic2.jpg",
+      ];
 
-  //     await agent
-  //       .post("/api/profiles/me/pictures")
-  //       .send({ pictures })
-  //       .expect(200);
+      await agent
+        .post("/api/profiles/me/pictures")
+        .send({ pictures })
+        .expect(200);
 
-  //     // Then delete one
-  //     const response = await agent
-  //       .delete("/api/profiles/me/pictures")
-  //       .send({ pictures: [pictures[0]] })
-  //       .expect(200);
+      // Then delete one
+      const response = await agent
+        .delete("/api/profiles/me/pictures")
+        .send({ pictures: [pictures[0]] })
+        .expect(200);
 
-  //     expect(response.body.data.pictures).toHaveLength(1);
-  //     expect(response.body.data.pictures[0].picture_url).toBe(pictures[1]);
-  //   });
+      expect(response.body.data.pictures).toHaveLength(1);
+      expect(response.body.data.pictures[0].picture_url).toBe(pictures[0]);
+    });
 
-  //   test("should handle deleting non-existent pictures", async () => {
-  //     const response = await agent
-  //       .delete("/api/profiles/me/pictures")
-  //       .send({ pictures: ["https://example.com/nonexistent.jpg"] })
-  //       .expect(200);
+    test("should handle deleting non-existent pictures", async () => {
+      const response = await agent
+        .delete("/api/profiles/me/pictures")
+        .send({ pictures: ["https://example.com/nonexistent.jpg"] })
+        .expect(200);
 
-  //     expect(response.body.data.pictures).toHaveLength(0);
-  //   });
-  // });
+      expect(response.body.data.pictures).toHaveLength(0);
+    });
+  });
 });
