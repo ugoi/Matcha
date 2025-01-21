@@ -34,7 +34,7 @@ router.post(
   "/me/pictures",
   passport.authenticate("jwt", { session: false }),
   body("pictures")
-    .optional()
+    .notEmpty()
     .customSanitizer(arraySanitizer)
     .isArray({ max: 5 })
     .custom(picturesNotExists)
@@ -105,7 +105,10 @@ router.post(
 router.delete(
   "/me/pictures",
   passport.authenticate("jwt", { session: false }),
-  body("pictures").customSanitizer(arraySanitizer).isArray({ max: 5 }),
+  body("pictures")
+    .notEmpty()
+    .customSanitizer(arraySanitizer)
+    .isArray({ max: 5 }),
   async function (req, res, next) {
     const result = validationResult(req);
     if (!result.isEmpty()) {

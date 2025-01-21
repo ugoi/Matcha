@@ -32,7 +32,7 @@ router.post(
   "/me/interests",
   passport.authenticate("jwt", { session: false }),
   body("interests")
-    .optional()
+    .notEmpty()
     .escape()
     .customSanitizer(arraySanitizer)
     .isArray({ max: 30 }),
@@ -64,7 +64,7 @@ router.delete(
   "/me/interests",
   passport.authenticate("jwt", { session: false }),
   body("interests")
-    .optional()
+    .notEmpty()
     .escape()
     .customSanitizer(arraySanitizer)
     .isArray({ max: 30 }),
