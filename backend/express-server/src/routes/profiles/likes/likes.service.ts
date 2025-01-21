@@ -63,7 +63,7 @@ export const likesService = {
       match = await likesRepository.like(liker_user_id, likee_user_id);
     }
 
-    // Check if the user already liked you
+    // Find the matches
     const matches = await likesRepository.findMatches(liker_user_id);
 
     // Check if you have a match

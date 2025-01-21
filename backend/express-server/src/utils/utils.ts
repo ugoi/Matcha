@@ -133,8 +133,12 @@ async function checkProfileExists(user_id) {
 }
 
 async function checkEmailVerified(is_email_verified) {
-  if (!is_email_verified) {
-    throw new JFail("email not verified");
+  const emailVerification = process.env.EMAIL_VERIFICATION;
+
+  if (emailVerification === "true") {
+    if (!is_email_verified) {
+      throw new JFail("email not verified");
+    }
   }
 }
 

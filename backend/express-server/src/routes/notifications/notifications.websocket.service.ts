@@ -5,7 +5,7 @@ import { NOTIFICATION_STATUS } from "./notification.interface.js";
 import { notificationRepository } from "./notification.repository.js";
 
 let io;
-let notificationsWebsocketService;
+let notificationsWebsocketService: NotificationsWebsocketService
 
 /**
  * NotificationsWebsocketService class
@@ -108,7 +108,7 @@ export class NotificationsWebsocketService {
   }
 }
 
-export const init = (ioInstance: Server) => {
+export const initNotificationsService = (ioInstance: Server) => {
   io = ioInstance;
   notificationsWebsocketService = new NotificationsWebsocketService(io);
 };
