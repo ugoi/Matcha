@@ -1,8 +1,10 @@
-import NavbarLogged from '../../components/NavbarLogged/NavbarLogged';
-import './settings.css';
+// src/routes/Settings/Settings.tsx
+
 import { useState, useEffect } from 'react';
 import ReactSlider from 'react-slider';
 import $ from 'jquery';
+import NavbarLogged from '../../components/NavbarLogged/NavbarLogged';
+import './settings.css';
 
 function Settings() {
   const [distance, setDistance] = useState<number>(50);
@@ -15,23 +17,18 @@ function Settings() {
   useEffect(() => {
     const checkProfile = async () => {
       try {
-        const emailSettings = {
+        const settings = {
           url: "http://localhost:3000/api/users/me",
           method: "GET",
-          timeout: 0,
+          timeout: 0
         };
-
-        $.ajax(emailSettings).done(function (response) {
-          console.log(response);
+        $.ajax(settings).done(function (response) {
           setEmail(response.data.user.email);
         });
-
       } catch (error) {
-        console.error('Error checking profile:', error);
         window.location.href = '/create-profile';
       }
     };
-
     checkProfile();
   }, []);
 
@@ -52,38 +49,33 @@ function Settings() {
         "Content-Type": "application/x-www-form-urlencoded"
       },
       data: {
-        email: email,
+        email: email
+      }
+    };
+    $.ajax(emailSettings).done(function () {});
+
+    const profileData = {
+      gender: gender || undefined,
+      sexual_preference: sexualPreference || undefined,
+      search_preferences: {
+        distance: { "$lte": distance },
+        age: { "$gte": minAge, "$lte": maxAge }
       }
     };
 
-    $.ajax(emailSettings).done(function (response) {
-      console.log(response);
-      window.location.href = '/home';
-    });
-
-    const genderSettings: any = {
+    const profileSettings = {
       url: "http://localhost:3000/api/profiles/me",
       method: "PATCH",
       timeout: 0,
       headers: {
-        "Content-Type": "application/x-www-form-urlencoded"
+        "Content-Type": "application/json"
       },
-      data: {}
+      data: JSON.stringify(profileData)
     };
 
-    if (gender) {
-      genderSettings.data.gender = gender;
-    }
-
-    if (sexualPreference) {
-      genderSettings.data.sexual_preference = sexualPreference;
-    }
-
-    if (Object.keys(genderSettings.data).length > 0) {
-      $.ajax(genderSettings).done(function (response) {
-        console.log(response);
-      });
-    }
+    $.ajax(profileSettings).done(function () {
+      window.location.href = '/home';
+    });
   };
 
   const handleUpdateGPS = async () => {
@@ -91,7 +83,7 @@ function Settings() {
       navigator.geolocation.getCurrentPosition(
         (position) => {
           const { latitude, longitude } = position.coords;
-          var settings = {
+          const settings = {
             url: "http://localhost:3000/api/profiles/me",
             method: "PATCH",
             timeout: 0,
@@ -103,18 +95,14 @@ function Settings() {
               gps_latitude: latitude.toString()
             }
           };
-          $.ajax(settings).done(function (response) {
-            console.log(response);
-          });
+          $.ajax(settings).done(function () {});
         },
-        async (error) => {
-          console.error("Error getting browser location:", error);
+        async () => {
           await getLocationByIP();
         },
         { timeout: 5000 }
       );
     } catch (error) {
-      console.error("Error accessing geolocation:", error);
       await getLocationByIP();
     }
   };
@@ -123,9 +111,8 @@ function Settings() {
     try {
       const response = await fetch('https://ipapi.co/json/');
       const data = await response.json();
-      
       if (data.latitude && data.longitude) {
-        var settings = {
+        const settings = {
           url: "http://localhost:3000/api/profiles/me",
           method: "PATCH",
           timeout: 0,
@@ -137,36 +124,23 @@ function Settings() {
             gps_latitude: data.latitude.toString()
           }
         };
-        $.ajax(settings).done(function (response) {
-          console.log(response);
-        });
-      } else {
-        throw new Error('Location data not available');
+        $.ajax(settings).done(function () {});
       }
-    } catch (error) {
-      console.error('Error getting IP location:', error);
-    }
+    } catch {}
   };
 
   const handleDeleteAccount = () => {
-    if (!window.confirm('Are you sure you want to delete your account? This action is irreversible.')) {
-      return;
-    }
-
+    if (!window.confirm('Are you sure you want to delete your account? This action is irreversible.')) return;
     const settings = {
       url: "http://localhost:3000/api/users/me",
       method: "DELETE",
       timeout: 0
     };
-
     $.ajax(settings)
-      .done((response) => {
-        console.log('Account deleted:', response);
+      .done(() => {
         window.location.href = '/';
       })
-      .fail((error) => {
-        console.error('Error deleting account:', error);
-      });
+      .fail(() => {});
   };
 
   return (
@@ -188,7 +162,6 @@ function Settings() {
             />
             <p className="slider-value">{distance} km</p>
           </div>
-
           <div className="setting-item mb-3">
             <label className="form-label">Age Range</label>
             <ReactSlider
@@ -208,7 +181,6 @@ function Settings() {
             />
             <p className="slider-value">{minAge} - {maxAge} years</p>
           </div>
-
           <div className="setting-item mb-3">
             <label htmlFor="Gender" className="form-label">Select your gender</label>
             <select
@@ -223,7 +195,6 @@ function Settings() {
               <option value="other">Other</option>
             </select>
           </div>
-
           <div className="setting-item mb-3">
             <label htmlFor="Preferences" className="form-label">Select your sexual preference</label>
             <select
@@ -239,7 +210,6 @@ function Settings() {
               <option value="other">Other</option>
             </select>
           </div>
-
           <div className="setting-item mb-3">
             <label htmlFor="email" className="form-label">Email</label>
             <input
@@ -250,21 +220,12 @@ function Settings() {
               className="form-control"
             />
           </div>
-
-          <button 
-            className="btn btn-primary mt-3" 
-            onClick={handleSaveChanges}
-          >
+          <button className="btn btn-primary mt-3" onClick={handleSaveChanges}>
             Save Changes
           </button>
-
-          <button 
-            className="btn btn-secondary mt-3" 
-            onClick={handleUpdateGPS}
-          >
+          <button className="btn btn-secondary mt-3" onClick={handleUpdateGPS}>
             Update location
           </button>
-
           <button
             className="btn btn-danger mt-3"
             onClick={handleDeleteAccount}

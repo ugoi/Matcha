@@ -1,4 +1,5 @@
 // src/routes/CreateProfile/CreateProfile.tsx
+
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import './CreateProfile.css';
@@ -12,7 +13,7 @@ function CreateProfile() {
   const [biography, setBiography] = useState('');
   const [interests, setInterests] = useState('');
   const navigate = useNavigate();
-  const [errors, setErrors] = useState<{[key: string]: string}>({});
+  const [errors, setErrors] = useState<{ [key: string]: string }>({});
   const [uploadedPictures, setUploadedPictures] = useState<string[]>([]);
   const [isUploading, setIsUploading] = useState(false);
   const [coordinates, setCoordinates] = useState({ latitude: 0, longitude: 0 });
@@ -21,24 +22,16 @@ function CreateProfile() {
     try {
       const response = await fetch('https://ipapi.co/json/');
       const data = await response.json();
-      
       if (data.latitude && data.longitude) {
-        setCoordinates({
-          latitude: data.latitude,
-          longitude: data.longitude
-        });
+        setCoordinates({ latitude: data.latitude, longitude: data.longitude });
       } else {
         throw new Error('Location data not available');
       }
     } catch (error) {
-      console.error('Error getting IP location:', error);
-      setCoordinates({
-        latitude: 40.7128,
-        longitude: -74.0060
-      });
+      setCoordinates({ latitude: 40.7128, longitude: -74.0060 });
       setErrors(prev => ({
         ...prev,
-        location: 'Using approximate location. For better accuracy, please enable location services.'
+        location: 'Using approximate location.'
       }));
     }
   };
@@ -52,8 +45,7 @@ function CreateProfile() {
             longitude: position.coords.longitude
           });
         },
-        async (error) => {
-          console.error("Error getting browser location:", error);
+        async () => {
           await getLocationByIP();
         },
         { timeout: 5000 }
@@ -69,47 +61,38 @@ function CreateProfile() {
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
       const newFiles = Array.from(e.target.files);
-      
       if (uploadedPictures.length + newFiles.length > 5) {
         setErrors({ pictures: 'Maximum 5 pictures allowed' });
         return;
       }
-
       setIsUploading(true);
-      
       try {
         for (const file of newFiles) {
           const formData = new FormData();
           formData.append('image', file);
-          const response = await fetch('https://api.imgbb.com/1/upload?key=90d36ad33552879ee7c36bb4ba197e92', {
-            method: 'POST',
-            body: formData,
-          });
-    
+          const response = await fetch(
+            'https://api.imgbb.com/1/upload?key=90d36ad33552879ee7c36bb4ba197e92',
+            {
+              method: 'POST',
+              body: formData,
+            }
+          );
           const result = await response.json();
-    
           if (!response.ok) {
             throw new Error(result.message || 'Failed to upload picture');
           }
           const backendResponse = await fetch(`${window.location.origin}/api/profiles/me/pictures`, {
             method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-              pictures: [result.data.url]
-            }),
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ pictures: [result.data.url] }),
           });
-
           if (!backendResponse.ok) {
             const errorData = await backendResponse.json();
             throw new Error(errorData.message || 'Failed to save picture URL to backend');
           }
-
           setUploadedPictures(prev => [...prev, result.data.url]);
         }
       } catch (error) {
-        console.error('Error uploading pictures:', error);
         setErrors(prev => ({
           ...prev,
           pictures: error instanceof Error ? error.message : 'Failed to upload pictures'
@@ -124,19 +107,14 @@ function CreateProfile() {
     try {
       const response = await fetch(`${window.location.origin}/api/profiles/me/pictures`, {
         method: 'DELETE',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ url: urlToRemove }),
       });
-
       if (!response.ok) {
         throw new Error('Failed to remove picture');
       }
-
       setUploadedPictures(prev => prev.filter((_, i) => i !== index));
     } catch (error) {
-      console.error('Error removing picture:', error);
       setErrors(prev => ({
         ...prev,
         pictures: error instanceof Error ? error.message : 'Failed to remove picture'
@@ -144,15 +122,36 @@ function CreateProfile() {
     }
   };
 
+  const handleNextStep = () => {
+    setErrors({});
+    if (step === 4) {
+      // On step 4 -> step 5, validate the interests
+      let splitted = interests
+        .split(',')
+        .map(t => t.trim())
+        .filter(Boolean);
+      // Ensure each interest starts with '#'
+      splitted = splitted.map(item => (item.startsWith('#') ? item : `#${item}`));
+      // Enforce maximum 5 interests
+      if (splitted.length > 5) {
+        setErrors({ interests: 'Maximum 5 interests allowed' });
+        return;
+      }
+      // Store back as a comma-separated string
+      setInterests(splitted.join(', '));
+    }
+    if (canProceedToNext()) {
+      nextStep();
+    }
+  };
+
   const handleSubmit = async () => {
     setErrors({});
-    
     try {
       if (uploadedPictures.length < 3) {
         setErrors({ pictures: 'At least 3 pictures are required' });
         return;
       }
-
       const formData = new URLSearchParams();
       formData.append('gender', gender);
       formData.append('age', age.toString());
@@ -161,20 +160,15 @@ function CreateProfile() {
       formData.append('profile_picture', uploadedPictures[0]);
       formData.append('gps_latitude', coordinates.latitude.toString());
       formData.append('gps_longitude', coordinates.longitude.toString());
-
       const response = await fetch(`${window.location.origin}/api/profiles/me`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/x-www-form-urlencoded',
-        },
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
         body: formData.toString(),
       });
-
       const result = await response.json();
-
       if (!response.ok) {
         if (result.status === 'fail' && result.data?.errors) {
-          const newErrors: {[key: string]: string} = {};
+          const newErrors: { [key: string]: string } = {};
           result.data.errors.forEach((error: any) => {
             newErrors[error.path] = error.msg;
           });
@@ -184,42 +178,19 @@ function CreateProfile() {
         throw new Error(result.data?.title || 'Something went wrong');
       }
       if (interests.length > 0) {
+        const finalTags = interests
+          .split(',')
+          .map(t => t.trim())
+          .filter(Boolean);
         await fetch(`${window.location.origin}/api/profiles/me/interests`, {
           method: 'POST',
-          headers: { 
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ interests: interests.split(',').map(tag => tag.trim()) }),
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ interests: finalTags }),
         });
       }
-
-      // Set default preferences
-      const defaultPreferences = {
-        sort_by: { username: { $order: "desc" }, age: { $order: "asc" } },
-        filter_by: { age: { $lt: "19" } }
-      };
-
-      // Fetch with default preferences
-      const myHeaders = new Headers();
-      myHeaders.append("Content-Type", "application/json");
-
-      const requestOptions = {
-        method: "GET",
-        headers: myHeaders,
-        redirect: "follow" as RequestRedirect
-      };
-
-      fetch(`http://localhost:3000/api/profiles?sort_by=${JSON.stringify(defaultPreferences.sort_by)}&filter_by=${JSON.stringify(defaultPreferences.filter_by)}`, requestOptions)
-        .then((response) => response.text())
-        .then((result) => console.log(result))
-        .catch((error) => console.error(error));
-
       navigate('/profile');
     } catch (error) {
-      console.error('Error creating profile:', error);
-      setErrors({
-        general: error instanceof Error ? error.message : 'An unexpected error occurred'
-      });
+      setErrors({ general: error instanceof Error ? error.message : 'An unexpected error occurred' });
     }
   };
 
@@ -228,20 +199,14 @@ function CreateProfile() {
   const isGenderValid = gender !== '';
   const isSexualPreferenceValid = sexualPreference !== '';
   const isBiographyValid = biography.length >= 15 && biography.length <= 300;
-  const isInterestsValid = interests.length > 0 && interests.length <= 100;
+  const isInterestsFilled = interests.trim().length > 0;
 
   const canProceedToNext = () => {
-    if (step === 1) {
-      return isNameValid && isAgeValid;
-    } else if (step === 2) {
-      return isGenderValid && isSexualPreferenceValid;
-    } else if (step === 3) {
-      return isBiographyValid;
-    } else if (step === 4) {
-      return isInterestsValid;
-    } else if (step === 5) {
-      return uploadedPictures.length > 0;
-    }
+    if (step === 1) return isNameValid && isAgeValid;
+    if (step === 2) return isGenderValid && isSexualPreferenceValid;
+    if (step === 3) return isBiographyValid;
+    if (step === 4) return isInterestsFilled;
+    if (step === 5) return uploadedPictures.length > 0;
     return false;
   };
 
@@ -272,16 +237,20 @@ function CreateProfile() {
               value={age}
               onChange={(e) => setAge(parseInt(e.target.value))}
             />
-            {errors.age && (
-              <div className="invalid-feedback">
-                {errors.age}
-              </div>
-            )}
+            {errors.age && <div className="invalid-feedback">{errors.age}</div>}
             <div className="d-flex justify-content-between mt-4">
-              <button className="btn btn-secondary" onClick={prevStep} disabled={step === 1}>
+              <button
+                className="btn btn-secondary"
+                onClick={prevStep}
+                disabled={step === 1}
+              >
                 Back
               </button>
-              <button className="btn btn-primary" onClick={nextStep} disabled={!canProceedToNext()}>
+              <button
+                className="btn btn-primary"
+                onClick={handleNextStep}
+                disabled={!canProceedToNext()}
+              >
                 Next
               </button>
             </div>
@@ -300,7 +269,7 @@ function CreateProfile() {
               <option value="Male">Male</option>
               <option value="Female">Female</option>
             </select>
-            <label htmlFor="Preferences" className="form-label mt-3">Show me!</label>
+            <label htmlFor="Preferences" className="form-label mt-3">Show me</label>
             <select
               id="Preferences"
               className="form-control"
@@ -308,15 +277,19 @@ function CreateProfile() {
               onChange={(e) => setSexualPreference(e.target.value)}
             >
               <option value="">Select...</option>
-              <option value="Heterosexual">Man</option>
-              <option value="Homosexual">Women</option>
-              <option value="Other">Both</option>
+              <option value="Heterosexual">Heterosexual</option>
+              <option value="Homosexual">Homosexual</option>
+              <option value="Bisexual">Bisexual</option>
             </select>
             <div className="d-flex justify-content-between mt-4">
               <button className="btn btn-secondary" onClick={prevStep}>
                 Back
               </button>
-              <button className="btn btn-primary" onClick={nextStep} disabled={!canProceedToNext()}>
+              <button
+                className="btn btn-primary"
+                onClick={handleNextStep}
+                disabled={!canProceedToNext()}
+              >
                 Next
               </button>
             </div>
@@ -333,12 +306,16 @@ function CreateProfile() {
               value={biography}
               onChange={(e) => setBiography(e.target.value)}
               maxLength={300}
-            ></textarea>
+            />
             <div className="d-flex justify-content-between mt-4">
               <button className="btn btn-secondary" onClick={prevStep}>
                 Back
               </button>
-              <button className="btn btn-primary" onClick={nextStep} disabled={!canProceedToNext()}>
+              <button
+                className="btn btn-primary"
+                onClick={handleNextStep}
+                disabled={!canProceedToNext()}
+              >
                 Next
               </button>
             </div>
@@ -346,21 +323,30 @@ function CreateProfile() {
         )}
         {step === 4 && (
           <div className="setting-item mb-3">
-            <label htmlFor="Interests" className="form-label">Select your interests (e.g. #vegan, #geek)</label>
+            <label htmlFor="Interests" className="form-label">
+              Select your interests (comma-separated). Example: #vegan, #geek
+            </label>
             <input
               type="text"
               id="Interests"
-              className="form-control"
-              placeholder="Enter interests separated by commas"
+              className={`form-control ${errors.interests ? 'is-invalid' : ''}`}
+              placeholder="Enter up to 5 interests"
               value={interests}
               onChange={(e) => setInterests(e.target.value)}
               maxLength={100}
             />
+            {errors.interests && (
+              <div className="invalid-feedback">{errors.interests}</div>
+            )}
             <div className="d-flex justify-content-between mt-4">
               <button className="btn btn-secondary" onClick={prevStep}>
                 Back
               </button>
-              <button className="btn btn-primary" onClick={nextStep} disabled={!canProceedToNext()}>
+              <button
+                className="btn btn-primary"
+                onClick={handleNextStep}
+                disabled={!canProceedToNext()}
+              >
                 Next
               </button>
             </div>
@@ -378,9 +364,7 @@ function CreateProfile() {
               disabled={isUploading || uploadedPictures.length >= 5}
             />
             {errors.pictures && (
-              <div className="invalid-feedback">
-                {errors.pictures}
-              </div>
+              <div className="invalid-feedback">{errors.pictures}</div>
             )}
             {isUploading && (
               <div className="text-center mt-2">
@@ -391,10 +375,13 @@ function CreateProfile() {
             )}
             <div className="uploaded-pictures-grid mt-3">
               {uploadedPictures.map((url, index) => (
-                <div key={index} className={`picture-container ${index === 0 ? 'profile-picture' : ''}`}>
-                  <img 
-                    src={url} 
-                    alt={`Upload ${index + 1}`} 
+                <div
+                  key={index}
+                  className={`picture-container ${index === 0 ? 'profile-picture' : ''}`}
+                >
+                  <img
+                    src={url}
+                    alt={`Upload ${index + 1}`}
                     className="uploaded-thumbnail"
                   />
                   <button
@@ -409,21 +396,24 @@ function CreateProfile() {
               ))}
             </div>
             <small className="text-muted d-block mt-2">
-              {uploadedPictures.length}/5 pictures uploaded (minimum 3 required). First picture will be your profile picture.
+              {uploadedPictures.length}/5 pictures uploaded (min 3). First is your profile picture.
             </small>
             <div className="d-flex justify-content-center mt-4">
               <button className="btn btn-secondary me-3" onClick={prevStep}>
                 Back
               </button>
-              <button 
-                className="btn btn-success" 
-                onClick={handleSubmit} 
+              <button
+                className="btn btn-success"
+                onClick={handleSubmit}
                 disabled={uploadedPictures.length === 0 || isUploading}
               >
                 Submit
               </button>
             </div>
           </div>
+        )}
+        {errors.general && (
+          <div className="alert alert-danger mt-3">{errors.general}</div>
         )}
       </div>
     </div>
