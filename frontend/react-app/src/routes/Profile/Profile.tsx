@@ -33,13 +33,25 @@ function Profile() {
     const fetchProfileData = async () => {
       try {
         const response = await fetch(`${window.location.origin}/api/profiles/me`);
-        if (!response.ok) throw new Error('Failed to fetch profile data');
+        if (!response.ok) {
+          throw new Error('Failed to fetch profile data');
+        }
+    
         const result = await response.json();
         const data = result.data;
+    
         const tempElement = document.createElement('div');
         tempElement.innerHTML = data.profile_picture;
         const decodedProfilePicture = tempElement.textContent || tempElement.innerText;
-
+    
+        const lat = data.gps_latitude;
+        const lon = data.gps_longitude;
+  
+        let nearestLocation = 'Unknown location';
+        if (typeof lat === 'number' && !isNaN(lat) && typeof lon === 'number' && !isNaN(lon)) {
+          nearestLocation = await fetchNearestLocation(lat, lon);
+        }
+    
         const userProfile: UserProfile = {
           name: `${data.first_name} ${data.last_name}`,
           age: data.age,
@@ -47,24 +59,27 @@ function Profile() {
           sexual_preference: data.sexual_preference,
           biography: data.biography,
           profile_picture: decodedProfilePicture,
-          gps_latitude: data.gps_latitude,
-          gps_longitude: data.gps_longitude,
-          nearest_location: await fetchNearestLocation(data.gps_latitude, data.gps_longitude),
+          gps_latitude: lat,
+          gps_longitude: lon,
+          nearest_location: nearestLocation,
           pictures: data.pictures,
           fame_rating: data.fame_rating,
         };
-
+  
         setUser(userProfile);
-        const profilePicIndex = data.pictures.findIndex((pic: { picture_url: string }) => 
-          pic.picture_url === decodedProfilePicture
+    
+        const profilePicIndex = data.pictures.findIndex(
+          (pic: { picture_url: string }) => pic.picture_url === decodedProfilePicture
         );
-        if (profilePicIndex !== -1) setCurrentPhotoIndex(profilePicIndex);
+        if (profilePicIndex !== -1) {
+          setCurrentPhotoIndex(profilePicIndex);
+        }
+    
         await checkImage(decodedProfilePicture);
       } catch (error) {
         console.error('Error fetching profile data:', error);
-        window.location.href = '/create-profile';
       }
-    };
+    };    
 
     fetchProfileData();
   }, []);

@@ -193,6 +193,27 @@ function CreateProfile() {
         });
       }
 
+      // Set default preferences
+      const defaultPreferences = {
+        sort_by: { username: { $order: "desc" }, age: { $order: "asc" } },
+        filter_by: { age: { $lt: "19" } }
+      };
+
+      // Fetch with default preferences
+      const myHeaders = new Headers();
+      myHeaders.append("Content-Type", "application/json");
+
+      const requestOptions = {
+        method: "GET",
+        headers: myHeaders,
+        redirect: "follow" as RequestRedirect
+      };
+
+      fetch(`http://localhost:3000/api/profiles?sort_by=${JSON.stringify(defaultPreferences.sort_by)}&filter_by=${JSON.stringify(defaultPreferences.filter_by)}`, requestOptions)
+        .then((response) => response.text())
+        .then((result) => console.log(result))
+        .catch((error) => console.error(error));
+
       navigate('/profile');
     } catch (error) {
       console.error('Error creating profile:', error);

@@ -148,6 +148,27 @@ function Settings() {
     }
   };
 
+  const handleDeleteAccount = () => {
+    if (!window.confirm('Are you sure you want to delete your account? This action is irreversible.')) {
+      return;
+    }
+
+    const settings = {
+      url: "http://localhost:3000/api/users/me",
+      method: "DELETE",
+      timeout: 0
+    };
+
+    $.ajax(settings)
+      .done((response) => {
+        console.log('Account deleted:', response);
+        window.location.href = '/';
+      })
+      .fail((error) => {
+        console.error('Error deleting account:', error);
+      });
+  };
+
   return (
     <>
       <NavbarLogged />
@@ -218,6 +239,7 @@ function Settings() {
               <option value="other">Other</option>
             </select>
           </div>
+
           <div className="setting-item mb-3">
             <label htmlFor="email" className="form-label">Email</label>
             <input
@@ -235,11 +257,19 @@ function Settings() {
           >
             Save Changes
           </button>
+
           <button 
             className="btn btn-secondary mt-3" 
             onClick={handleUpdateGPS}
           >
             Update location
+          </button>
+
+          <button
+            className="btn btn-danger mt-3"
+            onClick={handleDeleteAccount}
+          >
+            Delete Account
           </button>
         </div>
       </div>
