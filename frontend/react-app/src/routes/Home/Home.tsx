@@ -3,7 +3,7 @@
 import NavbarLogged from '../../components/NavbarLogged/NavbarLogged';
 import './home.css';
 import { useState, useEffect } from 'react';
-import $ from 'jquery';
+import { useNavigate } from 'react-router-dom';
 
 type User = {
   profile_id: number;
@@ -26,113 +26,187 @@ function Home() {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [photoIndex, setPhotoIndex] = useState(0);
   const [preferences, setPreferences] = useState<any>(null);
+  const navigate = useNavigate();
 
-  const fetchProfilesWithPreferences = async (prefs: any) => {
-    let query = 'http://localhost:3000/api/profiles';
-    if (prefs) {
-      const queryParams = new URLSearchParams();
-      queryParams.append('filter_by', JSON.stringify(prefs));
-      query = `${query}?${queryParams.toString()}`;
-    }
-    const settings = {
-      url: query,
-      method: 'GET',
-      timeout: 0,
-      headers: {
-        'Content-Type': 'application/json'
-      }
-    };
-    $.ajax(settings).done(function (response) {
-      if (response?.data?.profiles) {
-        const formattedUsers = response.data.profiles.map((data: any) => ({
-          profile_id: data.user_id,
-          name: `${data.first_name} ${data.last_name}`,
-          age: data.age,
-          gender: data.gender,
-          sexual_preference: data.sexual_preference,
-          biography: data.biography,
-          profile_picture: data.profile_picture,
-          gps_latitude: data.gps_latitude,
-          gps_longitude: data.gps_longitude,
-          nearest_location: '',
-          pictures: data.pictures,
-          interests: data.interests,
-          fame_rating: data.fame_rating
-        }));
-        setUsers(formattedUsers);
-      }
-    });
-  };
-
+  // Fetch user profile to get preferences
   useEffect(() => {
-    const init = async () => {
+    const fetchUserProfile = async () => {
       try {
-        const res = await fetch(`${window.location.origin}/api/profiles/me`);
-        const result = await res.json();
-        if (result.status === 'fail' && result.data === 'profile not found') {
-          window.location.href = '/create-profile';
+        const response = await fetch(`${window.location.origin}/api/profiles/me`, {
+          credentials: 'include',
+        });
+        const result = await response.json();
+        if (result.status === 'success') {
+          setPreferences(buildPreferences(result.data));
         } else {
-          const userData = result.data;
-          const userGender = userData.gender;
-          const userPreference = userData.sexual_preference;
-          let combinedPreferences = userData.search_preferences || {};
-          if (userGender === 'male' && userPreference === 'heterosexual') {
-            combinedPreferences = { ...combinedPreferences, gender: { '$eq': 'female' } };
-          } else if (userGender === 'female' && userPreference === 'heterosexual') {
-            combinedPreferences = { ...combinedPreferences, gender: { '$eq': 'male' } };
-          } else if (userGender === 'male' && userPreference === 'homosexual') {
-            combinedPreferences = { ...combinedPreferences, gender: { '$eq': 'male' } };
-          } else if (userGender === 'female' && userPreference === 'homosexual') {
-            combinedPreferences = { ...combinedPreferences, gender: { '$eq': 'female' } };
-          } else if (userPreference === 'bisexual') {
-            combinedPreferences = { ...combinedPreferences, gender: { '$in': ['male', 'female'] } };
-          }
-          setPreferences(combinedPreferences);
+          navigate('/create-profile');
         }
       } catch (error) {
-        window.location.href = '/create-profile';
+        console.error('Error fetching user profile:', error);
+        navigate('/create-profile');
       }
     };
-    init();
-  }, []);
+    fetchUserProfile();
+  }, [navigate]);
 
+  // Build preferences based on user data
+  const buildPreferences = (userData: any) => {
+    const { gender, sexual_preference, search_preferences } = userData;
+    let combinedPreferences = search_preferences || {};
+
+    switch (sexual_preference) {
+      case 'heterosexual':
+        combinedPreferences = {
+          ...combinedPreferences,
+          gender: gender === 'male' ? { '$eq': 'female' } : { '$eq': 'male' },
+        };
+        break;
+      case 'homosexual':
+        combinedPreferences = {
+          ...combinedPreferences,
+          gender: { '$eq': gender },
+        };
+        break;
+      case 'bisexual':
+        combinedPreferences = {
+          ...combinedPreferences,
+          gender: { '$in': ['male', 'female'] },
+        };
+        break;
+      default:
+        break;
+    }
+
+    return combinedPreferences;
+  };
+
+  // Fetch profiles based on preferences using fetch API
   useEffect(() => {
+    const fetchProfilesWithPreferences = async (prefs: any) => {
+      let query = 'http://localhost:3000/api/profiles';
+      if (prefs) {
+        const queryParams = new URLSearchParams();
+        queryParams.append('filter_by', JSON.stringify(prefs));
+        query = `${query}?${queryParams.toString()}`;
+      }
+      try {
+        const response = await fetch(query, {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          credentials: 'include',
+        });
+        const data = await response.json();
+        if (data?.status === 'success' && Array.isArray(data.data?.profiles)) {
+          const formattedUsers = data.data.profiles.map((data: any) => ({
+            profile_id: data.user_id,
+            name: `${data.first_name} ${data.last_name}`,
+            age: data.age,
+            gender: data.gender,
+            sexual_preference: data.sexual_preference,
+            biography: data.biography,
+            profile_picture: data.profile_picture,
+            gps_latitude: data.gps_latitude,
+            gps_longitude: data.gps_longitude,
+            nearest_location: data.nearest_location || '', // Assuming this field exists
+            pictures: data.pictures,
+            interests: data.interests,
+            fame_rating: data.fame_rating
+          }));
+          setUsers(formattedUsers);
+        } else {
+          setUsers([]);
+        }
+      } catch (error) {
+        console.error('Error fetching profiles:', error);
+        setUsers([]);
+      }
+    };
+
     if (preferences !== null) {
       fetchProfilesWithPreferences(preferences);
     }
   }, [preferences]);
 
+  // Handle Like User
   const handleLikeUser = async () => {
     if (!users[currentIndex]) return;
     const userId = users[currentIndex].profile_id;
     try {
-      await fetch(`http://localhost:3000/api/profiles/${userId}/like`, {
+      const response = await fetch(`http://localhost:3000/api/profiles/${userId}/like`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' }
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
       });
-    } catch {}
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        console.error('Error liking user:', errorData);
+      } else {
+        console.log(`Successfully liked user with ID: ${userId}`);
+      }
+    } catch (error) {
+      console.error('Error liking user:', error);
+    }
+
+    // Move to the next user
     setCurrentIndex((prev) => (prev + 1) % users.length);
     setPhotoIndex(0);
   };
 
+  // Handle Dislike User (Reject)
   const handleDislikeUser = async () => {
     if (!users[currentIndex]) return;
     const userId = users[currentIndex].profile_id;
+
     try {
-      await fetch(`http://localhost:3000/api/profiles/${userId}/dislike`, {
+      // First, log the visit
+      const visitResponse = await fetch(`http://localhost:3000/api/profiles/${userId}/visits`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' }
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ visited_user_id: userId }), // Ensure the payload is correct
+        credentials: 'include',
       });
-    } catch {}
-    setCurrentIndex((prev) => (prev - 1 + users.length) % users.length);
+
+      if (!visitResponse.ok) {
+        const errorData = await visitResponse.json();
+        console.error('Error logging visit:', errorData);
+        alert(`Error logging visit: ${errorData.message || 'Unknown error'}`);
+        return; // Exit if visit logging fails
+      } else {
+        console.log(`Successfully logged visit for user ID: ${userId}`);
+      }
+
+      // Second, dislike the user
+      const dislikeResponse = await fetch(`http://localhost:3000/api/profiles/${userId}/dislike`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+      });
+
+      if (!dislikeResponse.ok) {
+        const errorData = await dislikeResponse.json();
+        console.error('Error disliking user:', errorData);
+      } else {
+        console.log(`Successfully disliked user with ID: ${userId}`);
+      }
+    } catch (error) {
+      console.error('Error rejecting user:', error);
+    }
+
+    // Move to the next user
+    setCurrentIndex((prev) => (prev + 1) % users.length);
     setPhotoIndex(0);
   };
 
+  // Navigate to next photo
   const handleNextPhoto = () => {
     if (!users[currentIndex]) return;
     setPhotoIndex((prev) => (prev + 1) % users[currentIndex].pictures.length);
   };
 
+  // Navigate to previous photo
   const handlePreviousPhoto = () => {
     if (!users[currentIndex]) return;
     setPhotoIndex((prev) => (prev - 1 + users[currentIndex].pictures.length) % users[currentIndex].pictures.length);
@@ -147,11 +221,32 @@ function Home() {
       <div className="content d-flex flex-column align-items-center justify-content-center mt-5 position-relative">
         {currentUser ? (
           <div className="card text-center p-3 shadow-lg">
-            <img
-              src={currentPhoto}
-              className="card-img-top"
-              alt={`${currentUser.name}`}
-            />
+            <div className="position-relative">
+              <img
+                src={currentPhoto}
+                className="card-img-top"
+                alt={`${currentUser.name}`}
+              />
+              {/* Photo Navigation Buttons */}
+              {currentUser.pictures.length > 1 && (
+                <>
+                  <button
+                    className="photo-arrow left-arrow position-absolute top-50 start-0 translate-middle-y btn btn-light"
+                    onClick={handlePreviousPhoto}
+                    style={{ zIndex: 1 }}
+                  >
+                    <i className="bi bi-chevron-left"></i>
+                  </button>
+                  <button
+                    className="photo-arrow right-arrow position-absolute top-50 end-0 translate-middle-y btn btn-light"
+                    onClick={handleNextPhoto}
+                    style={{ zIndex: 1 }}
+                  >
+                    <i className="bi bi-chevron-right"></i>
+                  </button>
+                </>
+              )}
+            </div>
             <div className="card-body">
               <h4 className="card-title mb-2">{currentUser.name}, {currentUser.age}</h4>
               <p className="card-text text-muted mb-3">{currentUser.biography}</p>
@@ -163,38 +258,26 @@ function Home() {
                       return item.interest_tag || '';
                     }
                     return item;
-                  }).join(', ')}
+                  }).filter(Boolean).join(', ')}
                 </p>
               )}
               <p className="card-text text-muted mb-1">Fame Rating: {currentUser.fame_rating}</p>
-              <div className="d-flex justify-content-around">
+              <div className="d-flex justify-content-around mt-3">
                 <button
                   className="btn dislike-button rounded-circle shadow-sm"
                   onClick={handleDislikeUser}
+                  title="Reject"
                 >
-                  <i className="bi bi-x"></i>
+                  <i className="bi bi-x text-danger"></i>
                 </button>
                 <button
                   className="btn like-button rounded-circle shadow-sm"
                   onClick={handleLikeUser}
+                  title="Like"
                 >
-                  <i className="bi bi-heart-fill"></i>
+                  <i className="bi bi-heart-fill text-danger"></i>
                 </button>
               </div>
-            </div>
-            <div className="photo-navigation">
-              <button
-                className="photo-arrow left-arrow"
-                onClick={handlePreviousPhoto}
-              >
-                <i className="bi bi-chevron-left"></i>
-              </button>
-              <button
-                className="photo-arrow right-arrow"
-                onClick={handleNextPhoto}
-              >
-                <i className="bi bi-chevron-right"></i>
-              </button>
             </div>
           </div>
         ) : (

@@ -6,6 +6,7 @@
     "jquery": "^3.7.1",
     "mdb-react-ui-kit": "^9.0.0",
     "react-bootstrap": "^2.10.5",
-    "react-slider": "^2.0.6"
+    "react-slider": "^2.0.6",
+    "socket.io-client": "^4.8.1"
   }
 }
