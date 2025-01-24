@@ -4,13 +4,10 @@
  * Module dependencies.
  */
 
-import app from "../app.js";
+
 import debugF from "debug";
 var debug = debugF("express-server:server");
-import { createServer } from "http";
-import { Server } from "socket.io";
 import { initChatSocket } from "../routes/chats/chats.websocket.controller.js";
-import passport from "passport";
 import { initNotificationsSocket } from "../routes/notifications/notifications.websocket.controller.js";
 import { io } from "../config/socketio-config.js";
 import { port, server } from "../config/server-config.js";

@@ -4,11 +4,12 @@
 
 import { Server } from "socket.io";
 import passport from "passport";
-import { createServer } from "http";
 import { server } from "./server-config.js";
-
+import cookieParser from "cookie-parser";
 
 const io = new Server(server);
+
+io.engine.use(cookieParser());
 
 io.engine.use((req, res, next) => {
   const isHandshake = req._query.sid === undefined;

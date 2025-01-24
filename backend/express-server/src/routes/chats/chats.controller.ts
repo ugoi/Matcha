@@ -2,7 +2,7 @@ import { Router } from "express";
 import { body, param, query, validationResult } from "express-validator";
 var router = Router();
 import passport, { Profile } from "passport";
-import { escapeErrors, isAuthorized } from "../../utils/utils.js";
+import { escapeErrors, isAuthorized, profileExistsValidator } from "../../utils/utils.js";
 import { JFail } from "../../error-handlers/custom-errors.js";
 import { chatRepository } from "./chats.repository.js";
 import { SuccessResponse } from "../../interfaces/response.js";
@@ -16,7 +16,7 @@ router.post(
   "/:user_id",
   passport.authenticate("jwt", { session: false }),
   isAuthorized,
-  param("user_id").isString(),
+  param("user_id").isString().custom(profileExistsValidator),
   body("message").escape().isString(),
   async function (req, res, next) {
     const result = validationResult(req);
