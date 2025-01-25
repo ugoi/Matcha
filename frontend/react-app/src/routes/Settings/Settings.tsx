@@ -7,6 +7,7 @@ import NavbarLogged from '../../components/NavbarLogged/NavbarLogged';
 import './settings.css';
 
 function Settings() {
+  // Existing states
   const [distance, setDistance] = useState<number>(50);
   const [minAge, setMinAge] = useState<number>(18);
   const [maxAge, setMaxAge] = useState<number>(30);
@@ -14,23 +15,95 @@ function Settings() {
   const [gender, setGender] = useState<string>('');
   const [sexualPreference, setSexualPreference] = useState<string>('');
 
+  // NEW: states for fame rating and tags
+  const [minFameRating, setMinFameRating] = useState<number>(0);
+  const [maxFameRating, setMaxFameRating] = useState<number>(5);
+  const [tagsInput, setTagsInput] = useState<string>(''); 
+  const [commonTags, setCommonTags] = useState<string[]>([]);
+
+  /**
+   * Fetch user info from /api/users/me for the email,
+   * and from /api/profiles/me for gender, orientation, search_preferences, etc.
+   */
   useEffect(() => {
-    const checkProfile = async () => {
-      try {
-        const settings = {
-          url: "http://localhost:3000/api/users/me",
-          method: "GET",
-          timeout: 0
-        };
-        $.ajax(settings).done(function (response) {
+    // 1) Load user data for email
+    const loadUserData = () => {
+      $.ajax({
+        url: "http://localhost:3000/api/users/me",
+        method: "GET",
+        timeout: 0,
+      })
+      .done(function (response) {
+        if (response?.data?.user?.email) {
           setEmail(response.data.user.email);
+        }
+      })
+      .fail(() => {
+        // if needed, redirect or handle error
+      });
+    };
+
+    // 2) Load profile data for gender, sexual_pref, and search_preferences
+    const loadProfileData = async () => {
+      try {
+        const res = await fetch("http://localhost:3000/api/profiles/me", {
+          method: "GET",
+          credentials: "include",
         });
+        const result = await res.json();
+
+        if (result?.status === "success") {
+          // Set gender & sexual preference
+          if (result.data.gender) {
+            setGender(result.data.gender);
+          }
+          if (result.data.sexual_preference) {
+            setSexualPreference(result.data.sexual_preference);
+          }
+
+          // If the user already has search_preferences, populate them
+          if (result.data.search_preferences) {
+            const prefs = result.data.search_preferences;
+            // Distance
+            if (prefs.distance?.$lte) {
+              setDistance(prefs.distance.$lte);
+            }
+            // Age range
+            if (prefs.age) {
+              if (prefs.age.$gte) setMinAge(prefs.age.$gte);
+              if (prefs.age.$lte) setMaxAge(prefs.age.$lte);
+            }
+            // Fame rating
+            if (prefs.fame_rating) {
+              if (prefs.fame_rating.$gte !== undefined) setMinFameRating(prefs.fame_rating.$gte);
+              if (prefs.fame_rating.$lte !== undefined) setMaxFameRating(prefs.fame_rating.$lte);
+            }
+            // Common interests
+            if (prefs.common_interests?.$in) {
+              setCommonTags(prefs.common_interests.$in);
+              setTagsInput(prefs.common_interests.$in.join(', '));
+            }
+          }
+        } else {
+          // if needed, handle error or redirect
+        }
       } catch (error) {
-        window.location.href = '/create-profile';
+        console.error("Error loading profile data:", error);
       }
     };
-    checkProfile();
+
+    loadUserData();
+    loadProfileData();
   }, []);
+
+  // When the user leaves the tags field or hits enter
+  const handleTagsBlur = () => {
+    const parsed = tagsInput
+      .split(',')
+      .map((t) => t.trim())
+      .filter((t) => t.length > 0);
+    setCommonTags(parsed);
+  };
 
   const handleDistanceChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setDistance(Number(e.target.value));
@@ -41,7 +114,8 @@ function Settings() {
   };
 
   const handleSaveChanges = () => {
-    const emailSettings = {
+    // 1) Update user email
+    $.ajax({
       url: "http://localhost:3000/api/users/me",
       method: "PATCH",
       timeout: 0,
@@ -51,19 +125,24 @@ function Settings() {
       data: {
         email: email
       }
-    };
-    $.ajax(emailSettings).done(function () {});
+    }).done(function () {
+      // Email updated
+    });
 
-    const profileData = {
+    // 2) Build up search_preferences with the new values
+    const profileData: any = {
       gender: gender || undefined,
       sexual_preference: sexualPreference || undefined,
       search_preferences: {
         distance: { "$lte": distance },
-        age: { "$gte": minAge, "$lte": maxAge }
+        age: { "$gte": minAge, "$lte": maxAge },
+        fame_rating: { "$gte": minFameRating, "$lte": maxFameRating },
+        common_interests: { "$in": commonTags }
       }
     };
 
-    const profileSettings = {
+    // 3) Patch to /api/profiles/me
+    $.ajax({
       url: "http://localhost:3000/api/profiles/me",
       method: "PATCH",
       timeout: 0,
@@ -71,9 +150,8 @@ function Settings() {
         "Content-Type": "application/json"
       },
       data: JSON.stringify(profileData)
-    };
-
-    $.ajax(profileSettings).done(function () {
+    })
+    .done(function () {
       window.location.href = '/home';
     });
   };
@@ -131,16 +209,15 @@ function Settings() {
 
   const handleDeleteAccount = () => {
     if (!window.confirm('Are you sure you want to delete your account? This action is irreversible.')) return;
-    const settings = {
+    $.ajax({
       url: "http://localhost:3000/api/users/me",
       method: "DELETE",
       timeout: 0
-    };
-    $.ajax(settings)
-      .done(() => {
-        window.location.href = '/';
-      })
-      .fail(() => {});
+    })
+    .done(() => {
+      window.location.href = '/';
+    })
+    .fail(() => {});
   };
 
   return (
@@ -149,6 +226,8 @@ function Settings() {
       <div className="content d-flex flex-column align-items-center justify-content-center mt-5">
         <div className="card text-center p-4 shadow-lg settings-card">
           <h3 className="mb-4">Settings</h3>
+
+          {/* Distance filter */}
           <div className="setting-item mb-3">
             <label htmlFor="distance" className="form-label">Distance (km)</label>
             <input
@@ -162,13 +241,16 @@ function Settings() {
             />
             <p className="slider-value">{distance} km</p>
           </div>
+
+          {/* Age Range */}
           <div className="setting-item mb-3">
             <label className="form-label">Age Range</label>
             <ReactSlider
               className="horizontal-slider"
               thumbClassName="slider-thumb"
               trackClassName="slider-track"
-              defaultValue={[minAge, maxAge]}
+              // Notice we set initialValue via state, not defaultValue
+              value={[minAge, maxAge]}
               ariaLabel={['Lower thumb', 'Upper thumb']}
               pearling
               minDistance={1}
@@ -181,6 +263,46 @@ function Settings() {
             />
             <p className="slider-value">{minAge} - {maxAge} years</p>
           </div>
+
+          {/* Fame rating range */}
+          <div className="setting-item mb-3">
+            <label className="form-label">Fame Rating Range</label>
+            <ReactSlider
+              className="horizontal-slider"
+              thumbClassName="slider-thumb"
+              trackClassName="slider-track"
+              value={[minFameRating, maxFameRating]}
+              ariaLabel={['Fame min', 'Fame max']}
+              pearling
+              minDistance={1}
+              min={0}
+              max={5}
+              onChange={(value: number[]) => {
+                setMinFameRating(value[0]);
+                setMaxFameRating(value[1]);
+              }}
+            />
+            <p className="slider-value">{minFameRating} - {maxFameRating}</p>
+          </div>
+
+          {/* Common Tags */}
+          <div className="setting-item mb-3">
+            <label htmlFor="commonTags" className="form-label">Common Tags (comma-separated)</label>
+            <input
+              type="text"
+              id="commonTags"
+              value={tagsInput}
+              onChange={(e) => setTagsInput(e.target.value)}
+              onBlur={handleTagsBlur}
+              className="form-control"
+              placeholder="e.g. sport, music, coding"
+            />
+            {commonTags.length > 0 && (
+              <p className="text-muted mt-2">Current tags: {commonTags.join(', ')}</p>
+            )}
+          </div>
+
+          {/* Gender */}
           <div className="setting-item mb-3">
             <label htmlFor="Gender" className="form-label">Select your gender</label>
             <select
@@ -195,6 +317,8 @@ function Settings() {
               <option value="other">Other</option>
             </select>
           </div>
+
+          {/* Sexual preference */}
           <div className="setting-item mb-3">
             <label htmlFor="Preferences" className="form-label">Select your sexual preference</label>
             <select
@@ -210,6 +334,8 @@ function Settings() {
               <option value="other">Other</option>
             </select>
           </div>
+
+          {/* Email */}
           <div className="setting-item mb-3">
             <label htmlFor="email" className="form-label">Email</label>
             <input
@@ -220,6 +346,8 @@ function Settings() {
               className="form-control"
             />
           </div>
+
+          {/* Buttons */}
           <button className="btn btn-primary mt-3" onClick={handleSaveChanges}>
             Save Changes
           </button>

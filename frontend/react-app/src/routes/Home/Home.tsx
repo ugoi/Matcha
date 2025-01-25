@@ -26,6 +26,10 @@ function Home() {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [photoIndex, setPhotoIndex] = useState(0);
   const [preferences, setPreferences] = useState<any>(null);
+
+  // NEW: which field we are sorting by (age, distance, fame_rating, common_interests)
+  const [sortField, setSortField] = useState<string | null>(null);
+
   const navigate = useNavigate();
 
   // Fetch user profile to get preferences
@@ -80,17 +84,29 @@ function Home() {
     return combinedPreferences;
   };
 
-  // Fetch profiles based on preferences using fetch API
+  // Whenever `preferences` or `sortField` changes, we refetch profiles
   useEffect(() => {
-    const fetchProfilesWithPreferences = async (prefs: any) => {
-      let query = 'http://localhost:3000/api/profiles';
+    const fetchProfilesWithPreferences = async (prefs: any, sortField?: string) => {
+      // Build query
+      const queryParams = new URLSearchParams();
+
+      // If we have filters (prefs), add them
       if (prefs) {
-        const queryParams = new URLSearchParams();
         queryParams.append('filter_by', JSON.stringify(prefs));
-        query = `${query}?${queryParams.toString()}`;
       }
+
+      // If we have a sort field, add it, e.g. sort_by={"age": {"$order":"asc"}}
+      if (sortField) {
+        const sortObj = {
+          [sortField]: { '$order': 'asc' },
+        };
+        queryParams.append('sort_by', JSON.stringify(sortObj));
+      }
+
+      let queryUrl = `http://localhost:3000/api/profiles?${queryParams.toString()}`;
+
       try {
-        const response = await fetch(query, {
+        const response = await fetch(queryUrl, {
           method: 'GET',
           headers: {
             'Content-Type': 'application/json',
@@ -109,7 +125,7 @@ function Home() {
             profile_picture: data.profile_picture,
             gps_latitude: data.gps_latitude,
             gps_longitude: data.gps_longitude,
-            nearest_location: data.nearest_location || '', // Assuming this field exists
+            nearest_location: data.nearest_location || '',
             pictures: data.pictures,
             interests: data.interests,
             fame_rating: data.fame_rating
@@ -125,9 +141,9 @@ function Home() {
     };
 
     if (preferences !== null) {
-      fetchProfilesWithPreferences(preferences);
+      fetchProfilesWithPreferences(preferences, sortField || undefined);
     }
-  }, [preferences]);
+  }, [preferences, sortField]);
 
   // Handle Like User
   const handleLikeUser = async () => {
@@ -165,7 +181,7 @@ function Home() {
       const visitResponse = await fetch(`http://localhost:3000/api/profiles/${userId}/visits`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ visited_user_id: userId }), // Ensure the payload is correct
+        body: JSON.stringify({ visited_user_id: userId }),
         credentials: 'include',
       });
 
@@ -218,6 +234,35 @@ function Home() {
   return (
     <>
       <NavbarLogged />
+
+      {/* NEW: Sort buttons */}
+      <div className="d-flex justify-content-center gap-2 my-3">
+        <button
+          className="btn btn-outline-primary"
+          onClick={() => setSortField('age')}
+        >
+          Sort by Age
+        </button>
+        <button
+          className="btn btn-outline-primary"
+          onClick={() => setSortField('distance')}
+        >
+          Sort by Location
+        </button>
+        <button
+          className="btn btn-outline-primary"
+          onClick={() => setSortField('fame_rating')}
+        >
+          Sort by Fame Rating
+        </button>
+        <button
+          className="btn btn-outline-primary"
+          onClick={() => setSortField('common_interests')}
+        >
+          Sort by Common Tags
+        </button>
+      </div>
+
       <div className="content d-flex flex-column align-items-center justify-content-center mt-5 position-relative">
         {currentUser ? (
           <div className="card text-center p-3 shadow-lg">
@@ -248,20 +293,27 @@ function Home() {
               )}
             </div>
             <div className="card-body">
-              <h4 className="card-title mb-2">{currentUser.name}, {currentUser.age}</h4>
+              <h4 className="card-title mb-2">
+                {currentUser.name}, {currentUser.age}
+              </h4>
               <p className="card-text text-muted mb-3">{currentUser.biography}</p>
               {currentUser.interests && currentUser.interests.length > 0 && (
                 <p className="card-text mb-3">
                   <strong>Interests:</strong>{' '}
-                  {currentUser.interests.map((item: any) => {
-                    if (typeof item === 'object' && item !== null) {
-                      return item.interest_tag || '';
-                    }
-                    return item;
-                  }).filter(Boolean).join(', ')}
+                  {currentUser.interests
+                    .map((item: any) => {
+                      if (typeof item === 'object' && item !== null) {
+                        return item.interest_tag || '';
+                      }
+                      return item;
+                    })
+                    .filter(Boolean)
+                    .join(', ')}
                 </p>
               )}
-              <p className="card-text text-muted mb-1">Fame Rating: {currentUser.fame_rating}</p>
+              <p className="card-text text-muted mb-1">
+                Fame Rating: {currentUser.fame_rating}
+              </p>
               <div className="d-flex justify-content-around mt-3">
                 <button
                   className="btn dislike-button rounded-circle shadow-sm"
