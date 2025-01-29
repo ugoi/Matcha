@@ -125,19 +125,15 @@ function CreateProfile() {
   const handleNextStep = () => {
     setErrors({});
     if (step === 4) {
-      // On step 4 -> step 5, validate the interests
       let splitted = interests
         .split(',')
         .map(t => t.trim())
         .filter(Boolean);
-      // Ensure each interest starts with '#'
       splitted = splitted.map(item => (item.startsWith('#') ? item : `#${item}`));
-      // Enforce maximum 5 interests
       if (splitted.length > 5) {
         setErrors({ interests: 'Maximum 5 interests allowed' });
         return;
       }
-      // Store back as a comma-separated string
       setInterests(splitted.join(', '));
     }
     if (canProceedToNext()) {
