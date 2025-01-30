@@ -27,12 +27,11 @@ function Home() {
   const [photoIndex, setPhotoIndex] = useState(0);
   const [preferences, setPreferences] = useState<any>(null);
 
-  // NEW: which field we are sorting by (age, distance, fame_rating, common_interests)
+
   const [sortField, setSortField] = useState<string | null>(null);
 
   const navigate = useNavigate();
 
-  // Fetch user profile to get preferences
   useEffect(() => {
     const fetchUserProfile = async () => {
       try {
@@ -53,7 +52,6 @@ function Home() {
     fetchUserProfile();
   }, [navigate]);
 
-  // Build preferences based on user data
   const buildPreferences = (userData: any) => {
     const { gender, sexual_preference, search_preferences } = userData;
     let combinedPreferences = search_preferences || {};
@@ -84,18 +82,13 @@ function Home() {
     return combinedPreferences;
   };
 
-  // Whenever `preferences` or `sortField` changes, we refetch profiles
   useEffect(() => {
     const fetchProfilesWithPreferences = async (prefs: any, sortField?: string) => {
-      // Build query
       const queryParams = new URLSearchParams();
 
-      // If we have filters (prefs), add them
       if (prefs) {
         queryParams.append('filter_by', JSON.stringify(prefs));
       }
-
-      // If we have a sort field, add it, e.g. sort_by={"age": {"$order":"asc"}}
       if (sortField) {
         const sortObj = {
           [sortField]: { '$order': 'asc' },
@@ -145,7 +138,6 @@ function Home() {
     }
   }, [preferences, sortField]);
 
-  // Handle Like User
   const handleLikeUser = async () => {
     if (!users[currentIndex]) return;
     const userId = users[currentIndex].profile_id;
@@ -166,18 +158,15 @@ function Home() {
       console.error('Error liking user:', error);
     }
 
-    // Move to the next user
     setCurrentIndex((prev) => (prev + 1) % users.length);
     setPhotoIndex(0);
   };
 
-  // Handle Dislike User (Reject)
   const handleDislikeUser = async () => {
     if (!users[currentIndex]) return;
     const userId = users[currentIndex].profile_id;
 
     try {
-      // First, log the visit
       const visitResponse = await fetch(`http://localhost:3000/api/profiles/${userId}/visits`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -189,12 +178,11 @@ function Home() {
         const errorData = await visitResponse.json();
         console.error('Error logging visit:', errorData);
         alert(`Error logging visit: ${errorData.message || 'Unknown error'}`);
-        return; // Exit if visit logging fails
+        return; 
       } else {
         console.log(`Successfully logged visit for user ID: ${userId}`);
       }
 
-      // Second, dislike the user
       const dislikeResponse = await fetch(`http://localhost:3000/api/profiles/${userId}/dislike`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -211,18 +199,14 @@ function Home() {
       console.error('Error rejecting user:', error);
     }
 
-    // Move to the next user
     setCurrentIndex((prev) => (prev + 1) % users.length);
     setPhotoIndex(0);
   };
-
-  // Navigate to next photo
   const handleNextPhoto = () => {
     if (!users[currentIndex]) return;
     setPhotoIndex((prev) => (prev + 1) % users[currentIndex].pictures.length);
   };
 
-  // Navigate to previous photo
   const handlePreviousPhoto = () => {
     if (!users[currentIndex]) return;
     setPhotoIndex((prev) => (prev - 1 + users[currentIndex].pictures.length) % users[currentIndex].pictures.length);
@@ -235,7 +219,6 @@ function Home() {
     <>
       <NavbarLogged />
 
-      {/* NEW: Sort buttons */}
       <div className="d-flex justify-content-center gap-2 my-3">
         <button
           className="btn btn-outline-primary"
