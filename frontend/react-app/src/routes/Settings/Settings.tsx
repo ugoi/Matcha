@@ -79,7 +79,6 @@ function Settings() {
     loadProfileData();
   }, []);
 
-  // When the user leaves the tags field or hits enter
   const handleTagsBlur = () => {
     const parsed = tagsInput
       .split(',')
@@ -97,42 +96,36 @@ function Settings() {
   };
 
   const handleSaveChanges = () => {
-    // 1) Update user email
     $.ajax({
       url: "http://localhost:3000/api/users/me",
       method: "PATCH",
       timeout: 0,
       headers: {
-        "Content-Type": "application/x-www-form-urlencoded"
+        "Content-Type": "application/x-www-form-urlencoded",
       },
       data: {
-        email: email
-      }
+        email: email,
+      },
     }).done(function () {
-      // Email updated
     });
 
-    // 2) Build up search_preferences with the new values
-    const profileData: any = {
-      gender: gender || undefined,
-      sexual_preference: sexualPreference || undefined,
-      search_preferences: {
-        distance: { "$lte": distance },
-        age: { "$gte": minAge, "$lte": maxAge },
-        fame_rating: { "$gte": minFameRating, "$lte": maxFameRating },
-        common_interests: { "$in": commonTags }
-      }
-    };
-
-    // 3) Patch to /api/profiles/me
     $.ajax({
       url: "http://localhost:3000/api/profiles/me",
       method: "PATCH",
       timeout: 0,
       headers: {
-        "Content-Type": "application/json"
+        "Content-Type": "application/x-www-form-urlencoded",
       },
-      data: JSON.stringify(profileData)
+      data: {
+        gender: gender,
+        sexual_preference: sexualPreference,
+        'search_preferences[distance][$lte]': distance,
+        'search_preferences[age][$gte]': minAge,
+        'search_preferences[age][$lte]': maxAge,
+        'search_preferences[fame_rating][$gte]': minFameRating,
+        'search_preferences[fame_rating][$lte]': maxFameRating,
+        'search_preferences[common_interests][$in]': commonTags,
+      },
     })
     .done(function () {
       window.location.href = '/home';
@@ -149,14 +142,15 @@ function Settings() {
             method: "PATCH",
             timeout: 0,
             headers: {
-              "Content-Type": "application/x-www-form-urlencoded"
+              "Content-Type": "application/x-www-form-urlencoded",
             },
             data: {
               gps_longitude: longitude.toString(),
-              gps_latitude: latitude.toString()
-            }
+              gps_latitude: latitude.toString(),
+            },
           };
-          $.ajax(settings).done(function () {});
+          $.ajax(settings).done(function () {        
+          });
         },
         async () => {
           await getLocationByIP();
@@ -178,20 +172,23 @@ function Settings() {
           method: "PATCH",
           timeout: 0,
           headers: {
-            "Content-Type": "application/x-www-form-urlencoded"
+            "Content-Type": "application/x-www-form-urlencoded",
           },
           data: {
             gps_longitude: data.longitude.toString(),
-            gps_latitude: data.latitude.toString()
-          }
+            gps_latitude: data.latitude.toString(),
+          },
         };
-        $.ajax(settings).done(function () {});
+        $.ajax(settings).done(function () {
+        });
       }
-    } catch {}
+    } catch (error) {
+    }
   };
 
   const handleDeleteAccount = () => {
     if (!window.confirm('Are you sure you want to delete your account? This action is irreversible.')) return;
+
     $.ajax({
       url: "http://localhost:3000/api/users/me",
       method: "DELETE",
@@ -200,7 +197,8 @@ function Settings() {
     .done(() => {
       window.location.href = '/';
     })
-    .fail(() => {});
+    .fail(() => {
+    });
   };
 
   return (
