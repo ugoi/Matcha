@@ -21,6 +21,11 @@ import { PublicProfile } from "./profiles.interface.js";
 import { SuccessResponse } from "../../interfaces/response.js";
 // Import your SuccessResponse class (adjust path as needed)
 
+const validateProfilePicture = (isOptional = false) => {
+  let chain = body("profile_picture").isURL().custom(pictureExists);
+  return isOptional ? chain.optional() : chain;
+};
+
 // Sub-routes
 router.use("/", visitsRouter);
 router.use("/", interestsRouter);
@@ -140,7 +145,7 @@ router.patch(
   body("age").optional().escape().isNumeric(),
   body("sexual_preference").optional().escape().isString(),
   body("biography").optional().escape().isString(),
-  body("profile_picture").optional().escape().isString(),
+  body("profile_picture").optional().isURL().custom(pictureExists),
   body("gps_latitude").optional().escape().isNumeric(),
   body("gps_longitude").optional().escape().isNumeric(),
   async function (req, res, next) {
