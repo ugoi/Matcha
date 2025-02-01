@@ -1,261 +1,183 @@
-// src/routes/Home/Home.tsx
-
-import NavbarLogged from '../../components/NavbarLogged/NavbarLogged';
-import './home.css';
-import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useState, useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
+import NavbarLogged from '../../components/NavbarLogged/NavbarLogged'
+import './home.css'
 
 type User = {
-  profile_id: number;
-  name: string;
-  age: number;
-  gender: string;
-  sexual_preference: string;
-  biography: string;
-  profile_picture: string;
-  gps_latitude: number;
-  gps_longitude: number;
-  nearest_location: string;
-  pictures: { picture_url: string }[];
-  interests: any[];
-  fame_rating: number;
-};
+  profile_id: number
+  name: string
+  age: number
+  gender: string
+  sexual_preference: string
+  biography: string
+  profile_picture: string
+  gps_latitude: number
+  gps_longitude: number
+  nearest_location: string
+  pictures: { picture_url: string }[]
+  interests: any[]
+  fame_rating: number
+}
 
 function Home() {
-  const [users, setUsers] = useState<User[]>([]);
-  const [currentIndex, setCurrentIndex] = useState(0);
-  const [photoIndex, setPhotoIndex] = useState(0);
-  const [preferences, setPreferences] = useState<any>(null);
-
-
-  const [sortField, setSortField] = useState<string | null>(null);
-
-  const navigate = useNavigate();
+  const [users, setUsers] = useState<User[]>([])
+  const [currentIndex, setCurrentIndex] = useState(0)
+  const [photoIndex, setPhotoIndex] = useState(0)
+  const [preferences, setPreferences] = useState<any>(null)
+  const [sortField, setSortField] = useState<string | null>(null)
+  const navigate = useNavigate()
 
   useEffect(() => {
-    const fetchUserProfile = async () => {
+    async function fetchUserProfile() {
       try {
-        const response = await fetch(`${window.location.origin}/api/profiles/me`, {
-          credentials: 'include',
-        });
-        const result = await response.json();
+        const res = await fetch(`${window.location.origin}/api/profiles/me`, { credentials: 'include' })
+        const result = await res.json()
         if (result.status === 'success') {
-          setPreferences(buildPreferences(result.data));
+          setPreferences(buildPreferences(result.data))
         } else {
-          navigate('/create-profile');
+          navigate('/create-profile')
         }
       } catch (error) {
-        console.error('Error fetching user profile:', error);
-        navigate('/create-profile');
+        console.error('Error fetching user profile:', error)
+        navigate('/create-profile')
       }
-    };
-    fetchUserProfile();
-  }, [navigate]);
+    }
+    fetchUserProfile()
+  }, [navigate])
 
   const buildPreferences = (userData: any) => {
-    const { gender, sexual_preference, search_preferences } = userData;
-    let combinedPreferences = search_preferences || {};
-
-    switch (sexual_preference) {
-      case 'heterosexual':
-        combinedPreferences = {
-          ...combinedPreferences,
-          gender: gender === 'male' ? { '$eq': 'female' } : { '$eq': 'male' },
-        };
-        break;
-      case 'homosexual':
-        combinedPreferences = {
-          ...combinedPreferences,
-          gender: { '$eq': gender },
-        };
-        break;
-      case 'bisexual':
-        combinedPreferences = {
-          ...combinedPreferences,
-          gender: { '$in': ['male', 'female'] },
-        };
-        break;
-      default:
-        break;
+    const { gender, sexual_preference, search_preferences = {} } = userData
+    if (sexual_preference === 'heterosexual') {
+      return { ...search_preferences, gender: gender === 'male' ? { '$eq': 'female' } : { '$eq': 'male' } }
+    } else if (sexual_preference === 'homosexual') {
+      return { ...search_preferences, gender: { '$eq': gender } }
+    } else if (sexual_preference === 'bisexual') {
+      return { ...search_preferences, gender: { '$in': ['male', 'female'] } }
     }
-
-    return combinedPreferences;
-  };
+    return search_preferences
+  }
 
   useEffect(() => {
-    const fetchProfilesWithPreferences = async (prefs: any, sortField?: string) => {
-      const queryParams = new URLSearchParams();
-
-      if (prefs) {
-        queryParams.append('filter_by', JSON.stringify(prefs));
-      }
-      if (sortField) {
-        const sortObj = {
-          [sortField]: { '$order': 'asc' },
-        };
-        queryParams.append('sort_by', JSON.stringify(sortObj));
-      }
-
-      let queryUrl = `http://localhost:3000/api/profiles?${queryParams.toString()}`;
-
+    async function fetchProfiles(prefs: any, sort?: string) {
+      const params = new URLSearchParams()
+      if (prefs) params.append('filter_by', JSON.stringify(prefs))
+      if (sort) params.append('sort_by', JSON.stringify({ [sort]: { '$order': 'asc' } }))
       try {
-        const response = await fetch(queryUrl, {
-          method: 'GET',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          credentials: 'include',
-        });
-        const data = await response.json();
-        if (data?.status === 'success' && Array.isArray(data.data?.profiles)) {
-          const formattedUsers = data.data.profiles.map((data: any) => ({
-            profile_id: data.user_id,
-            name: `${data.first_name} ${data.last_name}`,
-            age: data.age,
-            gender: data.gender,
-            sexual_preference: data.sexual_preference,
-            biography: data.biography,
-            profile_picture: data.profile_picture,
-            gps_latitude: data.gps_latitude,
-            gps_longitude: data.gps_longitude,
-            nearest_location: data.nearest_location || '',
-            pictures: data.pictures,
-            interests: data.interests,
-            fame_rating: data.fame_rating
-          }));
-          setUsers(formattedUsers);
+        const res = await fetch(`http://localhost:3000/api/profiles?${params.toString()}`, { credentials: 'include' })
+        const data = await res.json()
+        if (data.status === 'success' && Array.isArray(data.data?.profiles)) {
+          const formatted = data.data.profiles.map((d: any) => ({
+            profile_id: d.user_id,
+            name: `${d.first_name} ${d.last_name}`,
+            age: d.age,
+            gender: d.gender,
+            sexual_preference: d.sexual_preference,
+            biography: d.biography,
+            profile_picture: d.profile_picture,
+            gps_latitude: d.gps_latitude,
+            gps_longitude: d.gps_longitude,
+            nearest_location: d.nearest_location || '',
+            pictures: d.pictures,
+            interests: d.interests,
+            fame_rating: d.fame_rating
+          }))
+          setUsers(formatted)
         } else {
-          setUsers([]);
+          setUsers([])
         }
       } catch (error) {
-        console.error('Error fetching profiles:', error);
-        setUsers([]);
+        console.error('Error fetching profiles:', error)
+        setUsers([])
       }
-    };
-
-    if (preferences !== null) {
-      fetchProfilesWithPreferences(preferences, sortField || undefined);
     }
-  }, [preferences, sortField]);
+    if (preferences !== null) {
+      fetchProfiles(preferences, sortField || undefined)
+    }
+  }, [preferences, sortField])
 
   const handleLikeUser = async () => {
-    if (!users[currentIndex]) return;
-    const userId = users[currentIndex].profile_id;
+    if (!users[currentIndex]) return
+    const userId = users[currentIndex].profile_id
     try {
-      const response = await fetch(`http://localhost:3000/api/profiles/${userId}/like`, {
+      const res = await fetch(`http://localhost:3000/api/profiles/${userId}/like`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        console.error('Error liking user:', errorData);
-      } else {
-        console.log(`Successfully liked user with ID: ${userId}`);
+        credentials: 'include'
+      })
+      if (!res.ok) {
+        const err = await res.json()
+        console.error('Error liking user:', err)
       }
     } catch (error) {
-      console.error('Error liking user:', error);
+      console.error('Error liking user:', error)
     }
-
-    setCurrentIndex((prev) => (prev + 1) % users.length);
-    setPhotoIndex(0);
-  };
+    setCurrentIndex((prev) => (prev + 1) % users.length)
+    setPhotoIndex(0)
+  }
 
   const handleDislikeUser = async () => {
-    if (!users[currentIndex]) return;
-    const userId = users[currentIndex].profile_id;
-
+    if (!users[currentIndex]) return
+    const userId = users[currentIndex].profile_id
     try {
-      const visitResponse = await fetch(`http://localhost:3000/api/profiles/${userId}/visits`, {
+      const visitRes = await fetch(`http://localhost:3000/api/profiles/${userId}/visits`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ visited_user_id: userId }),
-        credentials: 'include',
-      });
-
-      if (!visitResponse.ok) {
-        const errorData = await visitResponse.json();
-        console.error('Error logging visit:', errorData);
-        alert(`Error logging visit: ${errorData.message || 'Unknown error'}`);
-        return; 
-      } else {
-        console.log(`Successfully logged visit for user ID: ${userId}`);
+        credentials: 'include'
+      })
+      if (!visitRes.ok) {
+        const err = await visitRes.json()
+        console.error('Error logging visit:', err)
+        alert(`Error logging visit: ${err.message || 'Unknown error'}`)
+        return
       }
-
-      const dislikeResponse = await fetch(`http://localhost:3000/api/profiles/${userId}/dislike`, {
+      await fetch(`http://localhost:3000/api/profiles/${userId}/dislike`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-      });
-
-      if (!dislikeResponse.ok) {
-        const errorData = await dislikeResponse.json();
-        console.error('Error disliking user:', errorData);
-      } else {
-        console.log(`Successfully disliked user with ID: ${userId}`);
-      }
+        credentials: 'include'
+      })
     } catch (error) {
-      console.error('Error rejecting user:', error);
+      console.error('Error rejecting user:', error)
     }
+    setCurrentIndex((prev) => (prev + 1) % users.length)
+    setPhotoIndex(0)
+  }
 
-    setCurrentIndex((prev) => (prev + 1) % users.length);
-    setPhotoIndex(0);
-  };
   const handleNextPhoto = () => {
-    if (!users[currentIndex]) return;
-    setPhotoIndex((prev) => (prev + 1) % users[currentIndex].pictures.length);
-  };
+    if (!users[currentIndex]) return
+    setPhotoIndex((prev) => (prev + 1) % users[currentIndex].pictures.length)
+  }
 
   const handlePreviousPhoto = () => {
-    if (!users[currentIndex]) return;
-    setPhotoIndex((prev) => (prev - 1 + users[currentIndex].pictures.length) % users[currentIndex].pictures.length);
-  };
+    if (!users[currentIndex]) return
+    setPhotoIndex((prev) => (prev - 1 + users[currentIndex].pictures.length) % users[currentIndex].pictures.length)
+  }
 
-  const currentUser = users[currentIndex];
-  const currentPhoto = currentUser ? currentUser.pictures[photoIndex]?.picture_url : '';
+  const currentUser = users[currentIndex]
+  const currentPhoto = currentUser ? currentUser.pictures[photoIndex]?.picture_url : ''
 
   return (
     <>
       <NavbarLogged />
-
       <div className="d-flex justify-content-center gap-2 my-3">
-        <button
-          className="btn btn-outline-primary"
-          onClick={() => setSortField('age')}
-        >
+        <button className="btn btn-outline-primary" onClick={() => setSortField('age')}>
           Sort by Age
         </button>
-        <button
-          className="btn btn-outline-primary"
-          onClick={() => setSortField('distance')}
-        >
+        <button className="btn btn-outline-primary" onClick={() => setSortField('distance')}>
           Sort by Location
         </button>
-        <button
-          className="btn btn-outline-primary"
-          onClick={() => setSortField('fame_rating')}
-        >
+        <button className="btn btn-outline-primary" onClick={() => setSortField('fame_rating')}>
           Sort by Fame Rating
         </button>
-        <button
-          className="btn btn-outline-primary"
-          onClick={() => setSortField('common_interests')}
-        >
+        <button className="btn btn-outline-primary" onClick={() => setSortField('common_interests')}>
           Sort by Common Tags
         </button>
       </div>
-
       <div className="content d-flex flex-column align-items-center justify-content-center mt-5 position-relative">
         {currentUser ? (
           <div className="card text-center p-3 shadow-lg">
             <div className="position-relative">
-              <img
-                src={currentPhoto}
-                className="card-img-top"
-                alt={`${currentUser.name}`}
-              />
-              {/* Photo Navigation Buttons */}
+              <img src={currentPhoto} className="card-img-top" alt={currentUser.name} />
               {currentUser.pictures.length > 1 && (
                 <>
                   <button
@@ -284,32 +206,17 @@ function Home() {
                 <p className="card-text mb-3">
                   <strong>Interests:</strong>{' '}
                   {currentUser.interests
-                    .map((item: any) => {
-                      if (typeof item === 'object' && item !== null) {
-                        return item.interest_tag || '';
-                      }
-                      return item;
-                    })
+                    .map((item: any) => (typeof item === 'object' ? item.interest_tag || '' : item))
                     .filter(Boolean)
                     .join(', ')}
                 </p>
               )}
-              <p className="card-text text-muted mb-1">
-                Fame Rating: {currentUser.fame_rating}
-              </p>
+              <p className="card-text text-muted mb-1">Fame Rating: {currentUser.fame_rating}</p>
               <div className="d-flex justify-content-around mt-3">
-                <button
-                  className="btn dislike-button rounded-circle shadow-sm"
-                  onClick={handleDislikeUser}
-                  title="Reject"
-                >
+                <button className="btn dislike-button rounded-circle shadow-sm" onClick={handleDislikeUser} title="Reject">
                   <i className="bi bi-x text-danger"></i>
                 </button>
-                <button
-                  className="btn like-button rounded-circle shadow-sm"
-                  onClick={handleLikeUser}
-                  title="Like"
-                >
+                <button className="btn like-button rounded-circle shadow-sm" onClick={handleLikeUser} title="Like">
                   <i className="bi bi-heart-fill text-danger"></i>
                 </button>
               </div>
@@ -320,7 +227,7 @@ function Home() {
         )}
       </div>
     </>
-  );
+  )
 }
 
-export default Home;
+export default Home
