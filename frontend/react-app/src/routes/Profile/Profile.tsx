@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import NavbarLogged from '../../components/NavbarLogged/NavbarLogged'
 import './profile.css'
 
@@ -19,6 +20,7 @@ export interface UserProfile {
 }
 
 function Profile() {
+  const navigate = useNavigate()
   const [user, setUser] = useState<UserProfile | null>(null)
   const [profileImgSrc, setProfileImgSrc] = useState('https://via.placeholder.com/400x500?text=Unknown+1')
   const [isEditing, setIsEditing] = useState(false)
@@ -36,8 +38,12 @@ function Profile() {
         const res = await fetch(`${window.location.origin}/api/profiles/me`)
         if (!res.ok) throw new Error('Failed to fetch profile data')
         const responseJson = await res.json()
-        // Check if the API returns an error (for example, email not verified)
+        
         if (responseJson.status === "fail") {
+          if (responseJson.data === "profile not found") {
+            navigate('/create-profile')
+            return
+          }
           setError(responseJson.data)
           return
         }
@@ -93,7 +99,7 @@ function Profile() {
       }
     }
     fetchProfileData()
-  }, [])
+  }, [navigate])
 
   const handleEditClick = () => {
     if (!user) return

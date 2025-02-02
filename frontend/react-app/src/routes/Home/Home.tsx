@@ -35,11 +35,11 @@ function Home() {
         if (result.status === 'success') {
           setPreferences(buildPreferences(result.data))
         } else {
-          navigate('/create-profile')
+          navigate('/profile')
         }
       } catch (error) {
         console.error('Error fetching user profile:', error)
-        navigate('/create-profile')
+        navigate('/profile')
       }
     }
     fetchUserProfile()

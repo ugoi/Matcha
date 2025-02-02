@@ -5,14 +5,16 @@ import 'bootstrap/dist/css/bootstrap.min.css';
 import Root from "./routes/Root/Root.tsx";
 import Signup from "./routes/Signup/Signup.tsx";
 import Login from "./routes/Login/Login.tsx";
+import ForgotPassword from "./routes/ForgotPassword/ForgotPassword.tsx";
+import ResetPassword from "./routes/ResetPassword/ResetPassword.tsx";
 import About from "./routes/About/About.tsx";
 import Home from "./routes/Home/Home.tsx";
 import Profile from "./routes/Profile/Profile.tsx";
 import Chat from "./routes/Chat/Chat.tsx";
 import Settings from "./routes/Settings/Settings.tsx";
 import CreateProfile from "./routes/CreateProfile/CreateProfile.tsx";
-import VerifyEmail from './routes/VerifyEmail/VerifyEmail';
-import ConfirmEmail from './routes/ConfirmEmail/ConfirmEmail';
+import VerifyEmail from "./routes/VerifyEmail/VerifyEmail";
+import ConfirmEmail from "./routes/ConfirmEmail/ConfirmEmail";
 
 const App = () => {
   const [isLoggedIn, setIsLoggedIn] = useState<boolean | null>(null);
@@ -40,7 +42,6 @@ const App = () => {
       .catch(() => {
         setIsLoggedIn(false);
       });
-      
   }, []);
 
   const router = createBrowserRouter([
@@ -55,6 +56,14 @@ const App = () => {
     {
       path: "/login",
       element: isLoggedIn ? <Navigate to="/home" /> : <Login />,
+    },
+    {
+      path: "/forgot-password",
+      element: isLoggedIn ? <Navigate to="/home" /> : <ForgotPassword />,
+    },
+    {
+      path: "/reset-password",
+      element: isLoggedIn ? <Navigate to="/home" /> : <ResetPassword />,
     },
     {
       path: "/about",

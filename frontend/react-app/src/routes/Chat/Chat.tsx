@@ -62,14 +62,13 @@ export default function Chat() {
   const navigate = useNavigate()
 
   useEffect(() => {
-    // Fetch profile data to get userId. If not found, navigate to create-profile.
     (async () => {
       const res = await fetch(`${window.location.origin}/api/profiles/me`, { credentials: 'include' })
       const data = await res.json()
       if (data.status === 'success') {
         setUserId(data.data.user_id)
       } else {
-        navigate('/create-profile')
+        navigate('/profile')
       }
     })()
   }, [navigate])
@@ -80,12 +79,8 @@ export default function Chat() {
 
   useEffect(() => {
     if (!userId) return
-
-    // Log cookies for debugging (httpOnly JWT won't be visible)
     console.log('Document cookies:', document.cookie)
 
-    // Use withCredentials so that httpOnly cookies are sent automatically.
-    // For local development without SSL, use ws:// (change to wss:// if needed in production)
     const socketUrl = 'ws://localhost:3000/api/chat'
     socketRef.current = io(socketUrl, { withCredentials: true })
 

@@ -116,7 +116,10 @@ function Login() {
                 Login
               </Button>
             </Form>
-            <p className="text-center">or</p>
+            <div className="text-center">
+              <a href="/forgot-password">Forgot Password?</a>
+            </div>
+            <p className="text-center mt-3">or</p>
             <div className="d-flex justify-content-between">
               <Button 
                 variant="outline-danger" 
