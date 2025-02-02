@@ -69,9 +69,14 @@ export const userRepository = {
   update: async function update(input: UpdateUserInput): Promise<User> {
     const { update } = pgp.helpers;
 
+    // Filter out undefined fields
+    const cleanData = Object.fromEntries(
+      Object.entries(input.data).filter(([_, v]) => v !== undefined)
+    );
+
     const condition = pgp.as.format("WHERE user_id = ${user_id}", input);
 
-    let query = `${update(input.data, null, "users")}
+    let query = `${update(cleanData, null, "users")}
     ${condition}
     RETURNING *`;
 

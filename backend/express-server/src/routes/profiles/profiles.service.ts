@@ -4,7 +4,6 @@ import {
   JFail,
   ValidationError,
 } from "../../error-handlers/custom-errors.js";
-import { FilterSet, SortSet } from "../../utils/utils.js";
 import {
   CreateProfileInput,
   FilterBy,
