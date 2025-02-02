@@ -3,7 +3,8 @@ import NavbarLogged from '../../components/NavbarLogged/NavbarLogged'
 import './profile.css'
 
 export interface UserProfile {
-  name: string
+  first_name: string
+  last_name: string
   age: number
   gender: string
   sexual_preference: string
@@ -27,23 +28,30 @@ function Profile() {
   const [editedInterests, setEditedInterests] = useState('')
   const [currentPhotoIndex, setCurrentPhotoIndex] = useState(0)
   const [isUploading, setIsUploading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
     async function fetchProfileData() {
       try {
         const res = await fetch(`${window.location.origin}/api/profiles/me`)
         if (!res.ok) throw new Error('Failed to fetch profile data')
-        const { data } = await res.json()
-        const { profile_picture, gps_latitude, gps_longitude } = data
+        const responseJson = await res.json()
+        // Check if the API returns an error (for example, email not verified)
+        if (responseJson.status === "fail") {
+          setError(responseJson.data)
+          return
+        }
+        const { data } = responseJson
+
         let nearestLocation = 'Unknown location'
         if (
-          typeof gps_latitude === 'number' &&
-          !isNaN(gps_latitude) &&
-          typeof gps_longitude === 'number' &&
-          !isNaN(gps_longitude)
+          typeof data.gps_latitude === 'number' &&
+          !isNaN(data.gps_latitude) &&
+          typeof data.gps_longitude === 'number' &&
+          !isNaN(data.gps_longitude)
         ) {
           const locRes = await fetch(
-            `https://nominatim.openstreetmap.org/reverse?format=json&lat=${gps_latitude}&lon=${gps_longitude}&zoom=10`,
+            `https://nominatim.openstreetmap.org/reverse?format=json&lat=${data.gps_latitude}&lon=${data.gps_longitude}&zoom=10`,
             { headers: { 'Accept-Language': 'en-US,en;q=0.9' } }
           )
           const locData = await locRes.json()
@@ -51,26 +59,32 @@ function Profile() {
           const country = locData.address?.country || ''
           nearestLocation = `${city}${country ? `, ${country}` : ''}`
         }
+
         const userProfile: UserProfile = {
-          name: `${data.first_name} ${data.last_name}`,
+          first_name: data.first_name,
+          last_name: data.last_name,
           age: data.age,
           gender: data.gender,
           sexual_preference: data.sexual_preference,
           biography: data.biography,
-          profile_picture,
-          gps_latitude,
-          gps_longitude,
+          profile_picture: data.profile_picture,
+          gps_latitude: data.gps_latitude,
+          gps_longitude: data.gps_longitude,
           nearest_location: nearestLocation,
           pictures: data.pictures,
           fame_rating: data.fame_rating,
           interests: data.interests || []
         }
         setUser(userProfile)
-        const profilePicIndex = data.pictures.findIndex((pic: { picture_url: string }) => pic.picture_url === profile_picture)
+
+        const profilePicIndex = data.pictures.findIndex(
+          (pic: { picture_url: string }) => pic.picture_url === data.profile_picture
+        )
         if (profilePicIndex !== -1) setCurrentPhotoIndex(profilePicIndex)
+
         try {
-          const imgRes = await fetch(profile_picture)
-          if (imgRes.ok) setProfileImgSrc(profile_picture)
+          const imgRes = await fetch(data.profile_picture)
+          if (imgRes.ok) setProfileImgSrc(data.profile_picture)
         } catch {
           setProfileImgSrc('https://via.placeholder.com/400x500?text=Unknown+1')
         }
@@ -85,34 +99,29 @@ function Profile() {
     if (!user) return
     setIsEditing(true)
     setEditedBio(user.biography)
-    const [first, ...rest] = user.name.split(' ')
-    setEditedFirstName(first)
-    setEditedLastName(rest.join(' '))
+    setEditedFirstName(user.first_name)
+    setEditedLastName(user.last_name)
     setEditedInterests(user.interests?.map(i => i.interest_tag).join(', ') || '')
   }
 
   const handleSaveClick = async () => {
     if (!user) return
     try {
-      const currentName = user.name.split(' ')
-      let nameUpdated = false
-      const userFormData = new URLSearchParams()
-      if (editedFirstName !== currentName[0]) {
-        userFormData.append('first_name', editedFirstName)
-        nameUpdated = true
-      }
-      if (editedLastName !== currentName.slice(1).join(' ')) {
-        userFormData.append('last_name', editedLastName)
-        nameUpdated = true
-      }
-      if (nameUpdated) {
+      const finalFirstName = editedFirstName.trim() === '' ? user.first_name : editedFirstName.trim()
+      const finalLastName = editedLastName.trim() === '' ? user.last_name : editedLastName.trim()
+
+      if (finalFirstName !== user.first_name || finalLastName !== user.last_name) {
+        const formData = new URLSearchParams()
+        if (finalFirstName !== user.first_name) formData.append('first_name', finalFirstName)
+        if (finalLastName !== user.last_name) formData.append('last_name', finalLastName)
         const res = await fetch(`${window.location.origin}/api/users/me`, {
           method: 'PATCH',
           headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-          body: userFormData.toString()
+          body: formData.toString()
         })
-        if (!res.ok) throw new Error('Failed to update user data')
+        if (!res.ok) throw new Error('Failed to update name')
       }
+
       if (editedBio !== user.biography) {
         const res = await fetch(`${window.location.origin}/api/profiles/me`, {
           method: 'PATCH',
@@ -121,6 +130,7 @@ function Profile() {
         })
         if (!res.ok) throw new Error('Failed to update biography')
       }
+
       const newInterests = editedInterests
         .split(',')
         .map(tag => tag.trim())
@@ -143,10 +153,12 @@ function Profile() {
         })
         if (!res.ok) throw new Error('Failed to update interests')
       }
+
       setUser({
         ...user,
+        first_name: finalFirstName,
+        last_name: finalLastName,
         biography: editedBio,
-        name: `${editedFirstName} ${editedLastName}`,
         interests: newInterests.map(tag => ({ interest_id: '', interest_tag: tag }))
       })
       setIsEditing(false)
@@ -217,6 +229,20 @@ function Profile() {
     }
   }
 
+  // If an error occurred (for example, email not verified), display the error message.
+  if (error) {
+    return (
+      <main>
+        <NavbarLogged />
+        <section className="content d-flex flex-column align-items-center justify-content-center mt-5">
+          <div className="alert alert-danger" role="alert">
+            {error}
+          </div>
+        </section>
+      </main>
+    )
+  }
+
   if (!user) return <p></p>
   return (
     <main>
@@ -227,7 +253,7 @@ function Profile() {
             <img
               src={user.pictures[currentPhotoIndex]?.picture_url || profileImgSrc}
               className="card-img-top"
-              alt={user.name}
+              alt={`${user.first_name} ${user.last_name}`}
               onError={() => setProfileImgSrc('https://via.placeholder.com/400x500?text=Unknown+1')}
             />
             {isEditing && (
@@ -259,7 +285,11 @@ function Profile() {
                           ×
                         </button>
                         {pic.picture_url !== user.profile_picture && (
-                          <button className="set-profile-btn" onClick={() => handleSetProfilePicture(pic.picture_url)} type="button">
+                          <button
+                            className="set-profile-btn"
+                            onClick={() => handleSetProfilePicture(pic.picture_url)}
+                            type="button"
+                          >
                             Set as Profile
                           </button>
                         )}
@@ -295,41 +325,82 @@ function Profile() {
             </button>
             {user.pictures.length > 1 && (
               <div className="photo-navigation">
-                <button className="photo-arrow left-arrow" onClick={() => setCurrentPhotoIndex((prev) => (prev - 1 + user.pictures.length) % user.pictures.length)}>
+                <button
+                  className="photo-arrow left-arrow"
+                  onClick={() =>
+                    setCurrentPhotoIndex(prev => (prev - 1 + user.pictures.length) % user.pictures.length)
+                  }
+                >
                   <i className="bi bi-chevron-left"></i>
                 </button>
-                <button className="photo-arrow right-arrow" onClick={() => setCurrentPhotoIndex((prev) => (prev + 1) % user.pictures.length)}>
+                <button
+                  className="photo-arrow right-arrow"
+                  onClick={() => setCurrentPhotoIndex(prev => (prev + 1) % user.pictures.length)}
+                >
                   <i className="bi bi-chevron-right"></i>
                 </button>
               </div>
             )}
           </header>
           <div className="card-body">
-            <h4 className="card-title mb-2">{user.name}, {user.age}</h4>
+            <h4 className="card-title mb-2">
+              {user.first_name} {user.last_name}, {user.age}
+            </h4>
             {isEditing ? (
               <div className="mb-3">
                 <div className="row mb-2">
                   <div className="col">
-                    <input type="text" className="form-control" value={editedFirstName} onChange={(e) => setEditedFirstName(e.target.value)} placeholder="First Name" />
+                    <input
+                      type="text"
+                      className="form-control"
+                      value={editedFirstName}
+                      onChange={(e) => setEditedFirstName(e.target.value)}
+                      placeholder="First Name"
+                    />
                   </div>
                   <div className="col">
-                    <input type="text" className="form-control" value={editedLastName} onChange={(e) => setEditedLastName(e.target.value)} placeholder="Last Name" />
+                    <input
+                      type="text"
+                      className="form-control"
+                      value={editedLastName}
+                      onChange={(e) => setEditedLastName(e.target.value)}
+                      placeholder="Last Name"
+                    />
                   </div>
                 </div>
-                <textarea className="form-control mb-2" value={editedBio} onChange={(e) => setEditedBio(e.target.value)} rows={4} />
-                <input type="text" className="form-control mb-2" value={editedInterests} onChange={(e) => setEditedInterests(e.target.value)} placeholder="#vegan, #geek" />
+                <textarea
+                  className="form-control mb-2"
+                  value={editedBio}
+                  onChange={(e) => setEditedBio(e.target.value)}
+                  rows={4}
+                />
+                <input
+                  type="text"
+                  className="form-control mb-2"
+                  value={editedInterests}
+                  onChange={(e) => setEditedInterests(e.target.value)}
+                  placeholder="#vegan, #geek"
+                />
                 <div className="d-flex justify-content-center gap-2">
-                  <button className="btn btn-primary" onClick={handleSaveClick}>Save</button>
-                  <button className="btn btn-secondary" onClick={() => setIsEditing(false)}>Cancel</button>
+                  <button className="btn btn-primary" onClick={handleSaveClick}>
+                    Save
+                  </button>
+                  <button className="btn btn-secondary" onClick={() => setIsEditing(false)}>
+                    Cancel
+                  </button>
                 </div>
               </div>
             ) : (
               <>
                 <p className="card-text text-muted mb-3">{user.biography}</p>
                 {user.interests && user.interests.length > 0 ? (
-                  <p className="card-text text-muted"><strong>Interests:</strong> {user.interests.map(i => i.interest_tag).join(', ')}</p>
+                  <p className="card-text text-muted">
+                    <strong>Interests:</strong> {user.interests.map(i => i.interest_tag).join(', ')}
+                  </p>
                 ) : (
-                  <p className="card-text text-muted"><strong>Interests:</strong> None</p>
+                  <p className="card-text text-muted">
+                    <strong>Interests:</strong> None
+                  </p>
                 )}
               </>
             )}
