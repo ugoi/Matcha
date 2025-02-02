@@ -186,19 +186,29 @@ function Settings() {
     }
   };
 
-  const handleDeleteAccount = () => {
+  const handleDeleteAccount = async () => {
     if (!window.confirm('Are you sure you want to delete your account? This action is irreversible.')) return;
 
-    $.ajax({
-      url: "http://localhost:3000/api/users/me",
+    const requestOptions: RequestInit = {
       method: "DELETE",
-      timeout: 0
-    })
-    .done(() => {
-      window.location.href = '/';
-    })
-    .fail(() => {
-    });
+      redirect: "follow",
+    };
+    
+    try {
+      const response = await fetch("http://localhost:3000/api/users/me", requestOptions);
+      const json = await response.json();
+      console.log(json);
+      const status = json.status;
+      if (status === "error") {
+        console.error(status)
+      } else if (status === "fail") {
+        console.log(status)
+      } else if (status === "success") {
+        console.error(status)
+      }
+    } catch (error) {
+      console.error("Error:", error);
+    }
   };
 
   return (
