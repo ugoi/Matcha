@@ -45,12 +45,6 @@ interface FullProfile {
   last_online?: string
 }
 
-function getCookie(name: string): string | null {
-  const value = `; ${document.cookie}`
-  const parts = value.split(`; ${name}=`)
-  return parts.length === 2 ? parts.pop()?.split(';').shift() || null : null
-}
-
 export default function Chat() {
   const [matches, setMatches] = useState<MatchItem[]>([])
   const [chats, setChats] = useState<MatchItem[]>([])
@@ -68,6 +62,7 @@ export default function Chat() {
   const navigate = useNavigate()
 
   useEffect(() => {
+    // Fetch profile data to get userId. If not found, navigate to create-profile.
     (async () => {
       const res = await fetch(`${window.location.origin}/api/profiles/me`, { credentials: 'include' })
       const data = await res.json()
@@ -85,33 +80,57 @@ export default function Chat() {
 
   useEffect(() => {
     if (!userId) return
-    const token = getCookie('jwt')
-    if (!token) return
-    socketRef.current = io('wss://localhost:3000/api/chat', { auth: { token: `Bearer ${token}` } })
-    socketRef.current.on('connect', () => {})
+
+    // Log cookies for debugging (httpOnly JWT won't be visible)
+    console.log('Document cookies:', document.cookie)
+
+    // Use withCredentials so that httpOnly cookies are sent automatically.
+    // For local development without SSL, use ws:// (change to wss:// if needed in production)
+    const socketUrl = 'ws://localhost:3000/api/chat'
+    socketRef.current = io(socketUrl, { withCredentials: true })
+
+    socketRef.current.on('connect', () => {
+      console.log('Socket connected! ID:', socketRef.current?.id)
+    })
+
+    socketRef.current.on('connect_error', (err) => {
+      console.error('Socket connect error:', err)
+    })
+
     socketRef.current.on('chat message', (data, ack) => {
+      console.log('Received chat message:', data)
+      // Note: the server sends properties 'msg' and 'sender'
       const newMsg: ChatMessage = {
         chat_id: Math.random().toString(36).substring(2),
-        sender_user_id: data.from,
+        sender_user_id: data.sender, // changed from data.from to data.sender
         receiver_user_id: userId,
-        message: data.message,
-        sent_at: data.timestamp,
+        message: data.msg,           // changed from data.message to data.msg
+        sent_at: data.timestamp || new Date().toISOString(), // use timestamp if provided
       }
-      if (newMsg.sender_user_id === selectedUserIdRef.current || newMsg.receiver_user_id === selectedUserIdRef.current) {
+      // Update message history if this message belongs to the selected chat
+      if (
+        newMsg.sender_user_id === selectedUserIdRef.current ||
+        newMsg.receiver_user_id === selectedUserIdRef.current
+      ) {
         setMessageHistory(prev =>
           [...prev, newMsg].sort((a, b) => new Date(a.sent_at).getTime() - new Date(b.sent_at).getTime())
         )
       }
+      // Update chat preview list
       setChats(prev =>
         prev.map(c =>
-          c.id === data.from
-            ? { ...c, lastMessage: data.message, timestamp: new Date(data.timestamp).toLocaleString() }
+          c.id === data.sender // changed from data.from to data.sender
+            ? { ...c, lastMessage: data.msg, timestamp: new Date(data.timestamp || Date.now()).toLocaleString() }
             : c
         )
       )
-      ack('Message received')
+      if (typeof ack === 'function') {
+        ack('Message received')
+      }
     })
-    socketRef.current.on('error', err => console.log(err))
+
+    socketRef.current.on('error', err => console.error('Socket error:', err))
+
     return (): void => {
       socketRef.current?.disconnect()
     }
@@ -187,7 +206,9 @@ export default function Chat() {
         )
         setMessageHistory(sortedChats)
       }
-    } catch {}
+    } catch (error) {
+      console.error('Error fetching chat history:', error)
+    }
   }
 
   const handleSendMessage = async () => {
@@ -204,6 +225,7 @@ export default function Chat() {
     setMessageHistory(prev =>
       [...prev, tempMsg].sort((a, b) => new Date(a.sent_at).getTime() - new Date(b.sent_at).getTime())
     )
+    console.log('Emitting chat message:', { msg, receiver: selectedUserId })
     try {
       const res = await fetch(`http://localhost:3000/api/chats/${selectedUserId}`, {
         method: 'POST',
@@ -228,17 +250,28 @@ export default function Chat() {
           }
         }
       }
-    } catch {}
-    socketRef.current?.emit('chat message', { msg, receiver: selectedUserId, timestamp: new Date().toISOString() })
+    } catch (error) {
+      console.error("Error sending message:", error)
+    }
+    // Emit the message via socket with expected payload properties
+    if (socketRef.current) {
+      socketRef.current.emit('chat message', { msg, receiver: selectedUserId })
+    } else {
+      console.error('Socket is not connected.')
+    }
     setChats(prev => {
       const existing = prev.find(c => c.id === selectedUserId)
       if (existing) {
         return prev.map(c =>
-          c.id === selectedUserId ? { ...c, lastMessage: msg, timestamp: new Date().toLocaleString() } : c
+          c.id === selectedUserId
+            ? { ...c, lastMessage: msg, timestamp: new Date().toLocaleString() }
+            : c
         )
       }
       const maybeMatch = matches.find(m => m.id === selectedUserId)
-      return maybeMatch ? [...prev, { ...maybeMatch, lastMessage: msg, timestamp: new Date().toLocaleString() }] : prev
+      return maybeMatch
+        ? [...prev, { ...maybeMatch, lastMessage: msg, timestamp: new Date().toLocaleString() }]
+        : prev
     })
     setMatches(prev => prev.filter(x => x.id !== selectedUserId))
   }
@@ -258,7 +291,11 @@ export default function Chat() {
     expandedProfile && (
       <div className="d-flex justify-content-center mt-3">
         <div className="card text-center p-3 shadow-lg" style={{ width: '22rem' }}>
-          <img src={expandedProfile.profile_picture || 'https://via.placeholder.com/200'} alt={`${expandedProfile.first_name} ${expandedProfile.last_name}`} className="card-img-top" />
+          <img
+            src={expandedProfile.profile_picture || 'https://via.placeholder.com/200'}
+            alt={`${expandedProfile.first_name} ${expandedProfile.last_name}`}
+            className="card-img-top"
+          />
           <div className="card-body">
             <h4 className="card-title mb-2">
               {expandedProfile.first_name} {expandedProfile.last_name}, {expandedProfile.age}
@@ -282,7 +319,12 @@ export default function Chat() {
     <div className="matches-list d-flex overflow-auto mb-3">
       {matches.length ? (
         matches.map(m => (
-          <div key={m.id} className="match-avatar-container mx-2" onClick={() => openChat(m.id)} style={{ cursor: 'pointer' }}>
+          <div
+            key={m.id}
+            className="match-avatar-container mx-2"
+            onClick={() => openChat(m.id)}
+            style={{ cursor: 'pointer' }}
+          >
             <img src={m.image} alt={m.name} className="match-avatar rounded-circle" />
             <p className="match-name text-center mt-2">{m.name}</p>
           </div>
@@ -297,7 +339,12 @@ export default function Chat() {
     <div className="chats-list">
       {chats.length ? (
         chats.map(chat => (
-          <div key={chat.id} className="chat-item p-3 shadow-sm d-flex align-items-center" onClick={() => openChat(chat.id)} style={{ cursor: 'pointer' }}>
+          <div
+            key={chat.id}
+            className="chat-item p-3 shadow-sm d-flex align-items-center"
+            onClick={() => openChat(chat.id)}
+            style={{ cursor: 'pointer' }}
+          >
             <img src={chat.image} alt={chat.name} className="chat-avatar rounded-circle" />
             <div className="chat-info ms-3">
               <h5>{chat.name}</h5>
@@ -320,7 +367,10 @@ export default function Chat() {
         <h5>{foundChat?.name || 'Chat'}</h5>
         <div className="chat-history" ref={chatHistoryRef}>
           {messageHistory.map(msg => (
-            <div key={msg.chat_id} className={`message-bubble ${msg.sender_user_id === userId ? 'message-sent' : 'message-received'}`}>
+            <div
+              key={msg.chat_id}
+              className={`message-bubble ${msg.sender_user_id === userId ? 'message-sent' : 'message-received'}`}
+            >
               <p>{msg.message}</p>
               <small className="text-muted">{new Date(msg.sent_at).toLocaleString()}</small>
             </div>
@@ -357,7 +407,12 @@ export default function Chat() {
           <ul className="list-group">
             {likes.length ? (
               likes.map(like => (
-                <li key={like.user_id} className="list-group-item d-flex align-items-center" style={{ cursor: 'pointer' }} onClick={() => handleExpandLike(like)}>
+                <li
+                  key={like.user_id}
+                  className="list-group-item d-flex align-items-center"
+                  style={{ cursor: 'pointer' }}
+                  onClick={() => handleExpandLike(like)}
+                >
                   <img
                     src={like.profile_picture}
                     alt={`${like.first_name} ${like.last_name}`.trim() || 'Unknown'}
@@ -397,10 +452,16 @@ export default function Chat() {
       <div className="content d-flex flex-column align-items-center justify-content-center mt-5">
         <div className="card text-center p-3 shadow-lg chat-card">
           <div className="toggle-buttons d-flex justify-content-center mb-3">
-            <button className={`btn ${view === 'matches' ? 'btn-primary' : 'btn-outline-primary'} mx-2`} onClick={() => setView('matches')}>
+            <button
+              className={`btn ${view === 'matches' ? 'btn-primary' : 'btn-outline-primary'} mx-2`}
+              onClick={() => setView('matches')}
+            >
               Matches & Chats
             </button>
-            <button className={`btn ${view === 'likes' ? 'btn-primary' : 'btn-outline-primary'} mx-2`} onClick={() => setView('likes')}>
+            <button
+              className={`btn ${view === 'likes' ? 'btn-primary' : 'btn-outline-primary'} mx-2`}
+              onClick={() => setView('likes')}
+            >
               Likes & Views
             </button>
           </div>
