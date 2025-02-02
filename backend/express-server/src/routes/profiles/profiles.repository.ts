@@ -141,26 +141,33 @@ export const searchPreferencesRepository = {
 
   update: async function update(
     user_id: string,
-    searchPreferences: {
+    searchPreferences: Partial<{
       min_age: number;
       max_age: number;
       max_distance: number;
-    }
+    }>
   ): Promise<SearchPreferences> {
-    let updatedSearchPreferences = await db.one(
-      `
-            UPDATE search_preferences
-            SET min_age = $1, max_age = $2, max_distance = $3
-            WHERE user_id = $4
-            RETURNING *
-        `,
-      [
-        searchPreferences.min_age,
-        searchPreferences.max_age,
-        searchPreferences.max_distance,
-        user_id,
-      ]
+    // Filter out undefined fields
+    const cleanData = Object.fromEntries(
+      Object.entries(searchPreferences).filter(([_, v]) => v !== undefined)
     );
+
+    // Define the column set for the fields that can be updated
+    const columns = new pgp.helpers.ColumnSet(Object.keys(cleanData), {
+      table: "search_preferences",
+    });
+
+    // Generate the SQL update statement
+    const updateStatement = pgp.helpers.update(cleanData, columns);
+
+    // Add the condition for user_id
+    const condition = pgp.as.format(" WHERE user_id = $1", [user_id]);
+
+    // Full query
+    const query = `${updateStatement}${condition} RETURNING *`;
+
+    // Execute the query and get the updated preferences
+    const updatedSearchPreferences = await db.one(query);
 
     return updatedSearchPreferences;
   },

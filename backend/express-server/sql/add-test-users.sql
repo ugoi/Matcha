@@ -3,26 +3,26 @@
 -- Insert test users
 INSERT INTO users (username, email, password_hash, first_name, last_name, phone, is_email_verified, is_phone_verified)
 VALUES
-('user1', 'user1@example.com', 'pwdhash1', 'John', 'Doe', '555-0001', TRUE, TRUE),
-('user2', 'user2@example.com', 'pwdhash2', 'Jane', 'Smith', '555-0002', TRUE, TRUE),
-('user3', 'user3@example.com', 'pwdhash3', 'Bob', 'Johnson', '555-0003', FALSE, FALSE),
-('user4', 'user4@example.com', 'pwdhash4', 'Alice', 'Williams', '555-0004', TRUE, FALSE),
-('user5', 'user5@example.com', 'pwdhash5', 'Michael', 'Brown', '555-0005', FALSE, TRUE),
-('user6', 'user6@example.com', 'pwdhash6', 'Emily', 'Jones', '555-0006', TRUE, TRUE),
-('user7', 'user7@example.com', 'pwdhash7', 'David', 'Garcia', '555-0007', FALSE, FALSE),
-('user8', 'user8@example.com', 'pwdhash8', 'Sarah', 'Martinez', '555-0008', TRUE, TRUE),
-('user9', 'user9@example.com', 'pwdhash9', 'Chris', 'Rodriguez', '555-0009', TRUE, FALSE),
-('user10', 'user10@example.com', 'pwdhash10', 'Laura', 'Hernandez', '555-0010', FALSE, TRUE),
-('user11', 'user11@example.com', 'pwdhash11', 'James', 'Lopez', '555-0011', TRUE, TRUE),
-('user12', 'user12@example.com', 'pwdhash12', 'Linda', 'Gonzalez', '555-0012', TRUE, FALSE),
-('user13', 'user13@example.com', 'pwdhash13', 'Robert', 'Wilson', '555-0013', FALSE, TRUE),
-('user14', 'user14@example.com', 'pwdhash14', 'Patricia', 'Anderson', '555-0014', TRUE, TRUE),
-('user15', 'user15@example.com', 'pwdhash15', 'Daniel', 'Thomas', '555-0015', FALSE, FALSE),
-('user16', 'user16@example.com', 'pwdhash16', 'Barbara', 'Taylor', '555-0016', TRUE, TRUE),
-('user17', 'user17@example.com', 'pwdhash17', 'Matthew', 'Moore', '555-0017', TRUE, FALSE),
-('user18', 'user18@example.com', 'pwdhash18', 'Elizabeth', 'Jackson', '555-0018', FALSE, TRUE),
-('user19', 'user19@example.com', 'pwdhash19', 'Joseph', 'Martin', '555-0019', TRUE, TRUE),
-('user20', 'user20@example.com', 'pwdhash20', 'Jennifer', 'Lee', '555-0020', TRUE, FALSE);
+('user1', 'user1@example.com', '$2b$10$fLBiHLPDL3tHXaX/17qILu4soC4rhZdKd/EzW4a3WnpMEbIIsbDoG', 'John', 'Doe', '555-0001', TRUE, TRUE),
+('user2', 'user2@example.com', '$2b$10$fLBiHLPDL3tHXaX/17qILu4soC4rhZdKd/EzW4a3WnpMEbIIsbDoG', 'Jane', 'Smith', '555-0002', TRUE, TRUE),
+('user3', 'user3@example.com', '$2b$10$fLBiHLPDL3tHXaX/17qILu4soC4rhZdKd/EzW4a3WnpMEbIIsbDoG', 'Bob', 'Johnson', '555-0003', FALSE, FALSE),
+('user4', 'user4@example.com', '$2b$10$fLBiHLPDL3tHXaX/17qILu4soC4rhZdKd/EzW4a3WnpMEbIIsbDoG', 'Alice', 'Williams', '555-0004', TRUE, FALSE),
+('user5', 'user5@example.com', '$2b$10$fLBiHLPDL3tHXaX/17qILu4soC4rhZdKd/EzW4a3WnpMEbIIsbDoG', 'Michael', 'Brown', '555-0005', FALSE, TRUE),
+('user6', 'user6@example.com', '$2b$10$fLBiHLPDL3tHXaX/17qILu4soC4rhZdKd/EzW4a3WnpMEbIIsbDoG', 'Emily', 'Jones', '555-0006', TRUE, TRUE),
+('user7', 'user7@example.com', '$2b$10$fLBiHLPDL3tHXaX/17qILu4soC4rhZdKd/EzW4a3WnpMEbIIsbDoG', 'David', 'Garcia', '555-0007', FALSE, FALSE),
+('user8', 'user8@example.com', '$2b$10$fLBiHLPDL3tHXaX/17qILu4soC4rhZdKd/EzW4a3WnpMEbIIsbDoG', 'Sarah', 'Martinez', '555-0008', TRUE, TRUE),
+('user9', 'user9@example.com', '$2b$10$fLBiHLPDL3tHXaX/17qILu4soC4rhZdKd/EzW4a3WnpMEbIIsbDoG', 'Chris', 'Rodriguez', '555-0009', TRUE, FALSE),
+('user10', 'user10@example.com', '$2b$10$fLBiHLPDL3tHXaX/17qILu4soC4rhZdKd/EzW4a3WnpMEbIIsbDoG', 'Laura', 'Hernandez', '555-0010', FALSE, TRUE),
+('user11', 'user11@example.com', '$2b$10$fLBiHLPDL3tHXaX/17qILu4soC4rhZdKd/EzW4a3WnpMEbIIsbDoG', 'James', 'Lopez', '555-0011', TRUE, TRUE),
+('user12', 'user12@example.com', '$2b$10$fLBiHLPDL3tHXaX/17qILu4soC4rhZdKd/EzW4a3WnpMEbIIsbDoG', 'Linda', 'Gonzalez', '555-0012', TRUE, FALSE),
+('user13', 'user13@example.com', '$2b$10$fLBiHLPDL3tHXaX/17qILu4soC4rhZdKd/EzW4a3WnpMEbIIsbDoG', 'Robert', 'Wilson', '555-0013', FALSE, TRUE),
+('user14', 'user14@example.com', '$2b$10$fLBiHLPDL3tHXaX/17qILu4soC4rhZdKd/EzW4a3WnpMEbIIsbDoG', 'Patricia', 'Anderson', '555-0014', TRUE, TRUE),
+('user15', 'user15@example.com', '$2b$10$fLBiHLPDL3tHXaX/17qILu4soC4rhZdKd/EzW4a3WnpMEbIIsbDoG', 'Daniel', 'Thomas', '555-0015', FALSE, FALSE),
+('user16', 'user16@example.com', '$2b$10$fLBiHLPDL3tHXaX/17qILu4soC4rhZdKd/EzW4a3WnpMEbIIsbDoG', 'Barbara', 'Taylor', '555-0016', TRUE, TRUE),
+('user17', 'user17@example.com', '$2b$10$fLBiHLPDL3tHXaX/17qILu4soC4rhZdKd/EzW4a3WnpMEbIIsbDoG', 'Matthew', 'Moore', '555-0017', TRUE, FALSE),
+('user18', 'user18@example.com', '$2b$10$fLBiHLPDL3tHXaX/17qILu4soC4rhZdKd/EzW4a3WnpMEbIIsbDoG', 'Elizabeth', 'Jackson', '555-0018', FALSE, TRUE),
+('user19', 'user19@example.com', '$2b$10$fLBiHLPDL3tHXaX/17qILu4soC4rhZdKd/EzW4a3WnpMEbIIsbDoG', 'Joseph', 'Martin', '555-0019', TRUE, TRUE),
+('user20', 'user20@example.com', '$2b$10$fLBiHLPDL3tHXaX/17qILu4soC4rhZdKd/EzW4a3WnpMEbIIsbDoG', 'Jennifer', 'Lee', '555-0020', TRUE, FALSE);
 
 -- Insert profiles
 INSERT INTO profiles (user_id, gender, age, sexual_preference, biography, fame_rating, profile_picture, location)
