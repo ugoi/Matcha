@@ -25,6 +25,8 @@ function Home() {
   const [photoIndex, setPhotoIndex] = useState(0)
   const [preferences, setPreferences] = useState<any>(null)
   const [sortField, setSortField] = useState<string | null>(null)
+  const [visitedUserIds, setVisitedUserIds] = useState<Set<number>>(new Set())
+  const [likedUserIds, setLikedUserIds] = useState<Set<number>>(new Set())
   const navigate = useNavigate()
 
   useEffect(() => {
@@ -38,7 +40,6 @@ function Home() {
           navigate('/profile')
         }
       } catch (error) {
-        console.error('Error fetching user profile:', error)
         navigate('/profile')
       }
     }
@@ -86,7 +87,6 @@ function Home() {
           setUsers([])
         }
       } catch (error) {
-        console.error('Error fetching profiles:', error)
         setUsers([])
       }
     }
@@ -95,43 +95,60 @@ function Home() {
     }
   }, [preferences, sortField])
 
-  const handleLikeUser = async () => {
-    if (!users[currentIndex]) return
-    const userId = users[currentIndex].profile_id
-    try {
-      const res = await fetch(`http://localhost:3000/api/profiles/${userId}/like`, {
+  // Automatically record a visit when a new profile is shown.
+  useEffect(() => {
+    const currentUser = users[currentIndex]
+    if (!currentUser) return
+    if (!visitedUserIds.has(currentUser.profile_id)) {
+      fetch(`http://localhost:3000/api/profiles/${currentUser.profile_id}/visits`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include'
       })
-      if (!res.ok) {
+      setVisitedUserIds(prev => {
+        const newSet = new Set(prev)
+        newSet.add(currentUser.profile_id)
+        return newSet
+      })
+    }
+  }, [currentIndex, users, visitedUserIds])
+
+  const handleLikeUser = async () => {
+    if (!users[currentIndex]) return
+    const currentUser = users[currentIndex]
+    if (likedUserIds.has(currentUser.profile_id)) {
+      setCurrentIndex(prev => (prev + 1) % users.length)
+      setPhotoIndex(0)
+      return
+    }
+    try {
+      const res = await fetch(`http://localhost:3000/api/profiles/${currentUser.profile_id}/like`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include'
+      })
+      if (res.ok) {
+        setLikedUserIds(prev => {
+          const newSet = new Set(prev)
+          newSet.add(currentUser.profile_id)
+          return newSet
+        })
+      } else {
         const err = await res.json()
         console.error('Error liking user:', err)
       }
     } catch (error) {
       console.error('Error liking user:', error)
     }
-    setCurrentIndex((prev) => (prev + 1) % users.length)
+    setCurrentIndex(prev => (prev + 1) % users.length)
     setPhotoIndex(0)
   }
 
   const handleDislikeUser = async () => {
     if (!users[currentIndex]) return
-    const userId = users[currentIndex].profile_id
+    const currentUser = users[currentIndex]
     try {
-      const visitRes = await fetch(`http://localhost:3000/api/profiles/${userId}/visits`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ visited_user_id: userId }),
-        credentials: 'include'
-      })
-      if (!visitRes.ok) {
-        const err = await visitRes.json()
-        console.error('Error logging visit:', err)
-        alert(`Error logging visit: ${err.message || 'Unknown error'}`)
-        return
-      }
-      await fetch(`http://localhost:3000/api/profiles/${userId}/dislike`, {
+      await fetch(`http://localhost:3000/api/profiles/${currentUser.profile_id}/dislike`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include'
@@ -139,18 +156,18 @@ function Home() {
     } catch (error) {
       console.error('Error rejecting user:', error)
     }
-    setCurrentIndex((prev) => (prev + 1) % users.length)
+    setCurrentIndex(prev => (prev + 1) % users.length)
     setPhotoIndex(0)
   }
 
   const handleNextPhoto = () => {
     if (!users[currentIndex]) return
-    setPhotoIndex((prev) => (prev + 1) % users[currentIndex].pictures.length)
+    setPhotoIndex(prev => (prev + 1) % users[currentIndex].pictures.length)
   }
 
   const handlePreviousPhoto = () => {
     if (!users[currentIndex]) return
-    setPhotoIndex((prev) => (prev - 1 + users[currentIndex].pictures.length) % users[currentIndex].pictures.length)
+    setPhotoIndex(prev => (prev - 1 + users[currentIndex].pictures.length) % users[currentIndex].pictures.length)
   }
 
   const currentUser = users[currentIndex]
@@ -213,10 +230,19 @@ function Home() {
               )}
               <p className="card-text text-muted mb-1">Fame Rating: {currentUser.fame_rating}</p>
               <div className="d-flex justify-content-around mt-3">
-                <button className="btn dislike-button rounded-circle shadow-sm" onClick={handleDislikeUser} title="Reject">
+                <button
+                  className="btn dislike-button rounded-circle shadow-sm"
+                  onClick={handleDislikeUser}
+                  title="Reject"
+                >
                   <i className="bi bi-x text-danger"></i>
                 </button>
-                <button className="btn like-button rounded-circle shadow-sm" onClick={handleLikeUser} title="Like">
+                <button
+                  className="btn like-button rounded-circle shadow-sm"
+                  onClick={handleLikeUser}
+                  title="Like"
+                  disabled={likedUserIds.has(currentUser.profile_id)}
+                >
                   <i className="bi bi-heart-fill text-danger"></i>
                 </button>
               </div>

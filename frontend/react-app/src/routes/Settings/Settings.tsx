@@ -5,6 +5,7 @@ import ReactSlider from 'react-slider';
 import $ from 'jquery';
 import NavbarLogged from '../../components/NavbarLogged/NavbarLogged';
 import './settings.css';
+import { useNavigate } from 'react-router-dom';
 
 function Settings() {
   const [distance, setDistance] = useState<number>(50);
@@ -18,6 +19,8 @@ function Settings() {
   const [maxFameRating, setMaxFameRating] = useState<number>(5);
   const [tagsInput, setTagsInput] = useState<string>(''); 
   const [commonTags, setCommonTags] = useState<string[]>([]);
+
+  const navigate = useNavigate();
 
   useEffect(() => {
     const loadUserData = () => {
@@ -205,6 +208,7 @@ function Settings() {
         console.log(status)
       } else if (status === "success") {
         console.error(status)
+        navigate('/');
       }
     } catch (error) {
       console.error("Error:", error);

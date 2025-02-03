@@ -51,7 +51,7 @@ export default function Chat() {
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null)
   const [messageHistory, setMessageHistory] = useState<ChatMessage[]>([])
   const [messageInput, setMessageInput] = useState('')
-  const [view, setView] = useState<'matches' | 'likes'>('matches')
+  const [view, setView] = useState<'matches' | 'likes' | 'visited'>('matches')
   const [likes, setLikes] = useState<LikeUser[]>([])
   const [views, setViews] = useState<any[]>([])
   const [userId, setUserId] = useState('')
@@ -60,6 +60,16 @@ export default function Chat() {
   const chatHistoryRef = useRef<HTMLDivElement | null>(null)
   const selectedUserIdRef = useRef<string | null>(null)
   const navigate = useNavigate()
+
+  // Helper function to format "last online" in a human-friendly manner.
+  const formatLastOnline = (lastOnlineStr?: string): string => {
+    if (!lastOnlineStr) return 'Unknown'
+    const lastOnline = new Date(lastOnlineStr)
+    const diffMs = new Date().getTime() - lastOnline.getTime()
+    const diffMinutes = Math.floor(diffMs / 60000)
+    if (diffMinutes < 1) return 'Just now'
+    return `${diffMinutes} minute${diffMinutes === 1 ? '' : 's'} ago`
+  }
 
   useEffect(() => {
     (async () => {
@@ -79,30 +89,15 @@ export default function Chat() {
 
   useEffect(() => {
     if (!userId) return
-    console.log('Document cookies:', document.cookie)
-
-    const socketUrl = 'ws://localhost:3000/api/chat'
-    socketRef.current = io(socketUrl, { withCredentials: true })
-
-    socketRef.current.on('connect', () => {
-      console.log('Socket connected! ID:', socketRef.current?.id)
-    })
-
-    socketRef.current.on('connect_error', (err) => {
-      console.error('Socket connect error:', err)
-    })
-
+    socketRef.current = io('ws://localhost:3000/api/chat', { withCredentials: true })
     socketRef.current.on('chat message', (data, ack) => {
-      console.log('Received chat message:', data)
-      // Note: the server sends properties 'msg' and 'sender'
       const newMsg: ChatMessage = {
         chat_id: Math.random().toString(36).substring(2),
-        sender_user_id: data.sender, // changed from data.from to data.sender
+        sender_user_id: data.sender,
         receiver_user_id: userId,
-        message: data.msg,           // changed from data.message to data.msg
-        sent_at: data.timestamp || new Date().toISOString(), // use timestamp if provided
+        message: data.msg,
+        sent_at: data.timestamp || new Date().toISOString()
       }
-      // Update message history if this message belongs to the selected chat
       if (
         newMsg.sender_user_id === selectedUserIdRef.current ||
         newMsg.receiver_user_id === selectedUserIdRef.current
@@ -111,22 +106,17 @@ export default function Chat() {
           [...prev, newMsg].sort((a, b) => new Date(a.sent_at).getTime() - new Date(b.sent_at).getTime())
         )
       }
-      // Update chat preview list
       setChats(prev =>
         prev.map(c =>
-          c.id === data.sender // changed from data.from to data.sender
+          c.id === data.sender
             ? { ...c, lastMessage: data.msg, timestamp: new Date(data.timestamp || Date.now()).toLocaleString() }
             : c
         )
       )
-      if (typeof ack === 'function') {
-        ack('Message received')
-      }
+      if (typeof ack === 'function') ack('Message received')
     })
-
-    socketRef.current.on('error', err => console.error('Socket error:', err))
-
-    return (): void => {
+    socketRef.current.on('error', () => {})
+    return () => {
       socketRef.current?.disconnect()
     }
   }, [userId])
@@ -201,9 +191,7 @@ export default function Chat() {
         )
         setMessageHistory(sortedChats)
       }
-    } catch (error) {
-      console.error('Error fetching chat history:', error)
-    }
+    } catch {}
   }
 
   const handleSendMessage = async () => {
@@ -220,7 +208,6 @@ export default function Chat() {
     setMessageHistory(prev =>
       [...prev, tempMsg].sort((a, b) => new Date(a.sent_at).getTime() - new Date(b.sent_at).getTime())
     )
-    console.log('Emitting chat message:', { msg, receiver: selectedUserId })
     try {
       const res = await fetch(`http://localhost:3000/api/chats/${selectedUserId}`, {
         method: 'POST',
@@ -245,14 +232,9 @@ export default function Chat() {
           }
         }
       }
-    } catch (error) {
-      console.error("Error sending message:", error)
-    }
-    // Emit the message via socket with expected payload properties
+    } catch {}
     if (socketRef.current) {
       socketRef.current.emit('chat message', { msg, receiver: selectedUserId })
-    } else {
-      console.error('Socket is not connected.')
     }
     setChats(prev => {
       const existing = prev.find(c => c.id === selectedUserId)
@@ -282,6 +264,29 @@ export default function Chat() {
     if (profileData) setExpandedProfile(profileData)
   }
 
+  // New function to report a fake account.
+  const handleReportFake = async () => {
+    if (!expandedProfile) return
+    try {
+      const params = new URLSearchParams({ reason: 'scammer asked for money' })
+      const res = await fetch(`http://localhost:3000/api/profiles/${expandedProfile.profile_id}/report`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        credentials: 'include',
+        body: params.toString()
+      })
+      if (res.ok) {
+        alert('Report submitted successfully.')
+        setExpandedProfile(null)
+      } else {
+        const err = await res.json()
+        alert(`Error reporting: ${err.message || 'Unknown error'}`)
+      }
+    } catch (error) {
+      alert('Error reporting account.')
+    }
+  }
+
   const renderExpandedProfile = () =>
     expandedProfile && (
       <div className="d-flex justify-content-center mt-3">
@@ -302,9 +307,19 @@ export default function Chat() {
               </p>
             )}
             <p className="card-text text-muted mb-1">Fame Rating: {expandedProfile.fame_rating}</p>
-            <button className="btn btn-secondary mt-3" onClick={() => setExpandedProfile(null)}>
-              Close
-            </button>
+            {expandedProfile.last_online && (
+              <p className="card-text text-muted mb-1">
+                Last online: {formatLastOnline(expandedProfile.last_online)}
+              </p>
+            )}
+            <div className="d-flex justify-content-around mt-3">
+              <button className="btn btn-secondary" onClick={() => setExpandedProfile(null)}>
+                Close
+              </button>
+              <button className="btn btn-danger" onClick={handleReportFake}>
+                Report
+              </button>
+            </div>
           </div>
         </div>
       </div>
@@ -354,12 +369,48 @@ export default function Chat() {
     </div>
   )
 
+  const handleUnmatch = async () => {
+    if (!selectedUserId) return
+    await fetch(`http://localhost:3000/api/profiles/${selectedUserId}/like`, {
+      method: 'DELETE',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include'
+    })
+    setChats(prev => prev.filter(chat => chat.id !== selectedUserId))
+    setMatches(prev => prev.filter(match => match.id !== selectedUserId))
+    setSelectedUserId(null)
+    setMessageHistory([])
+  }
+
+  const handleBlock = async () => {
+    if (!selectedUserId) return
+    await fetch(`http://localhost:3000/api/profiles/${selectedUserId}/block`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include'
+    })
+    setChats(prev => prev.filter(chat => chat.id !== selectedUserId))
+    setMatches(prev => prev.filter(match => match.id !== selectedUserId))
+    setSelectedUserId(null)
+    setMessageHistory([])
+  }
+
   const renderChatWindow = () => {
     if (!selectedUserId) return null
     const foundChat = chats.find(c => c.id === selectedUserId)
     return (
       <div className="chat-window mt-3">
-        <h5>{foundChat?.name || 'Chat'}</h5>
+        <div className="d-flex justify-content-between align-items-center">
+          <h5>{foundChat?.name || 'Chat'}</h5>
+          <div>
+            <button className="btn btn-danger btn-sm me-2" onClick={handleUnmatch}>
+              Unmatch
+            </button>
+            <button className="btn btn-warning btn-sm" onClick={handleBlock}>
+              Block
+            </button>
+          </div>
+        </div>
         <div className="chat-history" ref={chatHistoryRef}>
           {messageHistory.map(msg => (
             <div
@@ -441,6 +492,30 @@ export default function Chat() {
     )
   }
 
+  const renderVisitedProfiles = () => (
+    <div className="visited-profiles-section mt-3">
+      <h4>Visited Profiles</h4>
+      <div className="visited-profiles d-flex flex-wrap justify-content-center">
+        {views.length ? (
+          views.map((v: any, i: number) => (
+            <div key={i} className="visited-profile-card m-2 text-center">
+              <img
+                src={v.profile_picture || 'https://via.placeholder.com/40'}
+                alt={v.name || 'Unknown User'}
+                className="rounded-circle"
+                width="60"
+                height="60"
+              />
+              <p className="mt-2">{v.name || 'Unknown User'}</p>
+            </div>
+          ))
+        ) : (
+          <p>No visits yet</p>
+        )}
+      </div>
+    </div>
+  )
+
   return (
     <>
       <NavbarLogged />
@@ -459,6 +534,12 @@ export default function Chat() {
             >
               Likes & Views
             </button>
+            <button
+              className={`btn ${view === 'visited' ? 'btn-primary' : 'btn-outline-primary'} mx-2`}
+              onClick={() => setView('visited')}
+            >
+              Visited Profiles
+            </button>
           </div>
           {view === 'matches' ? (
             <>
@@ -466,8 +547,10 @@ export default function Chat() {
               {renderChats()}
               {renderChatWindow()}
             </>
-          ) : (
+          ) : view === 'likes' ? (
             renderLikesViews()
+          ) : (
+            renderVisitedProfiles()
           )}
         </div>
       </div>
