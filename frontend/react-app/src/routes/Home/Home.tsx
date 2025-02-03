@@ -20,29 +20,20 @@ type User = {
 };
 
 function Home() {
-  // Profiles to display
   const [users, setUsers] = useState<User[]>([]);
-  // Index and photo index tracking the current profile and its photos
   const [currentIndex, setCurrentIndex] = useState(0);
   const [photoIndex, setPhotoIndex] = useState(0);
-  // Preferences built from the current user's profile
   const [preferences, setPreferences] = useState<any>(null);
-  // Sorting criteria following the API spec; defaulting to sort by distance (desc) and age (asc)
   const [sortCriteria, setSortCriteria] = useState<Record<string, { $order: "asc" | "desc" }>>({
     distance: { $order: "desc" },
     age: { $order: "asc" },
   });
-  // To ensure you cannot like/dislike the same profile twice
   const [actedUserIds, setActedUserIds] = useState<Set<number>>(new Set());
-  // To show a match animation when both users like each other
   const [showMatchAnimation, setShowMatchAnimation] = useState(false);
-  // For disabling buttons while an action is in progress
   const [isActionLoading, setIsActionLoading] = useState(false);
-  // Store your own profile (which contains your “likes” list) for match checking
   const [myProfile, setMyProfile] = useState<any>(null);
   const navigate = useNavigate();
 
-  // On mount, fetch your own profile – this gives your search preferences and (assumed) list of users who liked you.
   useEffect(() => {
     async function fetchUserProfile() {
       try {
@@ -50,7 +41,7 @@ function Home() {
         const result = await res.json();
         if (result.status === 'success') {
           setPreferences(buildPreferences(result.data));
-          setMyProfile(result.data); // Assume result.data.likes is an array of profile_ids that liked you.
+          setMyProfile(result.data);
         } else {
           navigate('/profile');
         }
@@ -61,7 +52,6 @@ function Home() {
     fetchUserProfile();
   }, [navigate]);
 
-  // Build filter preferences based on your profile data.
   const buildPreferences = (userData: any) => {
     const { gender, sexual_preference, search_preferences = {} } = userData;
     if (sexual_preference === 'heterosexual') {
@@ -74,7 +64,6 @@ function Home() {
     return search_preferences;
   };
 
-  // Fetch profiles using your preferences and the current sort criteria.
   useEffect(() => {
     async function fetchProfiles(prefs: any, sort?: Record<string, { $order: "asc" | "desc" }>) {
       const params = new URLSearchParams();
@@ -115,7 +104,6 @@ function Home() {
     }
   }, [preferences, sortCriteria]);
 
-  // Record a visit as soon as a new profile is rendered.
   useEffect(() => {
     const currentUser = users[currentIndex];
     if (!currentUser) return;
@@ -126,11 +114,9 @@ function Home() {
     }).catch(err => console.error("Error recording visit:", err));
   }, [currentIndex, users]);
 
-  // A helper to toggle the sort criteria for a given field.
   const toggleSort = (field: string, defaultOrder: "asc" | "desc") => {
     setSortCriteria(prev => {
       if (prev[field]) {
-        // Toggle the order if already set.
         const newOrder = prev[field].$order === "asc" ? "desc" : "asc";
         return { [field]: { $order: newOrder } };
       }
@@ -138,12 +124,10 @@ function Home() {
     });
   };
 
-  // Handle a like action: send the like API call, mark the profile as acted upon, and then check if that profile already liked you.
   const handleLikeUser = async () => {
     if (!users[currentIndex]) return;
     const currentUser = users[currentIndex];
     if (actedUserIds.has(currentUser.profile_id)) return;
-
     setIsActionLoading(true);
     try {
       await fetch(`http://localhost:3000/api/profiles/${currentUser.profile_id}/like`, {
@@ -151,9 +135,7 @@ function Home() {
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
       });
-      // Mark the profile as having been acted upon.
       setActedUserIds(prev => new Set(prev).add(currentUser.profile_id));
-      // If your profile’s likes (an array of profile_ids that liked you) already includes the current profile, it’s a match.
       if (myProfile && myProfile.likes && myProfile.likes.includes(currentUser.profile_id)) {
         setShowMatchAnimation(true);
         setTimeout(() => setShowMatchAnimation(false), 3000);
@@ -162,17 +144,14 @@ function Home() {
       console.error('Error liking user:', error);
     }
     setIsActionLoading(false);
-    // Advance to the next profile.
     setCurrentIndex(prev => (prev + 1) % users.length);
     setPhotoIndex(0);
   };
 
-  // Handle a dislike action similarly.
   const handleDislikeUser = async () => {
     if (!users[currentIndex]) return;
     const currentUser = users[currentIndex];
     if (actedUserIds.has(currentUser.profile_id)) return;
-
     setIsActionLoading(true);
     try {
       await fetch(`http://localhost:3000/api/profiles/${currentUser.profile_id}/dislike`, {
@@ -214,18 +193,10 @@ function Home() {
         </div>
       )}
       <div className="sort-container d-flex justify-content-center gap-2 my-3">
-        <button className="btn btn-outline-primary" onClick={() => toggleSort("age", "asc")}>
-          Sort by Age
-        </button>
-        <button className="btn btn-outline-primary" onClick={() => toggleSort("distance", "desc")}>
-          Sort by Distance
-        </button>
-        <button className="btn btn-outline-primary" onClick={() => toggleSort("fame_rating", "desc")}>
-          Sort by Fame Rating
-        </button>
-        <button className="btn btn-outline-primary" onClick={() => toggleSort("common_interests", "desc")}>
-          Sort by Common Interests
-        </button>
+        <button className="btn btn-outline-primary" onClick={() => toggleSort("age", "asc")}>Sort by Age</button>
+        <button className="btn btn-outline-primary" onClick={() => toggleSort("distance", "desc")}>Sort by Distance</button>
+        <button className="btn btn-outline-primary" onClick={() => toggleSort("fame_rating", "desc")}>Sort by Fame Rating</button>
+        <button className="btn btn-outline-primary" onClick={() => toggleSort("common_interests", "desc")}>Sort by Common Interests</button>
       </div>
       <div className="content d-flex flex-column align-items-center justify-content-center mt-5">
         {currentUser ? (
@@ -234,51 +205,29 @@ function Home() {
               <img src={currentPhoto} className="card-img-top" alt={currentUser.name} />
               {currentUser.pictures.length > 1 && (
                 <>
-                  <button
-                    className="photo-arrow left-arrow position-absolute top-50 start-0 translate-middle-y btn btn-light"
-                    onClick={handlePreviousPhoto}
-                  >
+                  <button className="photo-arrow left-arrow position-absolute top-50 start-0 translate-middle-y btn btn-light" onClick={handlePreviousPhoto}>
                     <i className="bi bi-chevron-left"></i>
                   </button>
-                  <button
-                    className="photo-arrow right-arrow position-absolute top-50 end-0 translate-middle-y btn btn-light"
-                    onClick={handleNextPhoto}
-                  >
+                  <button className="photo-arrow right-arrow position-absolute top-50 end-0 translate-middle-y btn btn-light" onClick={handleNextPhoto}>
                     <i className="bi bi-chevron-right"></i>
                   </button>
                 </>
               )}
             </div>
             <div className="card-body">
-              <h4 className="card-title mb-2">
-                {currentUser.name}, {currentUser.age}
-              </h4>
+              <h4 className="card-title mb-2">{currentUser.name}, {currentUser.age}</h4>
               <p className="card-text text-muted mb-3">{currentUser.biography}</p>
               {currentUser.interests && currentUser.interests.length > 0 && (
                 <p className="card-text mb-3">
-                  <strong>Interests:</strong>{' '}
-                  {currentUser.interests
-                    .map((item: any) => (typeof item === 'object' ? item.interest_tag || '' : item))
-                    .filter(Boolean)
-                    .join(', ')}
+                  <strong>Interests:</strong> {currentUser.interests.map((item: any) => (typeof item === 'object' ? item.interest_tag || '' : item)).filter(Boolean).join(', ')}
                 </p>
               )}
               <p className="card-text text-muted mb-1">Fame Rating: {currentUser.fame_rating}</p>
               <div className="action-buttons d-flex justify-content-around mt-3">
-                <button
-                  className="btn dislike-button rounded-circle shadow-sm"
-                  onClick={handleDislikeUser}
-                  title="Reject"
-                  disabled={isActionLoading || actedUserIds.has(currentUser.profile_id)}
-                >
+                <button className="btn dislike-button rounded-circle shadow-sm" onClick={handleDislikeUser} title="Reject" disabled={isActionLoading || actedUserIds.has(currentUser.profile_id)}>
                   <i className="bi bi-x text-danger"></i>
                 </button>
-                <button
-                  className="btn like-button rounded-circle shadow-sm"
-                  onClick={handleLikeUser}
-                  title="Like"
-                  disabled={isActionLoading || actedUserIds.has(currentUser.profile_id)}
-                >
+                <button className="btn like-button rounded-circle shadow-sm" onClick={handleLikeUser} title="Like" disabled={isActionLoading || actedUserIds.has(currentUser.profile_id)}>
                   <i className="bi bi-heart-fill text-danger"></i>
                 </button>
               </div>

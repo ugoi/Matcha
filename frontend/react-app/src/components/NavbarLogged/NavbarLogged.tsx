@@ -35,7 +35,6 @@ function NavbarLogged() {
               <Nav.Link href="/profile">Profile</Nav.Link>
               <Nav.Link href="/chat">Chat</Nav.Link>
               <Nav.Link href="/settings">Settings</Nav.Link>
-              {/* Include the notification bell */}
               <Nav.Link as="div">
                 <NotificationHandler />
               </Nav.Link>

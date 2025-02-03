@@ -61,7 +61,6 @@ export default function Chat() {
   const selectedUserIdRef = useRef<string | null>(null)
   const navigate = useNavigate()
 
-  // Helper function to format "last online" in a human-friendly manner.
   const formatLastOnline = (lastOnlineStr?: string): string => {
     if (!lastOnlineStr) return 'Unknown'
     const lastOnline = new Date(lastOnlineStr)
@@ -264,7 +263,6 @@ export default function Chat() {
     if (profileData) setExpandedProfile(profileData)
   }
 
-  // New function to report a fake account.
   const handleReportFake = async () => {
     if (!expandedProfile) return
     try {
@@ -291,34 +289,20 @@ export default function Chat() {
     expandedProfile && (
       <div className="d-flex justify-content-center mt-3">
         <div className="card text-center p-3 shadow-lg" style={{ width: '22rem' }}>
-          <img
-            src={expandedProfile.profile_picture || 'https://via.placeholder.com/200'}
-            alt={`${expandedProfile.first_name} ${expandedProfile.last_name}`}
-            className="card-img-top"
-          />
+          <img src={expandedProfile.profile_picture || 'https://via.placeholder.com/200'} alt={`${expandedProfile.first_name} ${expandedProfile.last_name}`} className="card-img-top" />
           <div className="card-body">
-            <h4 className="card-title mb-2">
-              {expandedProfile.first_name} {expandedProfile.last_name}, {expandedProfile.age}
-            </h4>
+            <h4 className="card-title mb-2">{expandedProfile.first_name} {expandedProfile.last_name}, {expandedProfile.age}</h4>
             <p className="card-text text-muted mb-3">{expandedProfile.biography}</p>
             {expandedProfile.interests && expandedProfile.interests.length > 0 && (
-              <p className="card-text mb-3">
-                <strong>Interests:</strong> {expandedProfile.interests.map(i => i.interest_tag).join(', ')}
-              </p>
+              <p className="card-text mb-3"><strong>Interests:</strong> {expandedProfile.interests.map(i => i.interest_tag).join(', ')}</p>
             )}
             <p className="card-text text-muted mb-1">Fame Rating: {expandedProfile.fame_rating}</p>
             {expandedProfile.last_online && (
-              <p className="card-text text-muted mb-1">
-                Last online: {formatLastOnline(expandedProfile.last_online)}
-              </p>
+              <p className="card-text text-muted mb-1">Last online: {formatLastOnline(expandedProfile.last_online)}</p>
             )}
             <div className="d-flex justify-content-around mt-3">
-              <button className="btn btn-secondary" onClick={() => setExpandedProfile(null)}>
-                Close
-              </button>
-              <button className="btn btn-danger" onClick={handleReportFake}>
-                Report
-              </button>
+              <button className="btn btn-secondary" onClick={() => setExpandedProfile(null)}>Close</button>
+              <button className="btn btn-danger" onClick={handleReportFake}>Report</button>
             </div>
           </div>
         </div>
@@ -329,12 +313,7 @@ export default function Chat() {
     <div className="matches-list d-flex overflow-auto mb-3">
       {matches.length ? (
         matches.map(m => (
-          <div
-            key={m.id}
-            className="match-avatar-container mx-2"
-            onClick={() => openChat(m.id)}
-            style={{ cursor: 'pointer' }}
-          >
+          <div key={m.id} className="match-avatar-container mx-2" onClick={() => openChat(m.id)} style={{ cursor: 'pointer' }}>
             <img src={m.image} alt={m.name} className="match-avatar rounded-circle" />
             <p className="match-name text-center mt-2">{m.name}</p>
           </div>
@@ -349,12 +328,7 @@ export default function Chat() {
     <div className="chats-list">
       {chats.length ? (
         chats.map(chat => (
-          <div
-            key={chat.id}
-            className="chat-item p-3 shadow-sm d-flex align-items-center"
-            onClick={() => openChat(chat.id)}
-            style={{ cursor: 'pointer' }}
-          >
+          <div key={chat.id} className="chat-item p-3 shadow-sm d-flex align-items-center" onClick={() => openChat(chat.id)} style={{ cursor: 'pointer' }}>
             <img src={chat.image} alt={chat.name} className="chat-avatar rounded-circle" />
             <div className="chat-info ms-3">
               <h5>{chat.name}</h5>
@@ -403,42 +377,26 @@ export default function Chat() {
         <div className="d-flex justify-content-between align-items-center">
           <h5>{foundChat?.name || 'Chat'}</h5>
           <div>
-            <button className="btn btn-danger btn-sm me-2" onClick={handleUnmatch}>
-              Unmatch
-            </button>
-            <button className="btn btn-warning btn-sm" onClick={handleBlock}>
-              Block
-            </button>
+            <button className="btn btn-danger btn-sm me-2" onClick={handleUnmatch}>Unmatch</button>
+            <button className="btn btn-warning btn-sm" onClick={handleBlock}>Block</button>
           </div>
         </div>
         <div className="chat-history" ref={chatHistoryRef}>
           {messageHistory.map(msg => (
-            <div
-              key={msg.chat_id}
-              className={`message-bubble ${msg.sender_user_id === userId ? 'message-sent' : 'message-received'}`}
-            >
+            <div key={msg.chat_id} className={`message-bubble ${msg.sender_user_id === userId ? 'message-sent' : 'message-received'}`}>
               <p>{msg.message}</p>
               <small className="text-muted">{new Date(msg.sent_at).toLocaleString()}</small>
             </div>
           ))}
         </div>
         <div className="chat-input">
-          <textarea
-            className="form-control"
-            rows={2}
-            placeholder="Type your message..."
-            value={messageInput}
-            onChange={e => setMessageInput(e.target.value)}
-            onKeyDown={e => {
-              if (e.key === 'Enter' && !e.shiftKey) {
-                e.preventDefault()
-                handleSendMessage()
-              }
-            }}
-          />
-          <button className="btn btn-success" onClick={handleSendMessage}>
-            Send
-          </button>
+          <textarea className="form-control" rows={2} placeholder="Type your message..." value={messageInput} onChange={e => setMessageInput(e.target.value)} onKeyDown={e => {
+            if (e.key === 'Enter' && !e.shiftKey) {
+              e.preventDefault()
+              handleSendMessage()
+            }
+          }} />
+          <button className="btn btn-success" onClick={handleSendMessage}>Send</button>
         </div>
       </div>
     )
@@ -453,19 +411,8 @@ export default function Chat() {
           <ul className="list-group">
             {likes.length ? (
               likes.map(like => (
-                <li
-                  key={like.user_id}
-                  className="list-group-item d-flex align-items-center"
-                  style={{ cursor: 'pointer' }}
-                  onClick={() => handleExpandLike(like)}
-                >
-                  <img
-                    src={like.profile_picture}
-                    alt={`${like.first_name} ${like.last_name}`.trim() || 'Unknown'}
-                    className="me-3 rounded-circle"
-                    width="40"
-                    height="40"
-                  />
+                <li key={like.user_id} className="list-group-item d-flex align-items-center" style={{ cursor: 'pointer' }} onClick={() => handleExpandLike(like)}>
+                  <img src={like.profile_picture} alt={`${like.first_name} ${like.last_name}`.trim() || 'Unknown'} className="me-3 rounded-circle" width="40" height="40" />
                   <span>{`${like.first_name} ${like.last_name}`.trim() || 'Unknown'}</span>
                 </li>
               ))
@@ -499,13 +446,7 @@ export default function Chat() {
         {views.length ? (
           views.map((v: any, i: number) => (
             <div key={i} className="visited-profile-card m-2 text-center">
-              <img
-                src={v.profile_picture || 'https://via.placeholder.com/40'}
-                alt={v.name || 'Unknown User'}
-                className="rounded-circle"
-                width="60"
-                height="60"
-              />
+              <img src={v.profile_picture || 'https://via.placeholder.com/40'} alt={v.name || 'Unknown User'} className="rounded-circle" width="60" height="60" />
               <p className="mt-2">{v.name || 'Unknown User'}</p>
             </div>
           ))
@@ -522,22 +463,13 @@ export default function Chat() {
       <div className="content d-flex flex-column align-items-center justify-content-center mt-5">
         <div className="card text-center p-3 shadow-lg chat-card">
           <div className="toggle-buttons d-flex justify-content-center mb-3">
-            <button
-              className={`btn ${view === 'matches' ? 'btn-primary' : 'btn-outline-primary'} mx-2`}
-              onClick={() => setView('matches')}
-            >
+            <button className={`btn ${view === 'matches' ? 'btn-primary' : 'btn-outline-primary'} mx-2`} onClick={() => setView('matches')}>
               Matches & Chats
             </button>
-            <button
-              className={`btn ${view === 'likes' ? 'btn-primary' : 'btn-outline-primary'} mx-2`}
-              onClick={() => setView('likes')}
-            >
+            <button className={`btn ${view === 'likes' ? 'btn-primary' : 'btn-outline-primary'} mx-2`} onClick={() => setView('likes')}>
               Likes & Views
             </button>
-            <button
-              className={`btn ${view === 'visited' ? 'btn-primary' : 'btn-outline-primary'} mx-2`}
-              onClick={() => setView('visited')}
-            >
+            <button className={`btn ${view === 'visited' ? 'btn-primary' : 'btn-outline-primary'} mx-2`} onClick={() => setView('visited')}>
               Visited Profiles
             </button>
           </div>
