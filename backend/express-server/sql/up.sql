@@ -123,7 +123,7 @@ CREATE TABLE IF NOT EXISTS notification (
 CREATE TABLE IF NOT EXISTS notification_change (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,            -- e.g., '123e4567-e89b-12d3-a456-426614174003'
   notification_object_id UUID REFERENCES notification_object (id), -- e.g., '123e4567-e89b-12d3-a456-426614174000'
-  actor_id UUID REFERENCES users(user_id),                    -- e.g., '123e4567-e89b-12d3-a456-426614174004'
+  actor_id UUID REFERENCES users(user_id) ON DELETE CASCADE,                    -- e.g., '123e4567-e89b-12d3-a456-426614174004'
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL   -- e.g., '2024-11-25 15:30:00'
 );
 
