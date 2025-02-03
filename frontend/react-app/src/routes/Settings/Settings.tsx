@@ -33,22 +33,22 @@ function Settings() {
         if (result?.status === "success") {
           if (result.data.gender) setGender(result.data.gender);
           if (result.data.sexual_preference) setSexualPreference(result.data.sexual_preference);
-          if (result.data.search_preferences) {
-            const prefs = result.data.search_preferences;
-            if (prefs.distance?.$lte) setDistance(prefs.distance.$lte);
-            if (prefs.age) {
-              if (prefs.age.$gte) setMinAge(prefs.age.$gte);
-              if (prefs.age.$lte) setMaxAge(prefs.age.$lte);
-            }
-            if (prefs.fame_rating) {
-              if (prefs.fame_rating.$gte !== undefined) setMinFameRating(prefs.fame_rating.$gte);
-              if (prefs.fame_rating.$lte !== undefined) setMaxFameRating(prefs.fame_rating.$lte);
-            }
-            if (prefs.common_interests?.$in) {
-              setCommonTags(prefs.common_interests.$in);
-              setTagsInput(prefs.common_interests.$in.join(', '));
-            }
-          }
+          // if (result.data.search_preferences) {
+          //   const prefs = result.data.search_preferences;
+          //   if (prefs.distance?.$lte) setDistance(prefs.distance.$lte);
+          //   if (prefs.age) {
+          //     if (prefs.age.$gte) setMinAge(prefs.age.$gte);
+          //     if (prefs.age.$lte) setMaxAge(prefs.age.$lte);
+          //   }
+          //   if (prefs.fame_rating) {
+          //     if (prefs.fame_rating.$gte !== undefined) setMinFameRating(prefs.fame_rating.$gte);
+          //     if (prefs.fame_rating.$lte !== undefined) setMaxFameRating(prefs.fame_rating.$lte);
+          //   }
+          //   if (prefs.common_interests?.$in) {
+          //     setCommonTags(prefs.common_interests.$in);
+          //     setTagsInput(prefs.common_interests.$in.join(', '));
+          //   }
+          // }
         }
       })
       .catch(() => {});
@@ -79,12 +79,12 @@ function Settings() {
     const profileParams = new URLSearchParams();
     profileParams.append("gender", gender);
     profileParams.append("sexual_preference", sexualPreference);
-    profileParams.append("search_preferences[distance][$lte]", distance.toString());
-    profileParams.append("search_preferences[age][$gte]", minAge.toString());
-    profileParams.append("search_preferences[age][$lte]", maxAge.toString());
-    profileParams.append("search_preferences[fame_rating][$gte]", minFameRating.toString());
-    profileParams.append("search_preferences[fame_rating][$lte]", maxFameRating.toString());
-    profileParams.append("search_preferences[common_interests][$in]", commonTags.join(','));
+    // profileParams.append("search_preferences[distance][$lte]", distance.toString());
+    // profileParams.append("search_preferences[age][$gte]", minAge.toString());
+    // profileParams.append("search_preferences[age][$lte]", maxAge.toString());
+    // profileParams.append("search_preferences[fame_rating][$gte]", minFameRating.toString());
+    // profileParams.append("search_preferences[fame_rating][$lte]", maxFameRating.toString());
+    // profileParams.append("search_preferences[common_interests][$in]", commonTags.join(','));
     await fetch("http://localhost:3000/api/profiles/me", {
       method: "PATCH",
       headers: { "Content-Type": "application/x-www-form-urlencoded" },

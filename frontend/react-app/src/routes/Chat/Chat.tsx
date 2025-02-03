@@ -131,6 +131,7 @@ export default function Chat() {
       const matchedData = await matchedRes.json()
       const likesData = await likesRes.json()
       const visitsData = await visitsRes.json()
+
       if (matchedData.status === 'success' && Array.isArray(matchedData.data?.matches)) {
         const freshMatches: MatchItem[] = []
         const freshChats: MatchItem[] = []
@@ -167,7 +168,19 @@ export default function Chat() {
         setLikes(arr)
       }
       if (visitsData.status === 'success' && Array.isArray(visitsData.data?.visits)) {
-        setViews(visitsData.data.visits)
+        // Process visits data to extract visitor details from the nested visitor_profile array
+        const processedViews = visitsData.data.visits.map((visit: any) => {
+          if (visit.visitor_profile && Array.isArray(visit.visitor_profile) && visit.visitor_profile.length > 0) {
+            const profile = visit.visitor_profile[0]
+            return {
+              ...visit,
+              name: `${profile.first_name || ''} ${profile.last_name || ''}`.trim() || 'Unknown User',
+              profile_picture: profile.profile_picture || 'https://via.placeholder.com/40'
+            }
+          }
+          return { name: 'Unknown User', profile_picture: 'https://via.placeholder.com/40' }
+        })
+        setViews(processedViews)
       }
     })()
   }, [userId])
