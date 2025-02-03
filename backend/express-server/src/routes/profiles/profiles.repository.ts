@@ -69,6 +69,11 @@ export const profilesRepository = {
   async update(input: { user_id: string; data: any }): Promise<Profile> {
     const { user_id, data } = input;
 
+    // Handle if data is empty by returning the profile
+    if (Object.keys(data).length === 0) {
+      return await this.findOne(user_id);
+    }
+
     // Define the column set, marking `location` as raw if it exists
     const columns = new pgp.helpers.ColumnSet(
       Object.keys(data).map((col) =>
@@ -126,6 +131,41 @@ export const profilesRepository = {
 };
 
 export const searchPreferencesRepository = {
+  create: async function create(input: {
+    user_id: string;
+    searchPreferences: {
+      age_min: number;
+      age_max: number;
+      fame_rating_min: number;
+      fame_rating_max: number;
+      location_radius: number;
+      interests_filter: string;
+    };
+  }): Promise<SearchPreferences> {
+    const { user_id, searchPreferences } = input;
+
+    const statement = pgp.as.format(
+      `
+      INSERT INTO search_preferences (user_id, age_min, age_max, fame_rating_min, fame_rating_max, location_radius, interests_filter)
+      VALUES ($1, $2, $3, $4, $5, $6, $7)
+      RETURNING *
+      `,
+      [
+        user_id,
+        searchPreferences.age_min,
+        searchPreferences.age_max,
+        searchPreferences.fame_rating_min,
+        searchPreferences.fame_rating_max,
+        searchPreferences.location_radius,
+        searchPreferences.interests_filter,
+      ]
+    );
+
+    const newSearchPreferences = await db.one(statement);
+
+    return newSearchPreferences;
+  },
+
   find: async function find(user_id: string): Promise<SearchPreferences> {
     const searchPreferences = await db.oneOrNone(
       `
@@ -142,15 +182,22 @@ export const searchPreferencesRepository = {
   update: async function update(
     user_id: string,
     searchPreferences: Partial<{
-      min_age: number;
-      max_age: number;
-      max_distance: number;
+      age_min: number;
+      age_max: number;
+      fame_rating_min: number;
+      fame_rating_max: number;
+      location_radius: number;
+      interests_filter: string;
     }>
   ): Promise<SearchPreferences> {
     // Filter out undefined fields
     const cleanData = Object.fromEntries(
       Object.entries(searchPreferences).filter(([_, v]) => v !== undefined)
     );
+
+    if (Object.keys(cleanData).length === 0) {
+      return await this.find(user_id);
+    }
 
     // Define the column set for the fields that can be updated
     const columns = new pgp.helpers.ColumnSet(Object.keys(cleanData), {

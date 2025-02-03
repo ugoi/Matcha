@@ -201,6 +201,14 @@ export interface UpdateProfileInput {
     gps_longitude?: number;
     fame_rating?: number;
   };
+  search_preferences?: {
+    age_min?: number;
+    age_max?: number;
+    fame_rating_min?: number;
+    fame_rating_max?: number;
+    location_radius?: number;
+    interests_filter?: string;
+  };
 }
 
 export interface CreateProfileInput {

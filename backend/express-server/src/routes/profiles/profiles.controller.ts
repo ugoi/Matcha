@@ -10,7 +10,10 @@ import {
   validateFilterOperators,
 } from "../../utils/utils.js";
 import { JFail } from "../../error-handlers/custom-errors.js";
-import { userReportsRepository } from "./profiles.repository.js";
+import {
+  searchPreferencesRepository,
+  userReportsRepository,
+} from "./profiles.repository.js";
 import { profilesService } from "./profiles.service.js";
 import visitsRouter from "./visits/visits.controller.js";
 import interestsRouter from "./interests/interests.controller.js";
@@ -151,6 +154,18 @@ router.post(
   }
 );
 
+//   -- Advanced Search Table: This could store user preferences for searches (only visible to the user)
+// CREATE TABLE IF NOT EXISTS search_preferences (
+//     search_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+//     user_id UUID UNIQUE REFERENCES users(user_id) ON DELETE CASCADE,
+//     age_min INT,
+//     age_max INT,
+//     fame_rating_min INT,
+//     fame_rating_max INT,
+//     location_radius FLOAT, -- e.g., 50 km radius
+//     interests_filter TEXT -- Store tags as a string or use a more normalized design
+// );
+
 /* Update my user profile*/
 router.patch(
   "/me",
@@ -179,6 +194,16 @@ router.patch(
   body("profile_picture").optional().isURL().custom(pictureExists),
   body("gps_latitude").optional().escape().isNumeric(),
   body("gps_longitude").optional().escape().isNumeric(),
+  body("age_min")
+    .optional()
+    .isInt({ min: validationLimits.age.min, max: validationLimits.age.max }),
+  body("age_max")
+    .optional()
+    .isInt({ min: validationLimits.age.min, max: validationLimits.age.max }),
+  body("fame_rating_min").optional().isInt(),
+  body("fame_rating_max").optional().isInt(),
+  body("location_radius").optional().isFloat(),
+  body("interests_filter").optional().isString(),
   async function (req, res, next) {
     const result = validationResult(req);
     if (!result.isEmpty()) {
@@ -199,12 +224,36 @@ router.patch(
         });
       }
 
+      // Extract search preferences from request body
+      const {
+        age_min,
+        age_max,
+        fame_rating_min,
+        fame_rating_max,
+        location_radius,
+        interests_filter,
+        ...profileData
+      } = req.body;
+
+      const search_preferences = {
+        age_min,
+        age_max,
+        fame_rating_min,
+        fame_rating_max,
+        location_radius,
+        interests_filter,
+      };
+
+      // Update profile
+
       const profile = await profilesService.updateProfile({
         user_id: req.user.user_id,
-        data: req.body,
+        data: profileData,
+        search_preferences: search_preferences,
       });
 
       // Wrap result in SuccessResponse
+
       const response = new SuccessResponse(profile);
       res.json(response);
     } catch (error) {

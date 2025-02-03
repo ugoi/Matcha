@@ -89,10 +89,38 @@ export const profilesService = {
 
     let newProfile = await profilesRepository.create(input);
 
+    // Create search preferences
+    await searchPreferencesRepository.create({
+      user_id: user_id,
+      searchPreferences: {
+        age_min: null,
+        age_max: null,
+        fame_rating_min: null,
+        fame_rating_max: null,
+        location_radius: null,
+        interests_filter: null,
+      },
+    });
     return newProfile;
   },
 
   async updateProfile(input: UpdateProfileInput): Promise<Profile> {
+
+
+    const { search_preferences } = input;
+
+    // Update search preferences if provided
+    if (Object.keys(search_preferences).length > 0) {
+      await searchPreferencesRepository.update(input.user_id, {
+        age_min: search_preferences.age_min,
+        age_max: search_preferences.age_max,
+        fame_rating_min: search_preferences.fame_rating_min,
+        fame_rating_max: search_preferences.fame_rating_max,
+        location_radius: search_preferences.location_radius,
+        interests_filter: search_preferences.interests_filter,
+      });
+    }
+
     const { gps_latitude, gps_longitude } = input.data;
 
     // Prepare the location SQL expression if coordinates are provided
@@ -119,10 +147,14 @@ export const profilesService = {
     );
 
     // Call repository with cleaned data
-    return profilesRepository.update({
+    profilesRepository.update({
       user_id: input.user_id,
       data: cleanData,
     });
+
+    const updatedProfile = await this.getProfile(input.user_id);
+
+    return updatedProfile;
   },
 
   async searchProfiles(searchPreferences: SearchPreferences) {
