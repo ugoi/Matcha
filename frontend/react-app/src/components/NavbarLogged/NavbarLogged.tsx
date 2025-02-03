@@ -3,43 +3,48 @@ import Container from 'react-bootstrap/Container';
 import Nav from 'react-bootstrap/Nav';
 import Navbar from 'react-bootstrap/Navbar';
 import $ from 'jquery';
+import NotificationHandler from '../NotificationHandler.tsx';
 import './NavbarLogged.css';
 
 const handleLogout = () => {
-  var settings = {
-    "url": "http://localhost:3000/api/logout",
-    "method": "GET",
-    "timeout": 0,
+  const settings = {
+    url: "http://localhost:3000/api/logout",
+    method: "GET",
+    timeout: 0,
   };
 
-  $.ajax(settings).done(function (response) {
-    console.log(response);
-    window.location.href = '/';
-  }).fail(function (jqXHR) {
-    console.error('Logout failed:', jqXHR.statusText);
-  });
+  $.ajax(settings)
+    .done(function (response) {
+      console.log(response);
+      window.location.href = '/';
+    })
+    .fail(function (jqXHR) {
+      console.error('Logout failed:', jqXHR.statusText);
+    });
 };
 
 function NavbarLogged() {
   return (
-    <>
-      <div className="navbar-container">
-        <Navbar collapseOnSelect expand="lg" className="custom-navbar">
-          <Container>
-            <Navbar.Toggle aria-controls="responsive-navbar-nav" />
-            <Navbar.Collapse id="responsive-navbar-nav">
-              <Nav className="mx-auto">
-                <Nav.Link href="/home">Home</Nav.Link>
-                <Nav.Link href="/profile">Profile</Nav.Link>
-                <Nav.Link href="/chat">Chat</Nav.Link>
-                <Nav.Link href="/settings">Settings</Nav.Link>
-                <Nav.Link onClick={handleLogout} className="logout-link">Logout</Nav.Link>
-              </Nav>
-            </Navbar.Collapse>
-          </Container>
-        </Navbar>
-      </div>
-    </>
+    <div className="navbar-container">
+      <Navbar collapseOnSelect expand="lg" className="custom-navbar">
+        <Container>
+          <Navbar.Toggle aria-controls="responsive-navbar-nav" />
+          <Navbar.Collapse id="responsive-navbar-nav">
+            <Nav className="mx-auto align-items-center">
+              <Nav.Link href="/home">Home</Nav.Link>
+              <Nav.Link href="/profile">Profile</Nav.Link>
+              <Nav.Link href="/chat">Chat</Nav.Link>
+              <Nav.Link href="/settings">Settings</Nav.Link>
+              {/* Include the notification bell */}
+              <Nav.Link as="div">
+                <NotificationHandler />
+              </Nav.Link>
+              <Nav.Link onClick={handleLogout} className="logout-link">Logout</Nav.Link>
+            </Nav>
+          </Navbar.Collapse>
+        </Container>
+      </Navbar>
+    </div>
   );
 }
 

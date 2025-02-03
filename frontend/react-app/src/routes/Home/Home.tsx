@@ -20,18 +20,29 @@ type User = {
 };
 
 function Home() {
+  // Profiles to display
   const [users, setUsers] = useState<User[]>([]);
+  // Index and photo index tracking the current profile and its photos
   const [currentIndex, setCurrentIndex] = useState(0);
   const [photoIndex, setPhotoIndex] = useState(0);
+  // Preferences built from the current user's profile
   const [preferences, setPreferences] = useState<any>(null);
-  const [sortField, setSortField] = useState<string | null>(null);
-  const [visitedUserIds, setVisitedUserIds] = useState<Set<number>>(new Set());
-  const [likedUserIds, setLikedUserIds] = useState<Set<number>>(new Set());
+  // Sorting criteria following the API spec; defaulting to sort by distance (desc) and age (asc)
+  const [sortCriteria, setSortCriteria] = useState<Record<string, { $order: "asc" | "desc" }>>({
+    distance: { $order: "desc" },
+    age: { $order: "asc" },
+  });
+  // To ensure you cannot like/dislike the same profile twice
+  const [actedUserIds, setActedUserIds] = useState<Set<number>>(new Set());
+  // To show a match animation when both users like each other
   const [showMatchAnimation, setShowMatchAnimation] = useState(false);
+  // For disabling buttons while an action is in progress
   const [isActionLoading, setIsActionLoading] = useState(false);
+  // Store your own profile (which contains your “likes” list) for match checking
+  const [myProfile, setMyProfile] = useState<any>(null);
   const navigate = useNavigate();
 
-  // Fetch current user's profile for search preferences.
+  // On mount, fetch your own profile – this gives your search preferences and (assumed) list of users who liked you.
   useEffect(() => {
     async function fetchUserProfile() {
       try {
@@ -39,6 +50,7 @@ function Home() {
         const result = await res.json();
         if (result.status === 'success') {
           setPreferences(buildPreferences(result.data));
+          setMyProfile(result.data); // Assume result.data.likes is an array of profile_ids that liked you.
         } else {
           navigate('/profile');
         }
@@ -49,6 +61,7 @@ function Home() {
     fetchUserProfile();
   }, [navigate]);
 
+  // Build filter preferences based on your profile data.
   const buildPreferences = (userData: any) => {
     const { gender, sexual_preference, search_preferences = {} } = userData;
     if (sexual_preference === 'heterosexual') {
@@ -61,12 +74,14 @@ function Home() {
     return search_preferences;
   };
 
-  // Fetch profiles based on preferences and sorting.
+  // Fetch profiles using your preferences and the current sort criteria.
   useEffect(() => {
-    async function fetchProfiles(prefs: any, sort?: string) {
+    async function fetchProfiles(prefs: any, sort?: Record<string, { $order: "asc" | "desc" }>) {
       const params = new URLSearchParams();
-      if (prefs) params.append('filter_by', JSON.stringify(prefs));
-      if (sort) params.append('sort_by', JSON.stringify({ [sort]: { '$order': 'asc' } }));
+      if (prefs) params.append("filter_by", JSON.stringify(prefs));
+      if (sort && Object.keys(sort).length > 0) {
+        params.append("sort_by", JSON.stringify(sort));
+      }
       try {
         const res = await fetch(`http://localhost:3000/api/profiles?${params.toString()}`, { credentials: 'include' });
         const data = await res.json();
@@ -91,65 +106,73 @@ function Home() {
           setUsers([]);
         }
       } catch (error) {
+        console.error("Error fetching profiles:", error);
         setUsers([]);
       }
     }
     if (preferences !== null) {
-      fetchProfiles(preferences, sortField || undefined);
+      fetchProfiles(preferences, sortCriteria);
     }
-  }, [preferences, sortField]);
+  }, [preferences, sortCriteria]);
 
-  // Automatically record a visit when a new profile is shown.
+  // Record a visit as soon as a new profile is rendered.
   useEffect(() => {
     const currentUser = users[currentIndex];
     if (!currentUser) return;
-    if (!visitedUserIds.has(currentUser.profile_id)) {
-      fetch(`http://localhost:3000/api/profiles/${currentUser.profile_id}/visits`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-      });
-      setVisitedUserIds(prev => new Set(prev).add(currentUser.profile_id));
-    }
-  }, [currentIndex, users, visitedUserIds]);
+    fetch(`http://localhost:3000/api/profiles/${currentUser.profile_id}/visits`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include'
+    }).catch(err => console.error("Error recording visit:", err));
+  }, [currentIndex, users]);
 
+  // A helper to toggle the sort criteria for a given field.
+  const toggleSort = (field: string, defaultOrder: "asc" | "desc") => {
+    setSortCriteria(prev => {
+      if (prev[field]) {
+        // Toggle the order if already set.
+        const newOrder = prev[field].$order === "asc" ? "desc" : "asc";
+        return { [field]: { $order: newOrder } };
+      }
+      return { [field]: { $order: defaultOrder } };
+    });
+  };
+
+  // Handle a like action: send the like API call, mark the profile as acted upon, and then check if that profile already liked you.
   const handleLikeUser = async () => {
     if (!users[currentIndex]) return;
     const currentUser = users[currentIndex];
-    if (likedUserIds.has(currentUser.profile_id)) {
-      setCurrentIndex(prev => (prev + 1) % users.length);
-      setPhotoIndex(0);
-      return;
-    }
+    if (actedUserIds.has(currentUser.profile_id)) return;
+
     setIsActionLoading(true);
     try {
-      const res = await fetch(`http://localhost:3000/api/profiles/${currentUser.profile_id}/like`, {
+      await fetch(`http://localhost:3000/api/profiles/${currentUser.profile_id}/like`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
       });
-      const responseData = await res.json();
-      if (res.ok) {
-        setLikedUserIds(prev => new Set(prev).add(currentUser.profile_id));
-        // If the response indicates a match, trigger the animation.
-        if (responseData.match) {
-          setShowMatchAnimation(true);
-          setTimeout(() => setShowMatchAnimation(false), 3000);
-        }
-      } else {
-        console.error('Error liking user:', responseData);
+      // Mark the profile as having been acted upon.
+      setActedUserIds(prev => new Set(prev).add(currentUser.profile_id));
+      // If your profile’s likes (an array of profile_ids that liked you) already includes the current profile, it’s a match.
+      if (myProfile && myProfile.likes && myProfile.likes.includes(currentUser.profile_id)) {
+        setShowMatchAnimation(true);
+        setTimeout(() => setShowMatchAnimation(false), 3000);
       }
     } catch (error) {
       console.error('Error liking user:', error);
     }
     setIsActionLoading(false);
+    // Advance to the next profile.
     setCurrentIndex(prev => (prev + 1) % users.length);
     setPhotoIndex(0);
   };
 
+  // Handle a dislike action similarly.
   const handleDislikeUser = async () => {
     if (!users[currentIndex]) return;
     const currentUser = users[currentIndex];
+    if (actedUserIds.has(currentUser.profile_id)) return;
+
     setIsActionLoading(true);
     try {
       await fetch(`http://localhost:3000/api/profiles/${currentUser.profile_id}/dislike`, {
@@ -157,8 +180,9 @@ function Home() {
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
       });
+      setActedUserIds(prev => new Set(prev).add(currentUser.profile_id));
     } catch (error) {
-      console.error('Error rejecting user:', error);
+      console.error('Error disliking user:', error);
     }
     setIsActionLoading(false);
     setCurrentIndex(prev => (prev + 1) % users.length);
@@ -189,40 +213,36 @@ function Home() {
           </div>
         </div>
       )}
-      <div className="d-flex justify-content-center gap-2 my-3">
-        <button className="btn btn-outline-primary" onClick={() => setSortField('age')}>
+      <div className="sort-container d-flex justify-content-center gap-2 my-3">
+        <button className="btn btn-outline-primary" onClick={() => toggleSort("age", "asc")}>
           Sort by Age
         </button>
-        <button className="btn btn-outline-primary" onClick={() => setSortField('distance')}>
-          Sort by Location
+        <button className="btn btn-outline-primary" onClick={() => toggleSort("distance", "desc")}>
+          Sort by Distance
         </button>
-        <button className="btn btn-outline-primary" onClick={() => setSortField('fame_rating')}>
+        <button className="btn btn-outline-primary" onClick={() => toggleSort("fame_rating", "desc")}>
           Sort by Fame Rating
         </button>
-        <button className="btn btn-outline-primary" onClick={() => setSortField('common_interests')}>
-          Sort by Common Tags
+        <button className="btn btn-outline-primary" onClick={() => toggleSort("common_interests", "desc")}>
+          Sort by Common Interests
         </button>
       </div>
-      <div className="content d-flex flex-column align-items-center justify-content-center mt-5 position-relative">
+      <div className="content d-flex flex-column align-items-center justify-content-center mt-5">
         {currentUser ? (
           <div className="card text-center p-3 shadow-lg position-relative">
-            {/* Optionally display a "Visited" badge */}
-            {visitedUserIds.has(currentUser.profile_id) && <span className="visited-badge">Visited</span>}
-            <div className="position-relative">
+            <div className="image-container position-relative">
               <img src={currentPhoto} className="card-img-top" alt={currentUser.name} />
               {currentUser.pictures.length > 1 && (
                 <>
                   <button
                     className="photo-arrow left-arrow position-absolute top-50 start-0 translate-middle-y btn btn-light"
                     onClick={handlePreviousPhoto}
-                    style={{ zIndex: 1 }}
                   >
                     <i className="bi bi-chevron-left"></i>
                   </button>
                   <button
                     className="photo-arrow right-arrow position-absolute top-50 end-0 translate-middle-y btn btn-light"
                     onClick={handleNextPhoto}
-                    style={{ zIndex: 1 }}
                   >
                     <i className="bi bi-chevron-right"></i>
                   </button>
@@ -244,12 +264,12 @@ function Home() {
                 </p>
               )}
               <p className="card-text text-muted mb-1">Fame Rating: {currentUser.fame_rating}</p>
-              <div className="d-flex justify-content-around mt-3">
+              <div className="action-buttons d-flex justify-content-around mt-3">
                 <button
                   className="btn dislike-button rounded-circle shadow-sm"
                   onClick={handleDislikeUser}
                   title="Reject"
-                  disabled={isActionLoading}
+                  disabled={isActionLoading || actedUserIds.has(currentUser.profile_id)}
                 >
                   <i className="bi bi-x text-danger"></i>
                 </button>
@@ -257,7 +277,7 @@ function Home() {
                   className="btn like-button rounded-circle shadow-sm"
                   onClick={handleLikeUser}
                   title="Like"
-                  disabled={isActionLoading || likedUserIds.has(currentUser.profile_id)}
+                  disabled={isActionLoading || actedUserIds.has(currentUser.profile_id)}
                 >
                   <i className="bi bi-heart-fill text-danger"></i>
                 </button>
