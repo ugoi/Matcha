@@ -26,7 +26,7 @@ import { userRepository } from "../users/users.repository.js";
 import passport from "passport";
 import { profilesService } from "../profiles/profiles.service.js";
 import { SuccessResponse } from "../../interfaces/response.js";
-import { title } from "node:process";
+import { validationLimits } from "../../config/validation-config.js";
 
 /* Check if user is authenticated */
 router.get(
@@ -41,10 +41,20 @@ router.get(
 /* Create new user */
 router.post(
   "/signup",
-  body("firstName").notEmpty().escape(),
-  body("lastName").notEmpty().escape(),
+  body("firstName").notEmpty().escape().isLength({
+    min: validationLimits.name.min,
+    max: validationLimits.name.max,
+  }),
+  body("lastName").notEmpty().escape().isLength({
+    min: validationLimits.name.min,
+    max: validationLimits.name.max,
+  }),
   body("username")
     .notEmpty()
+    .isLength({
+      min: validationLimits.username.min,
+      max: validationLimits.username.max,
+    })
     .custom(isHtmlTagFreeValidator)
     .custom(usernameNotExistsValidator),
   body("email")

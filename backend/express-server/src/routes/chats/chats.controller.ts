@@ -2,10 +2,15 @@ import { Router } from "express";
 import { body, param, query, validationResult } from "express-validator";
 var router = Router();
 import passport, { Profile } from "passport";
-import { escapeErrors, isAuthorized, profileExistsValidator } from "../../utils/utils.js";
+import {
+  escapeErrors,
+  isAuthorized,
+  profileExistsValidator,
+} from "../../utils/utils.js";
 import { JFail } from "../../error-handlers/custom-errors.js";
 import { chatRepository } from "./chats.repository.js";
 import { SuccessResponse } from "../../interfaces/response.js";
+import { validationLimits } from "../../config/validation-config.js";
 
 /* 
 Send a message to a user
@@ -17,7 +22,10 @@ router.post(
   passport.authenticate("jwt", { session: false }),
   isAuthorized,
   param("user_id").isString().custom(profileExistsValidator),
-  body("message").escape().isString(),
+  body("message").escape().isString().isLength({
+    min: validationLimits.message.min,
+    max: validationLimits.message.max,
+  }),
   async function (req, res, next) {
     const result = validationResult(req);
     if (!result.isEmpty()) {

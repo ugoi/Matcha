@@ -9,6 +9,7 @@ import {
   NOTIFICATION_STATUS,
 } from "../notifications/notification.interface.js";
 import { blockedUsersRepository } from "../profiles/blocks/blocks.repository.js";
+import { validationLimits } from "../../config/validation-config.js";
 
 export function initChatSocket(io: Server) {
   /**
@@ -24,12 +25,27 @@ export function initChatSocket(io: Server) {
     // the user ID is used as a room
     socket.join(`user:${userId}`);
 
-    socket.on("disconnect", () => {
-    });
+    socket.on("disconnect", () => {});
 
     socket.on("chat message", async ({ msg, receiver }) => {
       try {
-        // Ecape the message using lodash escape
+        // Validate message length
+        if (
+          !msg ||
+          typeof msg !== "string" ||
+          msg.length < validationLimits.message.min ||
+          msg.length > validationLimits.message.max
+        ) {
+          socket.nsp
+            .to(`user:${socket.request.user.user_id}`)
+            .emit(
+              "error",
+              `Message must be between ${validationLimits.message.min} and ${validationLimits.message.max} characters`
+            );
+          return;
+        }
+
+        // Escape the message using lodash escape
         msg = _.escape(msg);
 
         const sender = socket.request.user.user_id;

@@ -19,6 +19,7 @@ import blocksRouter from "./blocks/blocks.controller.js";
 import picturesRouter from "./pictures/pictures.controller.js";
 import { PublicProfile } from "./profiles.interface.js";
 import { SuccessResponse } from "../../interfaces/response.js";
+import { validationLimits } from "../../config/validation-config.js";
 // Import your SuccessResponse class (adjust path as needed)
 
 const validateProfilePicture = (isOptional = false) => {
@@ -104,10 +105,24 @@ router.post(
   "/me",
   passport.authenticate("jwt", { session: false }),
   profileNotExists,
-  body("gender").escape().isString().toLowerCase(),
-  body("age").escape().isNumeric(),
-  body("sexual_preference").escape().isString().toLowerCase(),
-  body("biography").escape().isString(),
+  body("gender")
+    .escape()
+    .isString()
+    .isLength({ max: validationLimits.gender.max })
+    .toLowerCase(),
+  body("age")
+    .escape()
+    .isNumeric()
+    .isInt({ min: validationLimits.age.min, max: validationLimits.age.max }),
+  body("sexual_preference")
+    .escape()
+    .isString()
+    .isLength({ max: validationLimits.sexualPreference.max })
+    .toLowerCase(),
+  body("biography")
+    .escape()
+    .isString()
+    .isLength({ max: validationLimits.bio.max }),
   body("profile_picture").isURL().custom(pictureExists),
   body("gps_latitude").escape().isNumeric(),
   body("gps_longitude").escape().isNumeric(),
@@ -141,10 +156,26 @@ router.patch(
   "/me",
   passport.authenticate("jwt", { session: false }),
   isAuthorized,
-  body("gender").optional().escape().isString(),
-  body("age").optional().escape().isNumeric(),
-  body("sexual_preference").optional().escape().isString(),
-  body("biography").optional().escape().isString(),
+  body("gender")
+    .optional()
+    .escape()
+    .isString()
+    .isLength({ max: validationLimits.gender.max }),
+  body("age")
+    .optional()
+    .escape()
+    .isNumeric()
+    .isInt({ min: validationLimits.age.min, max: validationLimits.age.max }),
+  body("sexual_preference")
+    .optional()
+    .escape()
+    .isString()
+    .isLength({ max: validationLimits.sexualPreference.max }),
+  body("biography")
+    .optional()
+    .escape()
+    .isString()
+    .isLength({ max: validationLimits.bio.max }),
   body("profile_picture").optional().isURL().custom(pictureExists),
   body("gps_latitude").optional().escape().isNumeric(),
   body("gps_longitude").optional().escape().isNumeric(),
@@ -239,7 +270,10 @@ router.post(
   passport.authenticate("jwt", { session: false }),
   isAuthorized,
   param("user_id").isUUID(),
-  body("reason").isString(),
+  body("reason").isString().isLength({
+    min: validationLimits.report.min,
+    max: validationLimits.report.max,
+  }),
   async function (req, res, next) {
     const result = validationResult(req);
     if (!result.isEmpty()) {
