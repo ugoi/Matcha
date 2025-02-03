@@ -1,80 +1,130 @@
-/* home.css */
 .card {
-    background-color: #f5f0e8!important;
-    width: 22rem;
-    border-radius: 15px;
-    box-shadow: 0px 4px 20px rgba(255, 124, 10, 0.073)!important;
-    position: relative;
-  }
-  
-  .card-img-top {
-    aspect-ratio: 4 / 5;
-    object-fit: cover;
-    border-radius: 15px;
-  }
-  
-  .like-button,
-  .dislike-button {
-    width: 60px;
-    height: 60px;
-    font-size: 1.5rem;
-    border: none;
-  }
-  
-  .dislike-button {
-    background-color: red;
-    color: rgb(252, 126, 126);
-  }
-  
-  .like-button {
-    background-color: green;
-    color: rgb(84, 130, 84);
-  }
-  
-  .like-button:hover,
-  .dislike-button:hover {
-    background-color: green;
-    color: rgb(84, 130, 84);
-  }
-  
-  .dislike-button:hover {
-    background-color: red;
-    color: rgb(252, 126, 126);
-  }
-  
-  .shadow-sm {
-    box-shadow: 0 0.125rem 0.25rem rgb(235, 173, 14);
-  }
-  
-  .photo-navigation {
-    position: absolute;
-    top: 50%;
-    left: 0;
-    right: 0;
-    display: flex;
-    justify-content: space-between;
-    transform: translateY(-50%);
-  }
-  
-  .photo-arrow {
-    background-color: transparent;
-    border: none;
-    font-size: 1.5rem;
-    cursor: pointer;
-    color: #000;
-    transition: color 0.3s;
-  }
-  
-  .photo-arrow:hover {
-    color: #1e90ff;
-  }
-  
-  .left-arrow {
-    background-color: #1e90ff;
-    margin-left: -80px;
-  }
-  
-  .right-arrow {
-    background-color: #1e90ff;
-    margin-right: -80px;
-  }
+  background-color: #f5f0e8 !important;
+  width: 22rem;
+  border-radius: 15px;
+  box-shadow: 0px 4px 20px rgba(255, 124, 10, 0.073) !important;
+  position: relative;
+}
+
+.card-img-top {
+  aspect-ratio: 4 / 5;
+  object-fit: cover;
+  border-radius: 15px;
+}
+
+.like-button,
+.dislike-button {
+  width: 60px;
+  height: 60px;
+  font-size: 1.5rem;
+  border: none;
+}
+
+.dislike-button {
+  background-color: red;
+  color: rgb(252, 126, 126);
+}
+
+.like-button {
+  background-color: green;
+  color: rgb(84, 130, 84);
+}
+
+.like-button:hover,
+.dislike-button:hover {
+  background-color: green;
+  color: rgb(84, 130, 84);
+}
+
+.dislike-button:hover {
+  background-color: red;
+  color: rgb(252, 126, 126);
+}
+
+.shadow-sm {
+  box-shadow: 0 0.125rem 0.25rem rgb(235, 173, 14);
+}
+
+.photo-navigation {
+  position: absolute;
+  top: 50%;
+  left: 0;
+  right: 0;
+  display: flex;
+  justify-content: space-between;
+  transform: translateY(-50%);
+}
+
+.photo-arrow {
+  background-color: transparent;
+  border: none;
+  font-size: 1.5rem;
+  cursor: pointer;
+  color: #000;
+  transition: color 0.3s;
+}
+
+.photo-arrow:hover {
+  color: #1e90ff;
+}
+
+.left-arrow {
+  background-color: #1e90ff;
+  margin-left: -80px;
+}
+
+.right-arrow {
+  background-color: #1e90ff;
+  margin-right: -80px;
+}
+
+/* Visited badge to indicate the profile has been viewed */
+.visited-badge {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  background: #6c757d;
+  color: #fff;
+  padding: 5px 10px;
+  border-radius: 5px;
+  font-size: 0.8rem;
+  z-index: 2;
+}
+
+/* Match animation overlay styles */
+.match-animation-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+  animation: fadeIn 0.5s;
+}
+
+.match-animation {
+  background: white;
+  padding: 20px;
+  border-radius: 10px;
+  text-align: center;
+  animation: popIn 0.5s;
+}
+
+.match-icon {
+  font-size: 4rem;
+  color: red;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes popIn {
+  from { transform: scale(0.5); }
+  to { transform: scale(1); }
+}

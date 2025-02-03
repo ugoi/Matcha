@@ -155,7 +155,7 @@ export default function Chat() {
       }
       if (likesData.status === 'success' && Array.isArray(likesData.data?.likes)) {
         const arr = likesData.data.likes.map((like: any) => {
-          const u = like.matcher?.[0]
+          const u = like.matched?.[0]
           return u
             ? {
                 user_id: u.user_id,
