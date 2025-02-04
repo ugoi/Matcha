@@ -208,6 +208,7 @@ export interface UpdateProfileInput {
     fame_rating_max?: number;
     location_radius?: number;
     interests_filter?: string;
+    common_interests?: number;
   };
 }
 

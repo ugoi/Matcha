@@ -204,6 +204,7 @@ router.patch(
   body("fame_rating_max").optional().isInt(),
   body("location_radius").optional().isFloat(),
   body("interests_filter").optional().isString(),
+  body("common_interests").optional().isInt(),
   async function (req, res, next) {
     const result = validationResult(req);
     if (!result.isEmpty()) {
@@ -232,6 +233,7 @@ router.patch(
         fame_rating_max,
         location_radius,
         interests_filter,
+        common_interests,
         ...profileData
       } = req.body;
 
@@ -242,6 +244,7 @@ router.patch(
         fame_rating_max,
         location_radius,
         interests_filter,
+        common_interests,
       };
 
       // Update profile

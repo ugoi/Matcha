@@ -188,6 +188,7 @@ export const searchPreferencesRepository = {
       fame_rating_max: number;
       location_radius: number;
       interests_filter: string;
+      common_interests: number;
     }>
   ): Promise<SearchPreferences> {
     // Filter out undefined fields

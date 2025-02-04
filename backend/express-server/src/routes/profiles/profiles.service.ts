@@ -118,6 +118,7 @@ export const profilesService = {
         fame_rating_max: search_preferences.fame_rating_max,
         location_radius: search_preferences.location_radius,
         interests_filter: search_preferences.interests_filter,
+        common_interests: search_preferences.common_interests,
       });
     }
 

@@ -137,6 +137,7 @@ CREATE TABLE IF NOT EXISTS search_preferences (
     fame_rating_max INT,
     location_radius FLOAT, -- e.g., 50 km radius
     interests_filter TEXT -- Store tags as a string or use a more normalized design
+    common_interests INT
 );
 
 -- User Reports Table: Handles user reports for inappropriate behavior
