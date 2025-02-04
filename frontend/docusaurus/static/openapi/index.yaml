@@ -294,21 +294,67 @@ paths:
           content:
             application/json:
               schema:
-                type: object
-                $ref: "#/components/schemas/PublicProfile"
+                oneOf:
+                  - allOf:
+                      - $ref: "#/components/schemas/SuccessResponse"
+                    title: SuccessResponse
+                    type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          profile:
+                            $ref: "#/components/schemas/PublicProfile"
+                  - $ref: "#/components/schemas/FailResponse"
+                  - $ref: "#/components/schemas/ErrorResponse"
               examples:
                 success:
                   summary: Example success response
                   value:
-                    profile_id: "f241db89-e483-4c54-96e2-0cd2d043cadd"
-                    user_id: "e7ad562b-3d82-45eb-8bc0-30f158681f9f"
-                    username: "my_username"
-                    first_name: "MyFirstName"
-                    last_name: "MyLastName"
-                    age: 22
-                    gender: "female"
-                    biography: "Hello! This is my profile."
-                    pictures: []
+                    status: "success"
+                    data:
+                      profile_id: "36023346-afac-4d1e-97d3-ba5153f66db3"
+                      user_id: "c893cd54-bc06-4d13-8b1e-95435c7d791b"
+                      gender: "female"
+                      age: 19
+                      sexual_preference: "heterosexual"
+                      biography: "Hello"
+                      fame_rating: 0
+                      profile_picture: "https://picsum.photos/id/19/200/200"
+                      location: "0101000020E610000074B7EBA529A662C0C119FCFD62F234C0"
+                      last_online: "2025-02-03T22:31:52.947Z"
+                      created_at: "2025-02-03T22:31:52.947Z"
+                      username: "stefan"
+                      first_name: "Stefan"
+                      last_name: "Dukic"
+                      gps_latitude: -20.946823
+                      gps_longitude: -149.192584
+                      interests: []
+                      pictures:
+                        [
+                          {
+                            picture_id: "e4d00bce-c6f6-48c3-9bc9-feda2e4bde07",
+                            user_id: "c893cd54-bc06-4d13-8b1e-95435c7d791b",
+                            picture_url: "https://picsum.photos/id/19/200/200",
+                          },
+                          {
+                            picture_id: "8788cbe4-e643-441b-8803-5f42aab58229",
+                            user_id: "c893cd54-bc06-4d13-8b1e-95435c7d791b",
+                            picture_url: "https://picsum.photos/id/16/200/200",
+                          },
+                        ]
+                      search_preferences:
+                        {
+                          search_id: "32b0072c-d609-4c67-babc-3f1dad0f2711",
+                          user_id: "c893cd54-bc06-4d13-8b1e-95435c7d791b",
+                          age_min: 18,
+                          age_max: 30,
+                          fame_rating_min: null,
+                          fame_rating_max: null,
+                          location_radius: null,
+                          interests_filter: null,
+                          common_interests: 2,
+                        }
                 error:
                   summary: Example error response
                   value:
@@ -349,10 +395,50 @@ paths:
             schema:
               type: object
               properties:
+                gender:
+                  type: string
+                  enum: [male, female, other]
+                  description: User's gender
+                age:
+                  type: string
+                  description: User's age
+                sexual_preference:
+                  type: string
+                  enum: [heterosexual, homosexual, bisexual]
+                  description: User's sexual preference
+                biography:
+                  type: string
+                  description: User's biography
+                profile_picture:
+                  type: string
+                  description: URL of the profile picture
                 gps_longitude:
                   type: string
+                  description: Longitude coordinate
                 gps_latitude:
                   type: string
+                  description: Latitude coordinate
+                age_min:
+                  type: string
+                  description: Minimum age preference for matching
+                age_max:
+                  type: string
+                  description: Maximum age preference for matching
+                fame_rating_min:
+                  type: string
+                  description: Minimum fame rating preference for matching
+                fame_rating_max:
+                  type: string
+                  description: Maximum fame rating preference for matching
+                location_radius:
+                  type: string
+                  description: Maximum distance radius for matching (in kilometers)
+                interests_filter:
+                  type: string
+                  description: Comma-separated list of interests to filter matches
+                common_interests:
+                  type: string
+                  description: Minimum number of common interests required for matching
       responses:
         "200":
           description: Profile updated successfully
@@ -381,8 +467,13 @@ paths:
                       profile:
                         profile_id: "f241db89-e483-4c54-96e2-0cd2d043cadd"
                         user_id: "e7ad562b-3d82-45eb-8bc0-30f158681f9f"
-                        gps_latitude: "37.7749"
-                        gps_longitude: "-122.4194"
+                        gender: "female"
+                        age: 30
+                        sexual_preference: "homosexual"
+                        biography: "I am your father..."
+                        profile_picture: "https://picsum.photos/id/19/200/200"
+                        gps_latitude: "-20.946823"
+                        gps_longitude: "180"
                 fail:
                   summary: Example fail response
                   value:
@@ -390,8 +481,8 @@ paths:
                     data:
                       title: "Invalid input"
                       errors:
-                        - msg: "gps_longitude must be numeric"
-                          path: "gps_longitude"
+                        - msg: "Invalid gender value"
+                          path: "gender"
                 error:
                   summary: Example error response
                   value:
@@ -402,19 +493,41 @@ paths:
         - lang: cURL
           source: |
             curl --location --request PATCH 'http://localhost:3000/api/profiles/me' \
-            --header 'Authorization: Bearer YOUR_JWT_TOKEN' \
             --header 'Content-Type: application/x-www-form-urlencoded' \
-            --data-urlencode 'gps_longitude=-122.4194' \
-            --data-urlencode 'gps_latitude=37.7749'
+            --data-urlencode 'gender=female' \
+            --data-urlencode 'age=30' \
+            --data-urlencode 'sexual_preference=homosexual' \
+            --data-urlencode 'biography=I am your father...' \
+            --data-urlencode 'profile_picture=https://picsum.photos/id/19/200/200' \
+            --data-urlencode 'gps_longitude=180' \
+            --data-urlencode 'gps_latitude=-20.946823' \
+            --data-urlencode 'age_min=23' \
+            --data-urlencode 'age_max=20' \
+            --data-urlencode 'fame_rating_min=1' \
+            --data-urlencode 'fame_rating_max=100' \
+            --data-urlencode 'location_radius=100' \
+            --data-urlencode 'interests_filter=biking, hiking' \
+            --data-urlencode 'common_interests=2'
         - lang: typescript
           source: |
             const myHeaders = new Headers();
-            myHeaders.append("Authorization", "Bearer YOUR_JWT_TOKEN");
             myHeaders.append("Content-Type", "application/x-www-form-urlencoded");
 
             const urlencoded = new URLSearchParams();
-            urlencoded.append("gps_longitude", "-122.4194");
-            urlencoded.append("gps_latitude", "37.7749");
+            urlencoded.append("gender", "female");
+            urlencoded.append("age", "30");
+            urlencoded.append("sexual_preference", "homosexual");
+            urlencoded.append("biography", "I am your father...");
+            urlencoded.append("profile_picture", "https://picsum.photos/id/19/200/200");
+            urlencoded.append("gps_longitude", "180");
+            urlencoded.append("gps_latitude", "-20.946823");
+            urlencoded.append("age_min", "23");
+            urlencoded.append("age_max", "20");
+            urlencoded.append("fame_rating_min", "1");
+            urlencoded.append("fame_rating_max", "100");
+            urlencoded.append("location_radius", "100");
+            urlencoded.append("interests_filter", "biking, hiking");
+            urlencoded.append("common_interests", "2");
 
             const requestOptions: RequestInit = {
               method: "PATCH",
