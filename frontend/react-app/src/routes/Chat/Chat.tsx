@@ -168,7 +168,6 @@ export default function Chat() {
         setLikes(arr)
       }
       if (visitsData.status === 'success' && Array.isArray(visitsData.data?.visits)) {
-        // Process visits data to extract visitor details from the nested visitor_profile array
         const processedViews = visitsData.data.visits.map((visit: any) => {
           if (visit.visitor_profile && Array.isArray(visit.visitor_profile) && visit.visitor_profile.length > 0) {
             const profile = visit.visitor_profile[0]
@@ -470,36 +469,46 @@ export default function Chat() {
     </div>
   )
 
-  return (
-    <>
-      <div className="slant-shape1"></div>
-      <NavbarLogged />
-      <div className="content d-flex flex-column align-items-center justify-content-center mt-5">
-        <div className="card text-center p-3 shadow-lg chat-card">
-          <div className="toggle-buttons d-flex justify-content-center mb-3">
-            <button className={`btn ${view === 'matches' ? 'btn-primary' : 'btn-outline-primary'} mx-2`} onClick={() => setView('matches')}>
-              Matches & Chats
-            </button>
-            <button className={`btn ${view === 'likes' ? 'btn-primary' : 'btn-outline-primary'} mx-2`} onClick={() => setView('likes')}>
-              Likes & Views
-            </button>
-            <button className={`btn ${view === 'visited' ? 'btn-primary' : 'btn-outline-primary'} mx-2`} onClick={() => setView('visited')}>
-              Visited Profiles
-            </button>
-          </div>
-          {view === 'matches' ? (
-            <>
-              {renderMatches()}
-              {renderChats()}
-              {renderChatWindow()}
-            </>
-          ) : view === 'likes' ? (
-            renderLikesViews()
-          ) : (
-            renderVisitedProfiles()
-          )}
+return (
+  <>
+    <div className="slant-shape1"></div>
+    <NavbarLogged />
+    <div className="content d-flex flex-column align-items-center justify-content-center mt-5">
+      <div className="card text-center p-3 shadow-lg chat-card">
+        <div className="toggle-buttons d-flex justify-content-center mb-3">
+          <button
+            className={`btn hero-button ${view === 'matches' ? 'active' : ''}`}
+            onClick={() => setView('matches')}
+          >
+            Chats
+          </button>
+          <button
+            className={`btn hero-button ${view === 'likes' ? 'active' : ''}`}
+            onClick={() => setView('likes')}
+          >
+            Likes
+          </button>
+          <button
+            className={`btn hero-button ${view === 'visited' ? 'active' : ''}`}
+            onClick={() => setView('visited')}
+          >
+            Profiles
+          </button>
         </div>
+        {view === 'matches' ? (
+          <>
+            {renderMatches()}
+            {renderChats()}
+            {renderChatWindow()}
+          </>
+        ) : view === 'likes' ? (
+          renderLikesViews()
+        ) : view === 'visited' ? (
+          renderVisitedProfiles()
+        ) : null}
+        {expandedProfile && renderExpandedProfile()}
       </div>
-    </>
-  )
+    </div>
+  </>
+);
 }

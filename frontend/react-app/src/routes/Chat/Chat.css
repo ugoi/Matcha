@@ -10,7 +10,7 @@
 
 .matches-list,
 .chats-list {
-    max-height: 150px;
+    min-height: 175px;
     overflow-y: auto;
     margin-bottom: 15px;
 }
@@ -188,6 +188,7 @@
 }
 
 .likes-views-section {
+    min-height: 370px;
     width: 100%;
     display: flex;
     justify-content: space-around;
@@ -219,6 +220,7 @@
 }
 
 .visited-profiles-section {
+    min-height: 370px;
     margin-top: 15px;
 }
 
@@ -247,3 +249,13 @@
     font-size: 0.8rem;
     color: #2B3A45;
 }
+
+.toggle-buttons .hero-button {
+    margin: 0 3%;
+  }
+  
+  .hero-button.active {
+    background-color: #093c51;
+    color: #fff;
+  }
+  
