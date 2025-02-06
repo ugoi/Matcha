@@ -13,12 +13,8 @@ function Settings() {
   const [sexualPreference, setSexualPreference] = useState('');
   const [minFameRating, setMinFameRating] = useState(0);
   const [maxFameRating, setMaxFameRating] = useState(5);
-
-  // Existing tags/interest filters
   const [tagsInput, setTagsInput] = useState('');
   const [commonTags, setCommonTags] = useState<string[]>([]);
-
-  // New field for minimum common interests
   const [minCommonInterests, setMinCommonInterests] = useState(1);
 
   const navigate = useNavigate();
@@ -41,24 +37,20 @@ function Settings() {
           if (result.data.sexual_preference) setSexualPreference(result.data.sexual_preference);
           if (result.data.search_preferences) {
             const prefs = result.data.search_preferences;
-            if (prefs.distance?.$lte) setDistance(prefs.distance.$lte);
-            if (prefs.age) {
-              if (prefs.age.$gte) setMinAge(prefs.age.$gte);
-              if (prefs.age.$lte) setMaxAge(prefs.age.$lte);
+            if (prefs.location_radius !== undefined) setDistance(prefs.location_radius);
+            if (prefs.age_min !== undefined) setMinAge(prefs.age_min);
+            if (prefs.age_max !== undefined) setMaxAge(prefs.age_max);
+            if (prefs.fame_rating_min !== undefined) setMinFameRating(prefs.fame_rating_min);
+            if (prefs.fame_rating_max !== undefined) setMaxFameRating(prefs.fame_rating_max);
+            if (prefs.interests_filter) {
+              const tags = prefs.interests_filter
+                .split(',')
+                .map((t: string) => t.trim())
+                .filter((t: string) => t.length);
+              setCommonTags(tags);
+              setTagsInput(tags.map((t: string) => t.startsWith('#') ? t : '#' + t).join(' '));
             }
-            if (prefs.fame_rating) {
-              if (prefs.fame_rating.$gte !== undefined) setMinFameRating(prefs.fame_rating.$gte);
-              if (prefs.fame_rating.$lte !== undefined) setMaxFameRating(prefs.fame_rating.$lte);
-            }
-            // If you want to read this minimum common interests from the backend as well,
-            // you could do something like:
-            // if (prefs.common_interests && prefs.common_interests.$gte) {
-            //   setMinCommonInterests(prefs.common_interests.$gte);
-            // }
-            if (prefs.common_interests?.$in) {
-              setCommonTags(prefs.common_interests.$in);
-              setTagsInput(prefs.common_interests.$in.join(', '));
-            }
+            if (prefs.common_interests !== undefined) setMinCommonInterests(prefs.common_interests);
           }
         }
       })
@@ -66,8 +58,13 @@ function Settings() {
   }, []);
 
   const handleTagsBlur = () => {
-    const parsed = tagsInput.split(',').map(t => t.trim()).filter(t => t.length);
+    const parsed = tagsInput
+      .split(' ')
+      .map((t: string) => t.trim())
+      .filter((t: string) => t.length)
+      .map((t: string) => t.startsWith('#') ? t.substring(1) : t);
     setCommonTags(parsed);
+    setTagsInput(parsed.map((t: string) => '#' + t).join(' '));
   };
 
   const handleDistanceChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -79,7 +76,6 @@ function Settings() {
   };
 
   const handleSaveChanges = async () => {
-    // Patch user email
     const emailParams = new URLSearchParams();
     emailParams.append("email", email);
     await fetch("http://localhost:3000/api/users/me", {
@@ -88,7 +84,6 @@ function Settings() {
       body: emailParams,
     });
 
-    // Patch profile preferences
     const profileParams = new URLSearchParams();
     profileParams.append("gender", gender || "");
     profileParams.append("sexual_preference", sexualPreference || "");
@@ -98,8 +93,6 @@ function Settings() {
     profileParams.append("fame_rating_min", minFameRating.toString());
     profileParams.append("fame_rating_max", maxFameRating.toString());
     profileParams.append("interests_filter", commonTags.join(','));
-
-    // New minimum common interests field sent to backend
     profileParams.append("common_interests", minCommonInterests.toString());
 
     await fetch("http://localhost:3000/api/profiles/me", {
@@ -166,8 +159,6 @@ function Settings() {
       <div className="content d-flex flex-column align-items-center justify-content-center mt-5">
         <div className="card text-center p-4 shadow-lg settings-card">
           <h3 className="mb-4">Settings</h3>
-  
-          {/* Distance */}
           <div className="setting-item mb-3">
             <label htmlFor="distance" className="form-label">Distance (km)</label>
             <input
@@ -181,8 +172,6 @@ function Settings() {
             />
             <p className="slider-value">{distance} km</p>
           </div>
-  
-          {/* Age Range */}
           <div className="setting-item mb-3">
             <label className="form-label">Age Range</label>
             <ReactSlider
@@ -202,8 +191,6 @@ function Settings() {
             />
             <p className="slider-value">{minAge} - {maxAge} years</p>
           </div>
-  
-          {/* Fame Rating Range */}
           <div className="setting-item mb-3">
             <label className="form-label">Fame Rating Range</label>
             <ReactSlider
@@ -215,7 +202,7 @@ function Settings() {
               pearling
               minDistance={1}
               min={0}
-              max={5}
+              max={100}
               onChange={(value: number[]) => {
                 setMinFameRating(value[0]);
                 setMaxFameRating(value[1]);
@@ -223,10 +210,8 @@ function Settings() {
             />
             <p className="slider-value">{minFameRating} - {maxFameRating}</p>
           </div>
-  
-          {/* Common Tags */}
           <div className="setting-item mb-3">
-            <label htmlFor="commonTags" className="form-label">Common Tags (comma-separated)</label>
+            <label htmlFor="commonTags" className="form-label">Common Tags</label>
             <input
               type="text"
               id="commonTags"
@@ -234,26 +219,27 @@ function Settings() {
               onChange={(e) => setTagsInput(e.target.value)}
               onBlur={handleTagsBlur}
               className="form-control"
-              placeholder="e.g. sport, music, coding"
+              placeholder="e.g. #sport #music #coding"
             />
-            {commonTags.length > 0 && (
-              <p className="text-muted mt-2">Current tags: {commonTags.join(', ')}</p>
-            )}
           </div>
-  
-          {/* Minimum Common Interests */}
           <div className="setting-item mb-3">
             <label htmlFor="minCommonInterests" className="form-label">Minimum common interests</label>
-            <input
-              type="number"
-              id="minCommonInterests"
+            <ReactSlider
+              className="horizontal-slider"
+              thumbClassName="slider-thumb"
+              trackClassName="slider-track"
               value={minCommonInterests}
-              onChange={(e) => setMinCommonInterests(Number(e.target.value))}
-              className="form-control"
+              ariaLabel={['Minimum common interests']}
+              min={0}
+              max={3}
+              onChange={(value: number | number[]) => {
+                typeof value === 'number'
+                  ? setMinCommonInterests(value)
+                  : setMinCommonInterests(value[0]);
+              }}
             />
+            <p className="slider-value">{minCommonInterests}</p>
           </div>
-  
-          {/* Gender */}
           <div className="setting-item mb-3">
             <label htmlFor="Gender" className="form-label">Select your gender</label>
             <select
@@ -268,8 +254,6 @@ function Settings() {
               <option value="other">Other</option>
             </select>
           </div>
-  
-          {/* Sexual Preference */}
           <div className="setting-item mb-3">
             <label htmlFor="Preferences" className="form-label">Select your sexual preference</label>
             <select
@@ -285,8 +269,6 @@ function Settings() {
               <option value="other">Other</option>
             </select>
           </div>
-  
-          {/* Email */}
           <div className="setting-item mb-3">
             <label htmlFor="email" className="form-label">Email</label>
             <input
@@ -297,8 +279,6 @@ function Settings() {
               className="form-control"
             />
           </div>
-  
-          {/* Buttons container */}
           <div className="d-flex flex-column align-items-center">
             <button className="btn btn-primary mt-3" onClick={handleSaveChanges}>
               Save Changes

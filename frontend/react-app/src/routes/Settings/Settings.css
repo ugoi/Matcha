@@ -2,21 +2,17 @@
     width: 90%;
     max-width: 700px;
     border-radius: 10px;
-    /* padding: 0px 40px; */
     box-shadow: 0 8px 30px rgba(0, 0, 0, 0.1);
-    /* margin: 0 auto; */
   }  
 
   .setting-item {
     padding: 0px 40px;
-    /* margin-bottom: 0.2rem; */
     text-align: left;
   }
   
   .form-label {
     font-weight: 600;
     color: #2B3A45;
-    /* margin-bottom: 0.5rem; */
   }
   
   .form-control,
@@ -31,7 +27,6 @@
   .horizontal-slider {
     height: 20px;
     color: #1d4771;
-    /* margin: 1rem 0; */
   }
   
   .form-range::-webkit-slider-track,
@@ -71,13 +66,12 @@
   
   .slider-value {
     text-align: right;
-    /* margin-top: 5px; */
     color: #2B3A45;
     font-weight: 500;
   }
   
   .btn-secondary {
-    max-width: 250px;
+    max-width: 230px;
     background-color: #A3C0D8;
     border: none;
     color: #F0F8FF;
@@ -94,7 +88,7 @@
   }
   
   .btn-danger {
-    max-width: 250px;
+    max-width: 230px;
     background-color: #FF6B6B;
     border: none;
     color: white;
