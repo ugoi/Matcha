@@ -13,8 +13,14 @@ function Settings() {
   const [sexualPreference, setSexualPreference] = useState('');
   const [minFameRating, setMinFameRating] = useState(0);
   const [maxFameRating, setMaxFameRating] = useState(5);
+
+  // Existing tags/interest filters
   const [tagsInput, setTagsInput] = useState('');
   const [commonTags, setCommonTags] = useState<string[]>([]);
+
+  // New field for minimum common interests
+  const [minCommonInterests, setMinCommonInterests] = useState(1);
+
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -33,22 +39,27 @@ function Settings() {
         if (result?.status === "success") {
           if (result.data.gender) setGender(result.data.gender);
           if (result.data.sexual_preference) setSexualPreference(result.data.sexual_preference);
-          // if (result.data.search_preferences) {
-          //   const prefs = result.data.search_preferences;
-          //   if (prefs.distance?.$lte) setDistance(prefs.distance.$lte);
-          //   if (prefs.age) {
-          //     if (prefs.age.$gte) setMinAge(prefs.age.$gte);
-          //     if (prefs.age.$lte) setMaxAge(prefs.age.$lte);
-          //   }
-          //   if (prefs.fame_rating) {
-          //     if (prefs.fame_rating.$gte !== undefined) setMinFameRating(prefs.fame_rating.$gte);
-          //     if (prefs.fame_rating.$lte !== undefined) setMaxFameRating(prefs.fame_rating.$lte);
-          //   }
-          //   if (prefs.common_interests?.$in) {
-          //     setCommonTags(prefs.common_interests.$in);
-          //     setTagsInput(prefs.common_interests.$in.join(', '));
-          //   }
-          // }
+          if (result.data.search_preferences) {
+            const prefs = result.data.search_preferences;
+            if (prefs.distance?.$lte) setDistance(prefs.distance.$lte);
+            if (prefs.age) {
+              if (prefs.age.$gte) setMinAge(prefs.age.$gte);
+              if (prefs.age.$lte) setMaxAge(prefs.age.$lte);
+            }
+            if (prefs.fame_rating) {
+              if (prefs.fame_rating.$gte !== undefined) setMinFameRating(prefs.fame_rating.$gte);
+              if (prefs.fame_rating.$lte !== undefined) setMaxFameRating(prefs.fame_rating.$lte);
+            }
+            // If you want to read this minimum common interests from the backend as well,
+            // you could do something like:
+            // if (prefs.common_interests && prefs.common_interests.$gte) {
+            //   setMinCommonInterests(prefs.common_interests.$gte);
+            // }
+            if (prefs.common_interests?.$in) {
+              setCommonTags(prefs.common_interests.$in);
+              setTagsInput(prefs.common_interests.$in.join(', '));
+            }
+          }
         }
       })
       .catch(() => {});
@@ -68,6 +79,7 @@ function Settings() {
   };
 
   const handleSaveChanges = async () => {
+    // Patch user email
     const emailParams = new URLSearchParams();
     emailParams.append("email", email);
     await fetch("http://localhost:3000/api/users/me", {
@@ -76,15 +88,20 @@ function Settings() {
       body: emailParams,
     });
 
+    // Patch profile preferences
     const profileParams = new URLSearchParams();
-    profileParams.append("gender", gender);
-    profileParams.append("sexual_preference", sexualPreference);
-    // profileParams.append("search_preferences[distance][$lte]", distance.toString());
-    // profileParams.append("search_preferences[age][$gte]", minAge.toString());
-    // profileParams.append("search_preferences[age][$lte]", maxAge.toString());
-    // profileParams.append("search_preferences[fame_rating][$gte]", minFameRating.toString());
-    // profileParams.append("search_preferences[fame_rating][$lte]", maxFameRating.toString());
-    // profileParams.append("search_preferences[common_interests][$in]", commonTags.join(','));
+    profileParams.append("gender", gender || "");
+    profileParams.append("sexual_preference", sexualPreference || "");
+    profileParams.append("age_min", minAge.toString());
+    profileParams.append("age_max", maxAge.toString());
+    profileParams.append("location_radius", distance.toString());
+    profileParams.append("fame_rating_min", minFameRating.toString());
+    profileParams.append("fame_rating_max", maxFameRating.toString());
+    profileParams.append("interests_filter", commonTags.join(','));
+
+    // New minimum common interests field sent to backend
+    profileParams.append("common_interests", minCommonInterests.toString());
+
     await fetch("http://localhost:3000/api/profiles/me", {
       method: "PATCH",
       headers: { "Content-Type": "application/x-www-form-urlencoded" },
@@ -144,15 +161,28 @@ function Settings() {
 
   return (
     <>
+      <div className="slant-shape1"></div>
       <NavbarLogged />
       <div className="content d-flex flex-column align-items-center justify-content-center mt-5">
         <div className="card text-center p-4 shadow-lg settings-card">
           <h3 className="mb-4">Settings</h3>
+
+          {/* Distance */}
           <div className="setting-item mb-3">
             <label htmlFor="distance" className="form-label">Distance (km)</label>
-            <input type="range" id="distance" min="3" max="100" value={distance} onChange={handleDistanceChange} className="form-range" />
+            <input
+              type="range"
+              id="distance"
+              min="3"
+              max="100"
+              value={distance}
+              onChange={handleDistanceChange}
+              className="form-range"
+            />
             <p className="slider-value">{distance} km</p>
           </div>
+
+          {/* Age Range */}
           <div className="setting-item mb-3">
             <label className="form-label">Age Range</label>
             <ReactSlider
@@ -172,6 +202,8 @@ function Settings() {
             />
             <p className="slider-value">{minAge} - {maxAge} years</p>
           </div>
+
+          {/* Fame Rating Range */}
           <div className="setting-item mb-3">
             <label className="form-label">Fame Rating Range</label>
             <ReactSlider
@@ -191,23 +223,61 @@ function Settings() {
             />
             <p className="slider-value">{minFameRating} - {maxFameRating}</p>
           </div>
+
+          {/* Common Tags (string-based filters) */}
           <div className="setting-item mb-3">
             <label htmlFor="commonTags" className="form-label">Common Tags (comma-separated)</label>
-            <input type="text" id="commonTags" value={tagsInput} onChange={(e) => setTagsInput(e.target.value)} onBlur={handleTagsBlur} className="form-control" placeholder="e.g. sport, music, coding" />
-            {commonTags.length > 0 && <p className="text-muted mt-2">Current tags: {commonTags.join(', ')}</p>}
+            <input
+              type="text"
+              id="commonTags"
+              value={tagsInput}
+              onChange={(e) => setTagsInput(e.target.value)}
+              onBlur={handleTagsBlur}
+              className="form-control"
+              placeholder="e.g. sport, music, coding"
+            />
+            {commonTags.length > 0 && (
+              <p className="text-muted mt-2">Current tags: {commonTags.join(', ')}</p>
+            )}
           </div>
+
+          {/* Minimum Common Interests */}
+          <div className="setting-item mb-3">
+            <label htmlFor="minCommonInterests" className="form-label">Minimum common interests</label>
+            <input
+              type="number"
+              id="minCommonInterests"
+              value={minCommonInterests}
+              onChange={(e) => setMinCommonInterests(Number(e.target.value))}
+              className="form-control"
+            />
+          </div>
+
+          {/* Gender */}
           <div className="setting-item mb-3">
             <label htmlFor="Gender" className="form-label">Select your gender</label>
-            <select id="Gender" className="form-control" value={gender} onChange={(e) => setGender(e.target.value)}>
+            <select
+              id="Gender"
+              className="form-control"
+              value={gender}
+              onChange={(e) => setGender(e.target.value)}
+            >
               <option value="">Select...</option>
               <option value="male">Male</option>
               <option value="female">Female</option>
               <option value="other">Other</option>
             </select>
           </div>
+
+          {/* Sexual Preference */}
           <div className="setting-item mb-3">
             <label htmlFor="Preferences" className="form-label">Select your sexual preference</label>
-            <select id="Preferences" className="form-control" value={sexualPreference} onChange={(e) => setSexualPreference(e.target.value)}>
+            <select
+              id="Preferences"
+              className="form-control"
+              value={sexualPreference}
+              onChange={(e) => setSexualPreference(e.target.value)}
+            >
               <option value="">Select...</option>
               <option value="heterosexual">Heterosexual</option>
               <option value="homosexual">Homosexual</option>
@@ -215,12 +285,26 @@ function Settings() {
               <option value="other">Other</option>
             </select>
           </div>
+
+          {/* Email */}
           <div className="setting-item mb-3">
             <label htmlFor="email" className="form-label">Email</label>
-            <input type="email" id="email" value={email} onChange={handleEmailChange} className="form-control" />
+            <input
+              type="email"
+              id="email"
+              value={email}
+              onChange={handleEmailChange}
+              className="form-control"
+            />
           </div>
+
+          {/* Save Changes */}
           <button className="btn btn-primary mt-3" onClick={handleSaveChanges}>Save Changes</button>
+
+          {/* Update location */}
           <button className="btn btn-secondary mt-3" onClick={handleUpdateGPS}>Update location</button>
+
+          {/* Delete Account */}
           <button className="btn btn-danger mt-3" onClick={handleDeleteAccount}>Delete Account</button>
         </div>
       </div>

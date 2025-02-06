@@ -51,6 +51,7 @@ function ForgotPassword() {
 
   return (
     <>
+      <div className="slant-shape1"></div>
       <Navbar />
       <Container className="forgot-password-container mt-5">
         <Row className="justify-content-center">

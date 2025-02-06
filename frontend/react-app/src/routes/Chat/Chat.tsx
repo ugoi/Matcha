@@ -472,6 +472,7 @@ export default function Chat() {
 
   return (
     <>
+      <div className="slant-shape1"></div>
       <NavbarLogged />
       <div className="content d-flex flex-column align-items-center justify-content-center mt-5">
         <div className="card text-center p-3 shadow-lg chat-card">

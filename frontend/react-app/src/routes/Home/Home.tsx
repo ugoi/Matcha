@@ -37,7 +37,9 @@ function Home() {
   useEffect(() => {
     async function fetchUserProfile() {
       try {
-        const res = await fetch(`${window.location.origin}/api/profiles/me`, { credentials: 'include' });
+        const res = await fetch(`${window.location.origin}/api/profiles/me`, {
+          credentials: 'include',
+        });
         const result = await res.json();
         if (result.status === 'success') {
           setPreferences(buildPreferences(result.data));
@@ -45,34 +47,66 @@ function Home() {
         } else {
           navigate('/profile');
         }
-      } catch (error) {
+      } catch {
         navigate('/profile');
       }
     }
     fetchUserProfile();
   }, [navigate]);
 
-  const buildPreferences = (userData: any) => {
+  function buildPreferences(userData: any) {
     const { gender, sexual_preference, search_preferences = {} } = userData;
-    if (sexual_preference === 'heterosexual') {
-      return { ...search_preferences, gender: gender === 'male' ? { '$eq': 'female' } : { '$eq': 'male' } };
-    } else if (sexual_preference === 'homosexual') {
-      return { ...search_preferences, gender: { '$eq': gender } };
-    } else if (sexual_preference === 'bisexual') {
-      return { ...search_preferences, gender: { '$in': ['male', 'female'] } };
+    const filterObject: any = {};
+    if (search_preferences.location_radius !== undefined) {
+      filterObject.distance = { $lte: String(search_preferences.location_radius) };
     }
-    return search_preferences;
-  };
+    if (search_preferences.age_min !== undefined || search_preferences.age_max !== undefined) {
+      filterObject.age = {};
+      if (search_preferences.age_min !== undefined) {
+        filterObject.age.$gte = String(search_preferences.age_min);
+      }
+      if (search_preferences.age_max !== undefined) {
+        filterObject.age.$lte = String(search_preferences.age_max);
+      }
+    }
+    if (search_preferences.fame_rating_min !== undefined || search_preferences.fame_rating_max !== undefined) {
+      filterObject.fame_rating = {};
+      if (search_preferences.fame_rating_min !== undefined) {
+        filterObject.fame_rating.$gte = String(search_preferences.fame_rating_min);
+      }
+      if (search_preferences.fame_rating_max !== undefined) {
+        filterObject.fame_rating.$lte = String(search_preferences.fame_rating_max);
+      }
+    }
+    if (search_preferences.interests_filter) {
+      filterObject.interests = { $in: search_preferences.interests_filter.split(',').map((t: string) => t.trim()) };
+    }
+    if (search_preferences.common_interests !== undefined) {
+      filterObject.common_interests = { $gte: String(search_preferences.common_interests) };
+    }
+    if (sexual_preference === 'heterosexual') {
+      filterObject.gender = gender === 'male' ? { $eq: 'female' } : { $eq: 'male' };
+    } else if (sexual_preference === 'homosexual') {
+      filterObject.gender = { $eq: gender };
+    } else if (sexual_preference === 'bisexual') {
+      filterObject.gender = { $in: ['male', 'female'] };
+    }
+    return filterObject;
+  }
 
   useEffect(() => {
     async function fetchProfiles(prefs: any, sort?: Record<string, { $order: "asc" | "desc" }>) {
       const params = new URLSearchParams();
-      if (prefs) params.append("filter_by", JSON.stringify(prefs));
+      if (prefs) {
+        params.append("filter_by", JSON.stringify(prefs));
+      }
       if (sort && Object.keys(sort).length > 0) {
         params.append("sort_by", JSON.stringify(sort));
       }
       try {
-        const res = await fetch(`http://localhost:3000/api/profiles?${params.toString()}`, { credentials: 'include' });
+        const res = await fetch(`http://localhost:3000/api/profiles?${params.toString()}`, {
+          credentials: 'include'
+        });
         const data = await res.json();
         if (data.status === 'success' && Array.isArray(data.data?.profiles)) {
           const formatted = data.data.profiles.map((d: any) => ({
@@ -94,8 +128,7 @@ function Home() {
         } else {
           setUsers([]);
         }
-      } catch (error) {
-        console.error("Error fetching profiles:", error);
+      } catch {
         setUsers([]);
       }
     }
@@ -111,7 +144,7 @@ function Home() {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       credentials: 'include'
-    }).catch(err => console.error("Error recording visit:", err));
+    }).catch(() => {});
   }, [currentIndex, users]);
 
   const toggleSort = (field: string, defaultOrder: "asc" | "desc") => {
@@ -140,9 +173,7 @@ function Home() {
         setShowMatchAnimation(true);
         setTimeout(() => setShowMatchAnimation(false), 3000);
       }
-    } catch (error) {
-      console.error('Error liking user:', error);
-    }
+    } catch {}
     setIsActionLoading(false);
     setCurrentIndex(prev => (prev + 1) % users.length);
     setPhotoIndex(0);
@@ -160,9 +191,7 @@ function Home() {
         credentials: 'include',
       });
       setActedUserIds(prev => new Set(prev).add(currentUser.profile_id));
-    } catch (error) {
-      console.error('Error disliking user:', error);
-    }
+    } catch {}
     setIsActionLoading(false);
     setCurrentIndex(prev => (prev + 1) % users.length);
     setPhotoIndex(0);
@@ -183,6 +212,7 @@ function Home() {
 
   return (
     <>
+      <div className="slant-shape1"></div>
       <NavbarLogged />
       {showMatchAnimation && (
         <div className="match-animation-overlay">
@@ -192,12 +222,20 @@ function Home() {
           </div>
         </div>
       )}
-      <div className="sort-container d-flex justify-content-center gap-2 my-3">
-        <button className="btn btn-outline-primary" onClick={() => toggleSort("age", "asc")}>Sort by Age</button>
-        <button className="btn btn-outline-primary" onClick={() => toggleSort("distance", "desc")}>Sort by Distance</button>
-        <button className="btn btn-outline-primary" onClick={() => toggleSort("fame_rating", "desc")}>Sort by Fame Rating</button>
-        <button className="btn btn-outline-primary" onClick={() => toggleSort("common_interests", "desc")}>Sort by Common Interests</button>
-      </div>
+      <ul className="list-unstyled d-flex justify-content-center gap-3 my-3">
+        <li>
+          <button className="btn hero-button" onClick={() => toggleSort("age", "asc")}>Age</button>
+        </li>
+        <li>
+          <button className="btn hero-button" onClick={() => toggleSort("distance", "desc")}>Distance</button>
+        </li>
+        <li>
+          <button className="btn hero-button" onClick={() => toggleSort("fame_rating", "desc")}>Fame</button>
+        </li>
+        <li>
+          <button className="btn hero-button" onClick={() => toggleSort("common_interests", "desc")}>Interests</button>
+        </li>
+      </ul>
       <div className="content d-flex flex-column align-items-center justify-content-center mt-5">
         {currentUser ? (
           <div className="card text-center p-3 shadow-lg position-relative">
@@ -205,29 +243,52 @@ function Home() {
               <img src={currentPhoto} className="card-img-top" alt={currentUser.name} />
               {currentUser.pictures.length > 1 && (
                 <>
-                  <button className="photo-arrow left-arrow position-absolute top-50 start-0 translate-middle-y btn btn-light" onClick={handlePreviousPhoto}>
+                  <button
+                    className="photo-arrow left-arrow position-absolute top-50 start-0 translate-middle-y btn btn-light"
+                    onClick={handlePreviousPhoto}
+                  >
                     <i className="bi bi-chevron-left"></i>
                   </button>
-                  <button className="photo-arrow right-arrow position-absolute top-50 end-0 translate-middle-y btn btn-light" onClick={handleNextPhoto}>
+                  <button
+                    className="photo-arrow right-arrow position-absolute top-50 end-0 translate-middle-y btn btn-light"
+                    onClick={handleNextPhoto}
+                  >
                     <i className="bi bi-chevron-right"></i>
                   </button>
                 </>
               )}
             </div>
             <div className="card-body">
-              <h4 className="card-title mb-2">{currentUser.name}, {currentUser.age}</h4>
+              <h4 className="card-title mb-2">
+                {currentUser.name}, {currentUser.age}
+              </h4>
               <p className="card-text text-muted mb-3">{currentUser.biography}</p>
               {currentUser.interests && currentUser.interests.length > 0 && (
                 <p className="card-text mb-3">
-                  <strong>Interests:</strong> {currentUser.interests.map((item: any) => (typeof item === 'object' ? item.interest_tag || '' : item)).filter(Boolean).join(', ')}
+                  <strong>Interests:</strong> {currentUser.interests
+                    .map((item: any) => (typeof item === 'object' ? item.interest_tag || '' : item))
+                    .filter(Boolean)
+                    .join(', ')}
                 </p>
               )}
-              <p className="card-text text-muted mb-1">Fame Rating: {currentUser.fame_rating}</p>
+              <p className="card-text text-muted mb-1">
+                Fame Rating: {currentUser.fame_rating}
+              </p>
               <div className="action-buttons d-flex justify-content-around mt-3">
-                <button className="btn dislike-button rounded-circle shadow-sm" onClick={handleDislikeUser} title="Reject" disabled={isActionLoading || actedUserIds.has(currentUser.profile_id)}>
+                <button
+                  className="btn dislike-button rounded-circle shadow-sm"
+                  onClick={handleDislikeUser}
+                  title="Reject"
+                  disabled={isActionLoading || actedUserIds.has(currentUser.profile_id)}
+                >
                   <i className="bi bi-x text-danger"></i>
                 </button>
-                <button className="btn like-button rounded-circle shadow-sm" onClick={handleLikeUser} title="Like" disabled={isActionLoading || actedUserIds.has(currentUser.profile_id)}>
+                <button
+                  className="btn like-button rounded-circle shadow-sm"
+                  onClick={handleLikeUser}
+                  title="Like"
+                  disabled={isActionLoading || actedUserIds.has(currentUser.profile_id)}
+                >
                   <i className="bi bi-heart-fill text-danger"></i>
                 </button>
               </div>

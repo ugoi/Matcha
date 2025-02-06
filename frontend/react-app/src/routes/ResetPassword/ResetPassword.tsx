@@ -66,6 +66,7 @@ function ResetPassword() {
 
   return (
     <>
+     <div className="slant-shape1"></div>
       <Navbar />
       <Container className="reset-password-container mt-5">
         <Row className="justify-content-center">

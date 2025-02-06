@@ -1,21 +1,100 @@
-/* Signup.css */
-.signup-container {
-    background-color: #F5F0E8;
-    padding: 30px;
-    border-radius: 10px;
-    box-shadow: 0px 4px 20px rgba(255, 124, 10, 0.1);
-}
-
-.w-45 {
+  .signup-container {
+    background-color: #E8F0F8;
+    padding: 20px 40px;
+    border-radius: 15px;
+    box-shadow: 0 8px 30px rgba(53, 131, 158, 0.15);
+    max-width: 600px;
+    margin: 0 auto;
+  }
+  
+  h1 {
+    color: #1E3A5F;
+    font-size: 2.8rem;
+    margin-bottom: 0.8rem;
+  }
+  
+  .form-label {
+    color: #2B3A45;
+    font-weight: 600;
+    margin-bottom: 0.4rem;
+  }
+  
+  .form-control {
+    width: 100%;
+    border: 1px solid #D1E3EB;
+    border-radius: 8px;
+    background-color: #FFFFFF;
+    padding: 0.4rem;
+    color: #2B3A45;
+    transition: border-color 0.3s, box-shadow 0.3s;
+  }
+  
+  .form-control:focus {
+    border-color: #1E90FF;
+    box-shadow: 0 0 0 0.2rem rgba(30, 144, 255, 0.25);
+  }
+  
+  .form-range,
+  .horizontal-slider {
+    width: 100%;
+    height: 20px;
+    margin: 1rem 0;
+    padding: 0;
+    background: transparent;
+  }
+  
+  .form-range::-webkit-slider-track,
+  .slider-track {
+    height: 4px;
+    background: #D1E3EB;
+    border-radius: 2px;
+  }
+  
+  .slider-thumb,
+  .form-range::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 20px;
+    height: 20px;
+    background: #1E90FF;
+    border-radius: 50%;
+    cursor: pointer;
+    transition: box-shadow 0.2s;
+    margin-top: -8px;
+  }
+  
+  .slider-value {
+    text-align: right;
+    margin-top: 5px;
+    color: #2B3A45;
+    font-weight: 500;
+  }
+  
+  .btn-outline-danger,
+  .btn-outline-primary {
+    border-radius: 25px;
+    font-weight: 600;
+    padding: 0.75rem 1.5rem;
+    width: 100%;
+  }
+  
+  .btn-outline-danger:hover {
+    background-color: #FF6B6B;
+    border-color: #FF6B6B;
+    color: #FFF;
+  }
+  
+  .btn-outline-primary:hover {
+    background-color: #1E90FF;
+    border-color: #1E90FF;
+    color: #F0F8FF;
+  }
+  
+  .w-45 {
     width: 45%;
-}
-
-.social-button {
-    font-size: 0.85rem;
-    padding: 8px;
-    transition: transform 0.3s ease;
-}
-
-.social-button:hover {
-    transform: scale(1.05);
-}
+  }
+  
+  .text-center {
+    text-align: center;
+  }
+  

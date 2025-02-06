@@ -240,7 +240,7 @@ function Profile() {
     return (
       <main>
         <NavbarLogged />
-        <section className="content d-flex flex-column align-items-center justify-content-center mt-5">
+        <section className="content d-flex flex-column align-items-center justify-content-center">
           <div className="alert alert-danger" role="alert">
             {error}
           </div>
@@ -252,8 +252,9 @@ function Profile() {
   if (!user) return <p></p>
   return (
     <main>
+      <div className="slant-shape1"></div>
       <NavbarLogged />
-      <section className="content d-flex flex-column align-items-center justify-content-center mt-5">
+      <section className="content d-flex flex-column align-items-center justify-content-center">
         <article className="card text-center p-3 shadow-lg">
           <header className="profile-img-container position-relative">
             <img
@@ -327,7 +328,7 @@ function Profile() {
               </div>
             )}
             <button className="edit-button" onClick={handleEditClick}>
-              <i className="bi bi-pencil-square"></i> Edit
+              <i className="bi bi-pencil-square"></i>
             </button>
             {user.pictures.length > 1 && (
               <div className="photo-navigation">

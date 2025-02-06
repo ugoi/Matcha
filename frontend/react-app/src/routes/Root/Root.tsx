@@ -1,30 +1,28 @@
-// src/routes/Root/Root.tsx
-import { Link } from 'react-router-dom';
-import Navbar from '../../components/Navbar/Navbar';
-import { Container, Row, Col, Button } from 'react-bootstrap';
-import './Root.css';
+import { Link } from "react-router-dom";
+import Navbar from "../../components/Navbar/Navbar";
+import "./Root.css";
 
-function App() {
+function Root() {
   return (
     <>
+      <header className="hero">
       <Navbar />
-      <Container className="text-center mt-5">
-        <Row>
-          <Col>
-            <h1 className="display-4 mb-4">Welcome to Matcha!</h1>
-            <p className="lead mb-4">
-              Join our community and find your perfect match. Sign up now to start your journey!
-            </p>
-            <Link to="/signup">
-              <Button variant="dark" size="lg">
-                Create Account
-              </Button>
-            </Link>
-          </Col>
-        </Row>
-      </Container>
+        <div className="floating-polygon poly1"></div>
+        <div className="floating-polygon poly2"></div>
+        <div className="floating-polygon poly3"></div>
+        <div className="hero-content">
+          <h1 className="hero-title">Welcome to Matcha!</h1>
+          <p className="hero-subtitle">
+            Discover your perfect match in a serene space crafted for calm and connection.
+          </p>
+          <Link to="/signup" className="hero-button">
+            Create Account
+          </Link>
+        </div>
+        <div className="slant-shape"></div>
+      </header>
     </>
   );
 }
 
-export default App;
+export default Root;

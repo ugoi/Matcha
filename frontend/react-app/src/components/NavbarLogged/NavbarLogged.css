@@ -1,4 +1,3 @@
-/* NavbarLogged.css */
 .navbar-container {
     display: flex;
     justify-content: space-between;
@@ -6,25 +5,34 @@
     width: 90%;
     min-width: 300px;
     margin: 20px auto;
-}
-
-.custom-navbar {
-    flex-grow: 1;
-    border-radius: 30px;
-    padding: 5px 20px;
-}
-
-.navbar-nav {
+  }
+  
+  .notification-wrapper {
+    display: flex;
+    align-items: center;
+  }
+  
+  .navbar-nav {
     flex-grow: 1;
     display: flex;
     justify-content: space-around;
-}
-
-.login-container2 {
-    margin-left: 40px;
-    margin-right: 0px;
-}
-
-.logout-link {
-    color: red;
-}
+    font-size: 1rem;
+    font-weight: 500;
+    color: #2B3A45;
+  }
+  
+  .navbar-nav a {
+    color: #2B3A45;
+    transition: color 0.3s;
+  }
+  
+  .logout-link {
+    color: #FF6B6B !important;
+    font-weight: 600;
+    transition: color 0.3s;
+  }
+  
+  .logout-link:hover {
+    color: #FF4C4C;
+  }
+  

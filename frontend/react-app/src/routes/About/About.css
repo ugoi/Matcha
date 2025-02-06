@@ -1,58 +1,69 @@
-/* About.css */
-body {
-    overflow: auto;
+body { 
+    background-color: #B0CEDD;
 }
 
-.about-container {
-    padding: 60px 20px;
-    max-width: 900px;
-    margin: 0 auto;
-    border-radius: 15px;
-    box-shadow: 0px 4px 20px rgba(0, 0, 0, 0.1);
-    text-align: center;
-    animation: fadeIn 1s ease-in-out;
-}
-
-.team-photo img {
-    width: 200px;
-    height: 200px;
-    object-fit: cover;
-    border: 5px solid #0d2640;
-    margin-bottom: 20px;
-    transition: transform 0.3s ease-in-out;
-}
-
-.team-photo img:hover {
-    transform: scale(1.05);
-}
-
-.about-content {
-    font-size: 1.2rem;
-    line-height: 1.8;
-    color: #333;
-    padding: 20px;
-    border-radius: 10px;
-    box-shadow: 0px 4px 20px rgba(0, 0, 0, 0.1);
-    animation: slideUp 0.7s ease-in-out;
-}
-
-.about-content p {
-    margin-bottom: 20px;
-}
-
-.about-container h1 {
+.about-title {
+    font-family: 'Josefin Sans', sans-serif;
+    font-size: 2.8rem;
     color: #193450;
-    font-weight: bold;
+    margin-bottom: 20px;
+  }
+  
+  .about-section {
+    padding: 0px 20px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: calc(100vh - 110px);
+  }
+  
+  .about-wrapper {
+    background-color: #E8F0F8;
+    padding: 30px;
+    border-radius: 10px;
+    max-width: 800px;
+    width: 100%;
+    text-align: center;
+    position: relative;
+    box-shadow: 0 8px 30px rgba(30, 144, 255, 0.15);
+  }
+
+  
+  .team-photo {
     margin-bottom: 30px;
-}
-
-/* Animations */
-@keyframes fadeIn {
-    0% { opacity: 0; }
-    100% { opacity: 1; }
-}
-
-@keyframes slideUp {
-    0% { transform: translateY(20px); opacity: 0; }
-    100% { transform: translateY(0); opacity: 1; }
-}
+  }
+  
+  .team-image {
+    width: 180px;
+    height: 180px;
+    object-fit: cover;
+    border-radius: 50%;
+    transition: transform 0.3s ease;
+  }
+  
+  .team-image:hover {
+    transform: scale(1.05);
+  }
+  
+  .about-text {
+    font-size: 1.0rem;
+    line-height: 1.8;
+    color: #465C68;
+    padding: 20px;
+    border-radius: 8px;
+  }
+  
+  .about-text p {
+    margin-bottom: 1.2rem;
+  }
+  
+  @keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+  
+  @keyframes slideUp {
+    from { transform: translateY(20px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+  }
+  

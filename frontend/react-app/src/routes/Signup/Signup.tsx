@@ -111,10 +111,11 @@ function Signup() {
 
   return (
     <>
+      <div className="slant-shape1"></div>
       <Navbar />
       <Container className="signup-container mt-5">
         <Row className="justify-content-center">
-          <Col md={6}>
+          <Col md={9}>
             <h1 className="text-center mb-4">Sign Up</h1>
             <Form onSubmit={handleSubmit}>
               {["firstName", "lastName", "username", "email", "password"].map((field) => (
@@ -138,15 +139,6 @@ function Signup() {
                 Register
               </Button>
             </Form>
-            <p className="text-center">or</p>
-            <div className="d-flex justify-content-between">
-              <Button variant="outline-danger" href="/api/login/google" className="w-45">
-                Sign up with Google
-              </Button>
-              <Button variant="outline-primary" href="/api/login/facebook" className="w-45">
-                Sign up with Facebook
-              </Button>
-            </div>
           </Col>
         </Row>
       </Container>

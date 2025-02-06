@@ -1,14 +1,14 @@
 import { useState, useEffect } from "react";
+import { useSearchParams } from "react-router-dom";
+import { Form, Button, Container, Row, Col, Alert } from "react-bootstrap";
+import Navbar from "../../components/Navbar/Navbar";
 import "./Login.css";
-import Navbar from '../../components/Navbar/Navbar';
-import { Form, Button, Container, Row, Col, Alert } from 'react-bootstrap';
-import { useSearchParams } from 'react-router-dom';
 
 function Login() {
   const [error, setError] = useState(false);
   const [searchParams] = useSearchParams();
   const [statusMessage, setStatusMessage] = useState<string>("");
-
+  
   useEffect(() => {
     const message = searchParams.get("message");
     if (message) {
@@ -43,7 +43,7 @@ function Login() {
       method: "POST",
       headers: myHeaders,
       body: urlencoded,
-      credentials: 'include',
+      credentials: "include",
       redirect: "follow",
     };
   
@@ -51,13 +51,13 @@ function Login() {
       const response = await fetch(`${window.location.origin}/api/login`, requestOptions);
       const result = await response.json();
   
-      if (response.ok && result.status === 'success' && result.data.token) {
+      if (response.ok && result.status === "success" && result.data.token) {
         const profileResponse = await fetch(`${window.location.origin}/api/profiles/me`, {
           headers: { "Authorization": `Bearer ${result.data.token}` },
-          credentials: 'include',
+          credentials: "include",
         });
         const profileResult = await profileResponse.json();
-
+  
         if (profileResponse.ok && profileResult.data && profileResult.data.age) {
           window.location.href = "/home";
         } else {
@@ -71,79 +71,67 @@ function Login() {
       console.error(error);
     }
   };
-
+  
   return (
     <>
+    <div className="slant-shape1"></div>
       <Navbar />
-      <Container className="login-container mt-5">
-        <Row className="justify-content-center">
-          <Col md={6}>
-            <h1 className="text-center mb-4">Login</h1>
-            {statusMessage && (
-              <Alert 
-                variant={statusMessage.includes("success") ? "success" : "info"}
-                className="mb-3"
-              >
-                {statusMessage}
-              </Alert>
-            )}
-            <Form onSubmit={handleSubmit}>
-              <Form.Group controlId="username" className="mb-3">
-                <Form.Label>Username</Form.Label>
-                <Form.Control 
-                  type="text" 
-                  name="username" 
-                  placeholder="Enter your username" 
-                  required 
-                />
-              </Form.Group>
-              <Form.Group controlId="password" className="mb-3">
-                <Form.Label>Password</Form.Label>
-                <Form.Control 
-                  type="password" 
-                  name="password" 
-                  placeholder="Enter your password" 
-                  required 
-                  className={error ? "error-border" : ""}
-                />
-                {error && <p className="error-text">Incorrect login or password!</p>}
-              </Form.Group>
-              <Button 
-                variant="primary" 
-                type="submit" 
-                className="w-100 mb-3"
-              >
-                Login
-              </Button>
-            </Form>
-            <div className="text-center">
-              <a href="/forgot-password">Forgot Password?</a>
-            </div>
-            <p className="text-center mt-3">or</p>
-            <div className="d-flex justify-content-between">
-              <Button 
-                variant="outline-danger" 
-                href="/api/login/google" 
-                className="w-45 social-button"
-              >
-                Google Login
-              </Button>
-              <Button 
-                variant="outline-primary" 
-                href="/api/login/facebook" 
-                className="w-45 social-button"
-              >
-                Facebook Login
-              </Button>
-            </div>
-            <div className="mt-4 text-center">
-              <p>
-                Don't have an account? <a href="/signup">Sign up here!</a>
-              </p>
-            </div>
-          </Col>
-        </Row>
-      </Container>
+      <div className="login-page">
+        <Container className="login-container mt-5">
+          <Row className="justify-content-center">
+            <Col md={7}>
+              <h1 className="text-center mb-4">Login</h1>
+              {statusMessage && (
+                <Alert variant={statusMessage.includes("success") ? "success" : "info"} className="mb-3">
+                  {statusMessage}
+                </Alert>
+              )}
+              <Form onSubmit={handleSubmit}>
+                <Form.Group controlId="username" className="mb-3">
+                  <Form.Label>Username</Form.Label>
+                  <Form.Control 
+                    type="text" 
+                    name="username" 
+                    placeholder="Enter your username" 
+                    required 
+                  />
+                </Form.Group>
+                <Form.Group controlId="password" className="mb-3">
+                  <Form.Label>Password</Form.Label>
+                  <Form.Control 
+                    type="password" 
+                    name="password" 
+                    placeholder="Enter your password" 
+                    required 
+                    className={error ? "error-border" : ""}
+                  />
+                  {error && <p className="error-text">Incorrect login or password!</p>}
+                </Form.Group>
+                <Button variant="primary" type="submit" className="w-100 mb-3">
+                  Login
+                </Button>
+              </Form>
+              <div className="text-center">
+                <a href="/forgot-password">Forgot Password?</a>
+              </div>
+              <p className="text-center mt-3">or</p>
+              <div className="d-flex justify-content-between">
+                <Button variant="outline-primary" href="/api/login/google" className="w-45 social-button">
+                  Google
+                </Button>
+                <Button variant="outline-primary" href="/api/login/facebook" className="w-45 social-button">
+                  Facebook
+                </Button>
+              </div>
+              <div className="mt-4 text-center">
+                <p>
+                  Don't have an account? <a href="/signup">Sign up here!</a>
+                </p>
+              </div>
+            </Col>
+          </Row>
+        </Container>
+      </div>
     </>
   );
 }

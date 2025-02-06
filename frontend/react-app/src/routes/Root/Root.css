@@ -1,51 +1,149 @@
-@font-face {
-  font-family: 'YourFontName';
-  src: url('../../assets/font/Apax-Medium.ttf') format('truetype');
+@import url('https://fonts.googleapis.com/css2?family=Josefin+Sans:wght@400;700&family=Montserrat:wght@400;500&display=swap');
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
 }
 
 body {
-  font-family: 'YourFontName', 'Source Code Pro', monospace;
-  line-height: 1.5;
-  font-weight: 400;
-  
-  color-scheme: light dark;
-  background-color: #F0E7DC;
-  color: #552707cc;
+  font-family: 'Montserrat', sans-serif;
+  overflow: auto;
+  background-color: #EBF3F9;
+  color: #2B3A45;
+  line-height: 1.6;
+}
 
+h1, h2, h3 {
+  font-family: 'Josefin Sans', sans-serif;
+  font-weight: 700;
+}
+
+a {
+  text-decoration: none;
+  color: inherit;
+}
+
+.hero {
+  position: relative;
+  width: 100%;
+  height: 100vh;
+  background-color: #B0CEDD;
   overflow: hidden;
-
-  font-synthesis: none;
-  text-rendering: optimizeLegibility;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
 }
 
-h1 {
-  color: #552707cc;
-  font-size: 3.2em;
-  line-height: 1.1;
-}
-
-button {
-  border-radius: 25px;
-  border: 1px solid transparent;
-  padding: 1.2em 1.3em;
-  font-size: 1em;
-  font-weight: 500;
-  color: #2c2b12;
-  font-family: inherit;
-  background-color: #cccc;
-  cursor: pointer;
-  transition: border-color 0.25s;
-}
-
-.content {
-  min-height: 80vh;
+.nav-bar {
   display: flex;
-  flex-direction: column;
-  justify-content: center;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1.5rem 2rem;
+  position: relative;
+  z-index: 10;
 }
 
-.btn {
-  margin-top: 10px;
+.brand-name {
+  font-family: 'Josefin Sans', sans-serif;
+  font-size: 1.6rem;
+  font-weight: 700;
+  color: #FFFFFF;
+}
+
+.hero-content {
+  text-align: center;
+  position: relative;
+  z-index: 2;
+  margin-top: 20vh;
+  animation: heroFade 1.2s ease forwards;
+}
+
+.hero-title {
+  font-size: 3rem;
+  color: #FFFFFF;
+  margin-bottom: 1rem;
+}
+
+.hero-subtitle {
+  font-size: 1.4rem;
+  color: #E8F3F7;
+  margin-bottom: 2rem;
+}
+
+.hero-button {
+  display: inline-block;
+  padding: 0.8rem 2rem;
+  background-color: #35839E;
+  color: #FFFFFF;
+  font-weight: 600;
+  border-radius: 2rem;
+  transition: background-color 0.3s ease, transform 0.3s ease;
+}
+
+.hero-button:hover {
+  background-color: #2B6B84;
+  transform: translateY(-3px);
+}
+
+.slant-shape {
+  position: absolute;
+  bottom: -8vh;
+  left: 0;
+  width: 100%;
+  height: 35vh;
+  background-color: #EBF3F9;
+  transform: skewY(-10deg);
+  transform-origin: top left;
+  z-index: 0;
+}
+
+.floating-polygon {
+  position: absolute;
+  width: 120px;
+  height: 120px;
+  background: #ECF5FA;
+  clip-path: polygon(50% 0%, 100% 37%, 82% 100%, 18% 100%, 0% 37%);
+  opacity: 0.2;
+  animation: polygonFloat 6s ease-in-out infinite alternate;
+  z-index: 1;
+}
+
+.poly1 {
+  top: 20%;
+  left: 10%;
+  animation-duration: 7s;
+}
+
+.poly2 {
+  top: 50%;
+  right: 15%;
+  animation-duration: 5s;
+}
+
+.poly3 {
+  bottom: 15%;
+  left: 40%;
+  animation-duration: 8s;
+}
+
+@keyframes heroFade {
+  from { transform: translateY(-10px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+@keyframes polygonFloat {
+  from { transform: translateY(0); }
+  to { transform: translateY(-30px); }
+}
+
+@media (max-width: 768px) {
+  .hero-title {
+    font-size: 2.4rem;
+  }
+  
+  .hero-subtitle {
+    font-size: 1.2rem;
+  }
 }
