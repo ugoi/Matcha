@@ -166,7 +166,7 @@ function Settings() {
       <div className="content d-flex flex-column align-items-center justify-content-center mt-5">
         <div className="card text-center p-4 shadow-lg settings-card">
           <h3 className="mb-4">Settings</h3>
-
+  
           {/* Distance */}
           <div className="setting-item mb-3">
             <label htmlFor="distance" className="form-label">Distance (km)</label>
@@ -181,7 +181,7 @@ function Settings() {
             />
             <p className="slider-value">{distance} km</p>
           </div>
-
+  
           {/* Age Range */}
           <div className="setting-item mb-3">
             <label className="form-label">Age Range</label>
@@ -202,7 +202,7 @@ function Settings() {
             />
             <p className="slider-value">{minAge} - {maxAge} years</p>
           </div>
-
+  
           {/* Fame Rating Range */}
           <div className="setting-item mb-3">
             <label className="form-label">Fame Rating Range</label>
@@ -223,8 +223,8 @@ function Settings() {
             />
             <p className="slider-value">{minFameRating} - {maxFameRating}</p>
           </div>
-
-          {/* Common Tags (string-based filters) */}
+  
+          {/* Common Tags */}
           <div className="setting-item mb-3">
             <label htmlFor="commonTags" className="form-label">Common Tags (comma-separated)</label>
             <input
@@ -240,7 +240,7 @@ function Settings() {
               <p className="text-muted mt-2">Current tags: {commonTags.join(', ')}</p>
             )}
           </div>
-
+  
           {/* Minimum Common Interests */}
           <div className="setting-item mb-3">
             <label htmlFor="minCommonInterests" className="form-label">Minimum common interests</label>
@@ -252,7 +252,7 @@ function Settings() {
               className="form-control"
             />
           </div>
-
+  
           {/* Gender */}
           <div className="setting-item mb-3">
             <label htmlFor="Gender" className="form-label">Select your gender</label>
@@ -268,7 +268,7 @@ function Settings() {
               <option value="other">Other</option>
             </select>
           </div>
-
+  
           {/* Sexual Preference */}
           <div className="setting-item mb-3">
             <label htmlFor="Preferences" className="form-label">Select your sexual preference</label>
@@ -285,7 +285,7 @@ function Settings() {
               <option value="other">Other</option>
             </select>
           </div>
-
+  
           {/* Email */}
           <div className="setting-item mb-3">
             <label htmlFor="email" className="form-label">Email</label>
@@ -297,15 +297,19 @@ function Settings() {
               className="form-control"
             />
           </div>
-
-          {/* Save Changes */}
-          <button className="btn btn-primary mt-3" onClick={handleSaveChanges}>Save Changes</button>
-
-          {/* Update location */}
-          <button className="btn btn-secondary mt-3" onClick={handleUpdateGPS}>Update location</button>
-
-          {/* Delete Account */}
-          <button className="btn btn-danger mt-3" onClick={handleDeleteAccount}>Delete Account</button>
+  
+          {/* Buttons container */}
+          <div className="d-flex flex-column align-items-center">
+            <button className="btn btn-primary mt-3" onClick={handleSaveChanges}>
+              Save Changes
+            </button>
+            <button className="btn btn-secondary mt-3" onClick={handleUpdateGPS}>
+              Update location
+            </button>
+            <button className="btn btn-danger mt-3" onClick={handleDeleteAccount}>
+              Delete Account
+            </button>
+          </div>
         </div>
       </div>
     </>

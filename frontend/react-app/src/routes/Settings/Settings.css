@@ -1,13 +1,22 @@
-  
+.settings-card {
+    width: 90%;
+    max-width: 700px;
+    border-radius: 10px;
+    /* padding: 0px 40px; */
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.1);
+    /* margin: 0 auto; */
+  }  
+
   .setting-item {
-    margin-bottom: 1.5rem;
+    padding: 0px 40px;
+    /* margin-bottom: 0.2rem; */
     text-align: left;
   }
   
   .form-label {
     font-weight: 600;
     color: #2B3A45;
-    margin-bottom: 0.5rem;
+    /* margin-bottom: 0.5rem; */
   }
   
   .form-control,
@@ -15,28 +24,25 @@
   .horizontal-slider {
     width: 100%;
     border-radius: 8px;
-    border: 1px solid #D1E3EB;
-    background-color: #FFFFFF;
-    padding: 0.5rem;
     color: #2B3A45;
   }
   
   .form-range,
   .horizontal-slider {
     height: 20px;
-    margin: 1rem 0;
-    padding: 0;
+    color: #1d4771;
+    /* margin: 1rem 0; */
   }
   
   .form-range::-webkit-slider-track,
   .slider-track {
     height: 4px;
-    background: #D1E3EB;
+    background: #adddff;
     border-radius: 2px;
   }
   
   .slider-track.slider-track-1 {
-    background: #A3C0D8;
+    background: #ffffff;
   }
   
   .form-range::-webkit-slider-thumb,
@@ -45,7 +51,7 @@
     appearance: none;
     width: 20px;
     height: 20px;
-    background: #1E90FF;
+    background: #22476d;
     border-radius: 50%;
     cursor: pointer;
     outline: none;
@@ -57,7 +63,7 @@
   .slider-thumb {
     width: 20px;
     height: 20px;
-    background: #1E90FF;
+    background: #1d4771;
     border-radius: 50%;
     cursor: pointer;
     border: none;
@@ -65,12 +71,13 @@
   
   .slider-value {
     text-align: right;
-    margin-top: 5px;
+    /* margin-top: 5px; */
     color: #2B3A45;
     font-weight: 500;
   }
   
   .btn-secondary {
+    max-width: 250px;
     background-color: #A3C0D8;
     border: none;
     color: #F0F8FF;
@@ -87,9 +94,10 @@
   }
   
   .btn-danger {
+    max-width: 250px;
     background-color: #FF6B6B;
     border: none;
-    color: #FFFFFF;
+    color: white;
     padding: 0.75rem 1.5rem;
     border-radius: 25px;
     font-size: 1rem;
