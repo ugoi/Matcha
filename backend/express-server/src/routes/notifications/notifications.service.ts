@@ -109,40 +109,43 @@ export const notificationService = {
   },
 
   createMessage: async function createMessage(notification_id: string) {
-    // Get the message for the notification entity type
-
+    // Get the notification and its object
     const notification = await notificationRepository.find(notification_id);
-
     const notification_object_id = notification.notification_object_id;
-
     const notificationObject = await notificationObjectRepository.findOne(
       notification_object_id
     );
-    const notifications_entyty_type = notificationObject.entity_type;
-    const notificationChnage = (
+
+    // Get the notification change record (if any)
+    const notificationChanges =
       await notificationChangeRepository.findByNotificationObjectId(
         notification_object_id
-      )
-    )[0];
+      );
+    if (!notificationChanges || notificationChanges.length === 0) {
+      // Handle missing change record gracefully (e.g. log it or return a fallback message)
+      console.error(
+        `No notification change record found for notification object: ${notification_object_id}`
+      );
+      return "Notification details are unavailable";
+    }
+    const notificationChange = notificationChanges[0];
 
-    const senderId = notificationChnage.actor_id;
-    const created_at = notificationChnage.created_at;
-
+    // Safely use the notificationChange record
+    const senderId = notificationChange.actor_id;
+    const created_at = notificationChange.created_at;
     const sender = await profilesRepository.findOne(senderId);
 
-    const senderName = sender.first_name;
-
-    switch (notifications_entyty_type) {
+    switch (notificationObject.entity_type) {
       case NOTIFICATION_ENTITY_TYPE.LIKE:
-        return `${senderName} liked your post on ${created_at}`;
+        return `${sender.first_name} liked your post on ${created_at}`;
       case NOTIFICATION_ENTITY_TYPE.MATCH:
-        return `${senderName} matched with you on ${created_at}`;
+        return `${sender.first_name} matched with you on ${created_at}`;
       case NOTIFICATION_ENTITY_TYPE.MESSAGE:
-        return `${senderName} sent you a message on ${created_at}`;
+        return `${sender.first_name} sent you a message on ${created_at}`;
       case NOTIFICATION_ENTITY_TYPE.PROFILE_VIEW:
-        return `${senderName} viewed your profile on ${created_at}`;
+        return `${sender.first_name} viewed your profile on ${created_at}`;
       case NOTIFICATION_ENTITY_TYPE.UNLIKE:
-        return `${senderName} unliked your post on ${created_at}`;
+        return `${sender.first_name} unliked your post on ${created_at}`;
       default:
         return "Invalid notification entity type";
     }
