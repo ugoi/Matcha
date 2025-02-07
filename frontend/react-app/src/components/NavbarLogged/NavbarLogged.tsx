@@ -1,9 +1,8 @@
-// src/components/NavbarLogged/NavbarLogged.tsx
 import Container from 'react-bootstrap/Container';
 import Nav from 'react-bootstrap/Nav';
 import Navbar from 'react-bootstrap/Navbar';
 import $ from 'jquery';
-// import NotificationHandler from '../NotificationHandler';
+import NotificationHandler from '../NotificationHandler.tsx';
 import './NavbarLogged.css';
 
 const handleLogout = () => {
@@ -28,10 +27,6 @@ function NavbarLogged() {
     <div className="navbar-container">
       <Navbar collapseOnSelect expand="lg" className="custom-navbar">
         <Container>
-          <Navbar.Brand href="/chat">
-            <i className="bi-bell-fill"></i>
-          </Navbar.Brand>
-          
           <Navbar.Toggle aria-controls="responsive-navbar-nav" />
           <Navbar.Collapse id="responsive-navbar-nav">
             <Nav className="mx-auto align-items-center">
@@ -39,9 +34,10 @@ function NavbarLogged() {
               <Nav.Link href="/profile">Profile</Nav.Link>
               <Nav.Link href="/chat">Chat</Nav.Link>
               <Nav.Link href="/settings">Settings</Nav.Link>
-              <Nav.Link onClick={handleLogout} className="logout-link">
-                Logout
+              <Nav.Link as="div">
+                <NotificationHandler />
               </Nav.Link>
+              <Nav.Link onClick={handleLogout} className="logout-link">Logout</Nav.Link>
             </Nav>
           </Navbar.Collapse>
         </Container>

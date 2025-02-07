@@ -103,6 +103,7 @@ function Home() {
       if (sort && Object.keys(sort).length > 0) {
         params.append("sort_by", JSON.stringify(sort));
       }
+      params.append("limit", "100");
       try {
         const res = await fetch(`http://localhost:3000/api/profiles?${params.toString()}`, {
           credentials: 'include'
