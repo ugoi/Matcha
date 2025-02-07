@@ -7,7 +7,7 @@ default: prod
 
 # Production tasks
 build-frontend:
-	cd $(FRONTEND_DIR) && npm run build
+	npm install && cd $(FRONTEND_DIR) &&  npm install && npm run build
 
 build-backend:
 	cd $(BACKEND_DIR) && npm install
