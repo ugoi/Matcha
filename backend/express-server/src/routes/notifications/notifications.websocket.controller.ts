@@ -12,6 +12,7 @@ import { notificationChangeRepository } from "./notification-change.repository.j
 import { notificationsWebsocketService } from "./notifications.websocket.service.js";
 import { notificationService } from "./notifications.service.js";
 import { NotificationResponse } from "./notification.response.interface.js";
+import { socketioDefaultErrorHandler } from "../../error-handlers/socketio-default-error-handler.js";
 
 // Define a placeholder for deleted users
 const DELETED_USER_PLACEHOLDER = {
@@ -96,8 +97,7 @@ export function initNotificationsSocket(io: Server) {
     } catch (error) {
       // Catch any unexpected errors in the connection callback itself.
       console.error("Error in notifications socket connection:", error);
-      // Optionally, notify the client of the error
-      socket.emit("error", "An error occurred while processing notifications.");
+      socketioDefaultErrorHandler(error, socket);
     }
 
     socket.on("disconnect", () => {
