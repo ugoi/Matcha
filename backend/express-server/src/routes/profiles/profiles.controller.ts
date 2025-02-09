@@ -103,7 +103,7 @@ router.get(
   }
 );
 
-/* Create my user profile*/
+/* Create my user profile - supports initializing search preferences (age_min, age_max, location_radius, fame_rating_min, fame_rating_max, interests_filter, common_interests). These can also be updated later using PATCH */
 router.post(
   "/me",
   passport.authenticate("jwt", { session: false }),
@@ -129,6 +129,20 @@ router.post(
   body("profile_picture").isURL().custom(pictureExists),
   body("gps_latitude").escape().isNumeric(),
   body("gps_longitude").escape().isNumeric(),
+  // New validators for search preferences
+  body("age_min")
+    .optional()
+    .isInt({ min: validationLimits.age.min, max: validationLimits.age.max })
+    .toInt(),
+  body("age_max")
+    .optional()
+    .isInt({ min: validationLimits.age.min, max: validationLimits.age.max })
+    .toInt(),
+  body("fame_rating_min").optional().isInt().toInt(),
+  body("fame_rating_max").optional().isInt().toInt(),
+  body("location_radius").optional().isFloat().toFloat(),
+  body("interests_filter").optional().isString(),
+  body("common_interests").optional().isInt().toInt(),
   async function (req, res, next) {
     const result = validationResult(req);
     if (!result.isEmpty()) {
@@ -139,9 +153,30 @@ router.post(
     }
 
     try {
+      // Destructure search preference fields from req.body
+      const {
+        age_min,
+        age_max,
+        fame_rating_min,
+        fame_rating_max,
+        location_radius,
+        interests_filter,
+        common_interests,
+        ...profileData
+      } = req.body;
+
       await profilesService.createProfile({
         user_id: req.user.user_id,
-        data: req.body,
+        data: profileData,
+        search_preferences: {
+          age_min,
+          age_max,
+          fame_rating_min,
+          fame_rating_max,
+          location_radius,
+          interests_filter,
+          common_interests,
+        },
       });
 
       // Wrap result in SuccessResponse
@@ -195,16 +230,33 @@ router.patch(
   body("gps_latitude").optional().escape().isNumeric(),
   body("gps_longitude").optional().escape().isNumeric(),
   body("age_min")
-    .optional()
+    .customSanitizer((value) => (value === "null" ? null : value))
+    .optional({ nullable: true })
     .isInt({ min: validationLimits.age.min, max: validationLimits.age.max }),
   body("age_max")
-    .optional()
+    .customSanitizer((value) => (value === "null" ? null : value))
+    .optional({ nullable: true })
     .isInt({ min: validationLimits.age.min, max: validationLimits.age.max }),
-  body("fame_rating_min").optional().isInt(),
-  body("fame_rating_max").optional().isInt(),
-  body("location_radius").optional().isFloat(),
-  body("interests_filter").optional().isString(),
-  body("common_interests").optional().isInt(),
+  body("fame_rating_min")
+    .customSanitizer((value) => (value === "null" ? null : value))
+    .optional({ nullable: true })
+    .isInt(),
+  body("fame_rating_max")
+    .customSanitizer((value) => (value === "null" ? null : value))
+    .optional({ nullable: true })
+    .isInt(),
+  body("location_radius")
+    .customSanitizer((value) => (value === "null" ? null : value))
+    .optional({ nullable: true })
+    .isFloat(),
+  body("interests_filter")
+    .customSanitizer((value) => (value === "null" || value === "" ? null : value))
+    .optional({ nullable: true })
+    .isString(),
+  body("common_interests")
+    .customSanitizer((value) => (value === "null" ? null : value))
+    .optional({ nullable: true })
+    .isInt(),
   async function (req, res, next) {
     const result = validationResult(req);
     if (!result.isEmpty()) {

@@ -72,7 +72,18 @@ export const profilesService = {
   },
 
   async createProfile(input: CreateProfileInput): Promise<Profile> {
-    const { user_id, data } = input;
+    const { user_id, data, search_preferences } = input;
+
+    // Replace undefined values with null
+    const search_preferences_with_nulls = {
+      age_min: search_preferences.age_min ?? null,
+      age_max: search_preferences.age_max ?? null,
+      fame_rating_min: search_preferences.fame_rating_min ?? null,
+      fame_rating_max: search_preferences.fame_rating_max ?? null,
+      location_radius: search_preferences.location_radius ?? null,
+      interests_filter: search_preferences.interests_filter ?? null,
+      common_interests: search_preferences.common_interests ?? null,
+    };
 
     // Check if profile_picture is inside user_pictures
     const userPictures = await picturesRepository.find(user_id);
@@ -92,21 +103,12 @@ export const profilesService = {
     // Create search preferences
     await searchPreferencesRepository.create({
       user_id: user_id,
-      searchPreferences: {
-        age_min: null,
-        age_max: null,
-        fame_rating_min: null,
-        fame_rating_max: null,
-        location_radius: null,
-        interests_filter: null,
-      },
+      searchPreferences: search_preferences_with_nulls,
     });
     return newProfile;
   },
 
   async updateProfile(input: UpdateProfileInput): Promise<Profile> {
-
-
     const { search_preferences } = input;
 
     // Update search preferences if provided
@@ -148,7 +150,7 @@ export const profilesService = {
     );
 
     // Call repository with cleaned data
-    profilesRepository.update({
+    await profilesRepository.update({
       user_id: input.user_id,
       data: cleanData,
     });

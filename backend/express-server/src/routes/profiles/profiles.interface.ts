@@ -223,6 +223,15 @@ export interface CreateProfileInput {
     gps_latitude: number;
     gps_longitude: number;
   };
+  search_preferences: {
+    age_min?: number;
+    age_max?: number;
+    fame_rating_min?: number;
+    fame_rating_max?: number;
+    location_radius?: number;
+    interests_filter?: string;
+    common_interests?: number;
+  };
 }
 
 export const mockPublicProfile = new PublicProfile(mockProfile);

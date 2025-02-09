@@ -134,20 +134,21 @@ export const searchPreferencesRepository = {
   create: async function create(input: {
     user_id: string;
     searchPreferences: {
-      age_min: number;
-      age_max: number;
-      fame_rating_min: number;
-      fame_rating_max: number;
-      location_radius: number;
-      interests_filter: string;
+      age_min: number | null;
+      age_max: number | null;
+      fame_rating_min: number | null;
+      fame_rating_max: number | null;
+      location_radius: number | null;
+      interests_filter: string | null;
+      common_interests: number | null;
     };
   }): Promise<SearchPreferences> {
     const { user_id, searchPreferences } = input;
 
     const statement = pgp.as.format(
       `
-      INSERT INTO search_preferences (user_id, age_min, age_max, fame_rating_min, fame_rating_max, location_radius, interests_filter)
-      VALUES ($1, $2, $3, $4, $5, $6, $7)
+      INSERT INTO search_preferences (user_id, age_min, age_max, fame_rating_min, fame_rating_max, location_radius, interests_filter, common_interests)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
       RETURNING *
       `,
       [
@@ -158,6 +159,7 @@ export const searchPreferencesRepository = {
         searchPreferences.fame_rating_max,
         searchPreferences.location_radius,
         searchPreferences.interests_filter,
+        searchPreferences.common_interests,
       ]
     );
 
