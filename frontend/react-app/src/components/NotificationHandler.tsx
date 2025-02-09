@@ -15,7 +15,6 @@ export default function NotificationHandler() {
     const token = localStorage.getItem('jwtToken');
     const socket = io("ws://localhost:3000/api/notifications", { auth: { token: `Bearer ${token}` } });
 
-
     socket.on("connect", () => {
       console.log("Connected to notifications namespace.");
     });
@@ -39,7 +38,7 @@ export default function NotificationHandler() {
 
   return (
     <div style={{ position: 'relative', display: 'inline-block' }}>
-      <i className="bi bi-bell" style={{ fontSize: '1.5rem' }}></i>
+      <i className="bi-bell-fill" style={{ fontSize: '1.5rem' }}></i>
       {notificationCount > 0 && (
         <span style={{
           position: 'absolute',
@@ -48,7 +47,11 @@ export default function NotificationHandler() {
           backgroundColor: 'red',
           color: 'white',
           borderRadius: '50%',
-          padding: '2px 6px',
+          width: '20px',
+          height: '20px',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
           fontSize: '0.75rem'
         }}>
           {notificationCount}

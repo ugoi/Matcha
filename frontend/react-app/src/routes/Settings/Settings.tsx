@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react';
 import ReactSlider from 'react-slider';
-import { useNavigate } from 'react-router-dom';
 import NavbarLogged from '../../components/NavbarLogged/NavbarLogged';
 import './settings.css';
 
@@ -16,8 +15,6 @@ function Settings() {
   const [tagsInput, setTagsInput] = useState('');
   const [commonTags, setCommonTags] = useState<string[]>([]);
   const [minCommonInterests, setMinCommonInterests] = useState(1);
-
-  const navigate = useNavigate();
 
   useEffect(() => {
     fetch("http://localhost:3000/api/users/me")
@@ -139,17 +136,21 @@ function Settings() {
   };
 
   const handleDeleteAccount = async () => {
-    if (!window.confirm('Are you sure you want to delete your account? This action is irreversible.')) return;
+    if (!window.confirm('Are you sure you want to delete your account? This action is irreversible.')) {
+      return;
+    }
     try {
       const res = await fetch("http://localhost:3000/api/users/me", {
         method: "DELETE",
-        redirect: "follow",
+        credentials: "include",
       });
       const json = await res.json();
       if (json.status === "success") {
-        navigate('/');
+        window.location.replace('/');
       }
-    } catch {}
+    } catch (error) {
+      console.error('Error deleting account', error);
+    }
   };
 
   return (

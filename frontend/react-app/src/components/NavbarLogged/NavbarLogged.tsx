@@ -27,6 +27,11 @@ function NavbarLogged() {
     <div className="navbar-container">
       <Navbar collapseOnSelect expand="lg" className="custom-navbar">
         <Container>
+          <Navbar.Brand href="/chat">
+            <NotificationHandler />
+            {/* <i className="bi-bell-fill"></i> */}
+          </Navbar.Brand>
+          
           <Navbar.Toggle aria-controls="responsive-navbar-nav" />
           <Navbar.Collapse id="responsive-navbar-nav">
             <Nav className="mx-auto align-items-center">
@@ -34,10 +39,9 @@ function NavbarLogged() {
               <Nav.Link href="/profile">Profile</Nav.Link>
               <Nav.Link href="/chat">Chat</Nav.Link>
               <Nav.Link href="/settings">Settings</Nav.Link>
-              <Nav.Link as="div">
-                <NotificationHandler />
+              <Nav.Link onClick={handleLogout} className="logout-link">
+                Logout
               </Nav.Link>
-              <Nav.Link onClick={handleLogout} className="logout-link">Logout</Nav.Link>
             </Nav>
           </Navbar.Collapse>
         </Container>
