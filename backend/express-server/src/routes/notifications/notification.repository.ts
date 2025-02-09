@@ -63,7 +63,7 @@ export const notificationRepository = {
             UPDATE notification
             SET status = $2
             WHERE notifier_id = $1
-            AND notification_object_id = ANY($3)
+            AND id = ANY($3::uuid[])
             RETURNING *;
         `,
       [notifier_id, status, notification_object_ids]

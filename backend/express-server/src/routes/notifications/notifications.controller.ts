@@ -36,12 +36,13 @@ router.get(
 
 router.patch(
   "/",
-  body("ids").optional().escape().customSanitizer(arraySanitizer).isArray(),
+  body("ids").optional().customSanitizer(arraySanitizer).isArray(),
+  body("ids.*").isUUID(),
   passport.authenticate("jwt", { session: false }),
   async function (req, res, next) {
     const result = validationResult(req);
     if (!result.isEmpty()) {
-      // Escape html tags in error messages for security
+      // Escape HTML tags in error messages for security
       const errors = escapeErrors(result.array());
       next(new JFail({ title: "invalid input", errors: errors }));
       return;
