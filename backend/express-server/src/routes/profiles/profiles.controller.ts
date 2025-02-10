@@ -250,7 +250,9 @@ router.patch(
     .optional({ nullable: true })
     .isFloat(),
   body("interests_filter")
-    .customSanitizer((value) => (value === "null" || value === "" ? null : value))
+    .customSanitizer((value) =>
+      value === "null" || value === "" ? null : value
+    )
     .optional({ nullable: true })
     .isString(),
   body("common_interests")
@@ -314,6 +316,24 @@ router.patch(
     } catch (error) {
       next(error);
       return;
+    }
+  }
+);
+
+/* Update last online timestamp */
+router.patch(
+  "/me/last_online",
+  passport.authenticate("jwt", { session: false }),
+  isAuthorized,
+  async function (req, res, next) {
+    try {
+      await profilesService.updateLastOnline(req.user.user_id);
+      const response = new SuccessResponse({
+        title: "Last online timestamp updated",
+      });
+      res.json(response);
+    } catch (error) {
+      next(error);
     }
   }
 );
