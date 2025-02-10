@@ -10,6 +10,7 @@ import {
   NOTIFICATION_STATUS,
 } from "../../notifications/notification.interface.js";
 import { SuccessResponse } from "../../../interfaces/response.js";
+import { visitsService } from "./visits.service.js";
 
 var router = Router();
 
@@ -28,12 +29,10 @@ router.get(
     }
 
     try {
-      const visit = await visitsRepository.find({
-        visited_user_id: req.user.user_id,
-      });
+      const visits = await visitsService.findBoth(req.user.user_id);
 
       // Return as SuccessResponse
-      const response = new SuccessResponse({ visits: visit });
+      const response = new SuccessResponse({ visits });
       res.json(response);
     } catch (error) {
       next(error);
