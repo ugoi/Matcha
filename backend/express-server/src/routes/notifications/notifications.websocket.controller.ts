@@ -42,51 +42,13 @@ export function initNotificationsSocket(io: Server) {
       if (sentNotifications && sentNotifications.length > 0) {
         for (const notification of sentNotifications) {
           try {
-            const notificationObject =
-              await notificationObjectRepository.findOne(
-                notification.notification_object_id
-              );
-            const notificationChanges =
-              await notificationChangeRepository.findByNotificationObjectId(
-                notificationObject.id
-              );
-            let senderAccount = DELETED_USER_PLACEHOLDER;
-            if (notificationChanges && notificationChanges.length > 0) {
-              const sender = notificationChanges[0].actor_id;
-              senderAccount =
-                (await profilesRepository.findOne(sender)) ||
-                DELETED_USER_PLACEHOLDER;
-            }
-            const message = await notificationService.createMessage(
-              notification.id
-            );
-
-            const notificationResponse: NotificationResponse = {
-              id: notification.id,
-              type: NOTIFICATION_ENTITY_TYPE_STRING[
-                notificationObject.entity_type
-              ],
-              created_at: notification.created_at,
-              status: NOTIFICATION_STATUS_STRING[notification.status],
-              sender: {
-                id: senderAccount.user_id,
-                name: senderAccount.first_name,
-                username: senderAccount.username,
-                avatar_url: senderAccount.profile_picture,
-              },
-              entity: {
-                id: notificationObject.entity_id,
-              },
-              message: message,
-            };
-
-            // Send the notification using your websocket service
+            const enrichedNotification =
+              await notificationService.enrichNotification(notification);
             notificationsWebsocketService.sendNotification({
-              notificationResponse,
+              notificationResponse: enrichedNotification,
               receivers: [userId],
             });
           } catch (innerErr) {
-            // Log error for individual notification processing and continue with the next one.
             console.error(
               `Error processing notification ${notification.id}:`,
               innerErr

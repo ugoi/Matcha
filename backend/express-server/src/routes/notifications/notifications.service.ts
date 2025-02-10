@@ -150,4 +150,47 @@ export const notificationService = {
         return "Invalid notification entity type";
     }
   },
+
+  // Added new function to enrich a raw notification into a full NotificationResponse
+  enrichNotification: async function enrichNotification(
+    notification: Notification
+  ): Promise<NotificationResponse> {
+    const notificationObject = await notificationObjectRepository.findOne(
+      notification.notification_object_id
+    );
+    const notificationChanges =
+      await notificationChangeRepository.findByNotificationObjectId(
+        notificationObject.id
+      );
+    const DELETED_USER_PLACEHOLDER = {
+      user_id: "deleted",
+      first_name: "Deleted",
+      username: "deleted",
+      profile_picture: "",
+    };
+    let senderAccount = DELETED_USER_PLACEHOLDER;
+    if (notificationChanges && notificationChanges.length > 0) {
+      const senderId = notificationChanges[0].actor_id;
+      senderAccount =
+        (await profilesRepository.findOne(senderId)) ||
+        DELETED_USER_PLACEHOLDER;
+    }
+    const message = await notificationService.createMessage(notification.id);
+    return {
+      id: notification.id,
+      type: NOTIFICATION_ENTITY_TYPE_STRING[notificationObject.entity_type],
+      created_at: notification.created_at,
+      status: NOTIFICATION_STATUS_STRING[notification.status],
+      sender: {
+        id: senderAccount.user_id,
+        name: senderAccount.first_name,
+        username: senderAccount.username,
+        avatar_url: senderAccount.profile_picture,
+      },
+      entity: {
+        id: notificationObject.entity_id,
+      },
+      message: message,
+    };
+  },
 };
