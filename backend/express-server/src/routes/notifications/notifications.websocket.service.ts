@@ -5,7 +5,7 @@ import { NOTIFICATION_STATUS } from "./notification.interface.js";
 import { notificationRepository } from "./notification.repository.js";
 
 let io;
-let notificationsWebsocketService: NotificationsWebsocketService
+let notificationsWebsocketService: NotificationsWebsocketService;
 
 /**
  * NotificationsWebsocketService class
@@ -87,12 +87,16 @@ export class NotificationsWebsocketService {
             },
             async (err, response) => {
               if (err) {
-              } else {
+                // Optionally handle error here
+              } else if (response && response.status === "ok") {
+                // Only update if the client explicitly confirms it received the notification
                 await notificationRepository.update({
                   id: notificationResponse.id,
                   status: NOTIFICATION_STATUS.RECEIVED,
                 });
               }
+              // Otherwise, you might decide to keep the status as SENT, so that the notification
+              // can be retried later when the client connects.
             }
           );
       }
