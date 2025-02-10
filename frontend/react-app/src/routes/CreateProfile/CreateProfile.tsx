@@ -2,6 +2,18 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import './CreateProfile.css';
 
+interface ErrorState {
+  age?: string;
+  interests?: string;
+  pictures?: string;
+  general?: string;
+}
+
+interface ErrorDetail {
+  path: string;
+  msg: string;
+}
+
 function CreateProfile() {
   const [step, setStep] = useState(1);
   const [name, setName] = useState('');
@@ -11,7 +23,7 @@ function CreateProfile() {
   const [biography, setBiography] = useState('');
   const [interests, setInterests] = useState('');
   const navigate = useNavigate();
-  const [errors, setErrors] = useState<{ [key: string]: string }>({});
+  const [errors, setErrors] = useState<ErrorState>({});
   const [uploadedPictures, setUploadedPictures] = useState<string[]>([]);
   const [isUploading, setIsUploading] = useState(false);
   const [coordinates, setCoordinates] = useState({ latitude: 0, longitude: 0 });
@@ -67,9 +79,7 @@ function CreateProfile() {
             body: formData,
           });
           const result = await response.json();
-          if (!response.ok) {
-            throw new Error(result.message || 'Failed to upload picture');
-          }
+          if (!response.ok) throw new Error(result.message || 'Failed to upload picture');
           const backendResponse = await fetch(`${window.location.origin}/api/profiles/me/pictures`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -96,9 +106,7 @@ function CreateProfile() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ url: urlToRemove }),
       });
-      if (!response.ok) {
-        throw new Error('Failed to remove picture');
-      }
+      if (!response.ok) throw new Error('Failed to remove picture');
       setUploadedPictures(prev => prev.filter((_, i) => i !== index));
     } catch (error) {
       setErrors(prev => ({ ...prev, pictures: error instanceof Error ? error.message : 'Failed to remove picture' }));
@@ -128,6 +136,12 @@ function CreateProfile() {
         setErrors({ pictures: 'At least 3 pictures are required' });
         return;
       }
+      let splitted = interests.split(',').map(t => t.trim()).filter(Boolean);
+      splitted = splitted.map(item => (item.startsWith('#') ? item : `#${item}`));
+      if (splitted.length > 5) {
+        setErrors({ interests: 'Maximum 5 interests allowed' });
+        return;
+      }
       const formData = new URLSearchParams();
       formData.append('first_name', name);
       formData.append('age', age.toString());
@@ -142,7 +156,6 @@ function CreateProfile() {
       formData.append('location_radius', '50');
       formData.append('fame_rating_min', '0');
       formData.append('fame_rating_max', '100');
-      formData.append('interests_filter', interests);
       formData.append('common_interests', '0');
       const response = await fetch(`${window.location.origin}/api/profiles/me`, {
         method: 'POST',
@@ -152,14 +165,33 @@ function CreateProfile() {
       const result = await response.json();
       if (!response.ok) {
         if (result.status === 'fail' && result.data?.errors) {
-          const newErrors: { [key: string]: string } = {};
-          result.data.errors.forEach((error: any) => {
+          const newErrors: Record<string, string> = {};
+          result.data.errors.forEach((error: ErrorDetail) => {
             newErrors[error.path] = error.msg;
           });
           setErrors(newErrors);
           return;
         }
         throw new Error(result.data?.title || 'Something went wrong');
+      }
+      if (splitted.length > 0) {
+        const headers = new Headers();
+        headers.append("Content-Type", "application/x-www-form-urlencoded");
+        headers.append("Authorization", "Bearer YOUR_JWT_TOKEN");
+        const urlencoded = new URLSearchParams();
+        for (const interest of splitted) {
+          const cleanInterest = interest.startsWith('#') ? interest.substring(1) : interest;
+          urlencoded.append("interests", cleanInterest);
+        }
+        const requestOptions = {
+          method: "POST",
+          headers: headers,
+          body: urlencoded,
+        };
+        const interestsResponse = await fetch(`${window.location.origin}/api/profiles/me/interests`, requestOptions);
+        if (!interestsResponse.ok) {
+          throw new Error("Failed to update interests");
+        }
       }
       navigate('/profile');
     } catch (error) {

@@ -12,11 +12,12 @@ function Settings() {
   const [sexualPreference, setSexualPreference] = useState('');
   const [minFameRating, setMinFameRating] = useState(0);
   const [maxFameRating, setMaxFameRating] = useState(5);
-  const [tagsInput, setTagsInput] = useState('');
   const [commonTags, setCommonTags] = useState<string[]>([]);
   const [minCommonInterests, setMinCommonInterests] = useState(1);
+  const [availableInterests, setAvailableInterests] = useState<string[]>([]);
 
   useEffect(() => {
+    // Fetch user info (email)
     fetch("http://localhost:3000/api/users/me")
       .then((res) => res.json())
       .then((response) => {
@@ -26,6 +27,7 @@ function Settings() {
       })
       .catch(() => {});
 
+    // Fetch profile data and search preferences
     fetch("http://localhost:3000/api/profiles/me", { credentials: "include" })
       .then((res) => res.json())
       .then((result) => {
@@ -39,30 +41,29 @@ function Settings() {
             if (prefs.age_max !== undefined) setMaxAge(prefs.age_max);
             if (prefs.fame_rating_min !== undefined) setMinFameRating(prefs.fame_rating_min);
             if (prefs.fame_rating_max !== undefined) setMaxFameRating(prefs.fame_rating_max);
-            if (prefs.interests_filter) {
-              const tags = prefs.interests_filter
-                .split(',')
-                .map((t: string) => t.trim())
-                .filter((t: string) => t.length);
-              setCommonTags(tags);
-              setTagsInput(tags.map((t: string) => t.startsWith('#') ? t : '#' + t).join(' '));
-            }
+            // Try to read "interests_filter", or fall back to "intereses"
+            const tagsString = prefs.interests_filter || prefs.intereses || '';
+            const tags = tagsString
+              .split(',')
+              .map((t: string) => t.trim())
+              .filter((t: string) => t.length);
+            setCommonTags(tags);
             if (prefs.common_interests !== undefined) setMinCommonInterests(prefs.common_interests);
+          }
+          if (result.data.interests) {
+            const interestsArr = result.data.interests.map((item: any) => {
+              let tag = item.interest_tag;
+              if (!tag.startsWith('#')) {
+                tag = '#' + tag;
+              }
+              return tag;
+            });
+            setAvailableInterests(interestsArr);
           }
         }
       })
       .catch(() => {});
   }, []);
-
-  const handleTagsBlur = () => {
-    const parsed = tagsInput
-      .split(' ')
-      .map((t: string) => t.trim())
-      .filter((t: string) => t.length)
-      .map((t: string) => t.startsWith('#') ? t.substring(1) : t);
-    setCommonTags(parsed);
-    setTagsInput(parsed.map((t: string) => '#' + t).join(' '));
-  };
 
   const handleDistanceChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setDistance(Number(e.target.value));
@@ -73,6 +74,7 @@ function Settings() {
   };
 
   const handleSaveChanges = async () => {
+    // Update email
     const emailParams = new URLSearchParams();
     emailParams.append("email", email);
     await fetch("http://localhost:3000/api/users/me", {
@@ -81,6 +83,7 @@ function Settings() {
       body: emailParams,
     });
 
+    // Prepare profile parameters
     const profileParams = new URLSearchParams();
     profileParams.append("gender", gender || "");
     profileParams.append("sexual_preference", sexualPreference || "");
@@ -89,7 +92,11 @@ function Settings() {
     profileParams.append("location_radius", distance.toString());
     profileParams.append("fame_rating_min", minFameRating.toString());
     profileParams.append("fame_rating_max", maxFameRating.toString());
-    profileParams.append("interests_filter", commonTags.join(','));
+    // Send the selected common tags as interests_filter (ensure each tag has a '#' prefix)
+    profileParams.append(
+      "interests_filter",
+      commonTags.map(t => t.startsWith('#') ? t : '#' + t).join(', ')
+    );
     profileParams.append("common_interests", minCommonInterests.toString());
 
     await fetch("http://localhost:3000/api/profiles/me", {
@@ -153,6 +160,19 @@ function Settings() {
     }
   };
 
+  // Toggle the selection of a common tag (using checkboxes)
+  const toggleCommonTag = (tag: string) => {
+    if (commonTags.includes(tag)) {
+      setCommonTags(commonTags.filter(t => t !== tag));
+    } else {
+      if (commonTags.length < 5) {
+        setCommonTags([...commonTags, tag]);
+      } else {
+        alert("Maximum 5 tags allowed");
+      }
+    }
+  };
+
   return (
     <>
       <div className="slant-shape1"></div>
@@ -212,16 +232,24 @@ function Settings() {
             <p className="slider-value">{minFameRating} - {maxFameRating}</p>
           </div>
           <div className="setting-item mb-3">
-            <label htmlFor="commonTags" className="form-label">Common Tags</label>
-            <input
-              type="text"
-              id="commonTags"
-              value={tagsInput}
-              onChange={(e) => setTagsInput(e.target.value)}
-              onBlur={handleTagsBlur}
-              className="form-control"
-              placeholder="e.g. #sport #music #coding"
-            />
+            <label className="form-label">Common Tags</label>
+            <div className="checkbox-group">
+              {availableInterests.map((tag, idx) => (
+                <div key={idx} className="form-check">
+                  <input
+                    type="checkbox"
+                    className="form-check-input"
+                    id={`tag-${idx}`}
+                    value={tag}
+                    checked={commonTags.includes(tag)}
+                    onChange={() => toggleCommonTag(tag)}
+                  />
+                  <label className="form-check-label" htmlFor={`tag-${idx}`}>
+                    {tag}
+                  </label>
+                </div>
+              ))}
+            </div>
           </div>
           <div className="setting-item mb-3">
             <label htmlFor="minCommonInterests" className="form-label">Minimum common interests</label>
@@ -234,9 +262,11 @@ function Settings() {
               min={0}
               max={3}
               onChange={(value: number | number[]) => {
-                typeof value === 'number'
-                  ? setMinCommonInterests(value)
-                  : setMinCommonInterests(value[0]);
+                if (typeof value === 'number') {
+                  setMinCommonInterests(value);
+                } else {
+                  setMinCommonInterests(value[0]);
+                }
               }}
             />
             <p className="slider-value">{minCommonInterests}</p>

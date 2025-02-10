@@ -267,7 +267,10 @@ function Home() {
               {currentUser.interests && currentUser.interests.length > 0 && (
                 <p className="card-text mb-3">
                   <strong>Interests:</strong> {currentUser.interests
-                    .map((item: any) => (typeof item === 'object' ? item.interest_tag || '' : item))
+                    .map((item: any) => {
+                      const tag = typeof item === 'object' ? item.interest_tag || '' : item;
+                      return tag.startsWith('#') ? tag : '#' + tag;
+                    })
                     .filter(Boolean)
                     .join(', ')}
                 </p>

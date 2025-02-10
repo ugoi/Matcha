@@ -1,5 +1,5 @@
 import { useEffect, useState, useRef } from 'react'
-import { io, Socket } from 'socket.io-client'
+import { io } from 'socket.io-client'
 import { useNavigate } from 'react-router-dom'
 import NavbarLogged from '../../components/NavbarLogged/NavbarLogged'
 import './chat.css'
@@ -45,6 +45,13 @@ interface FullProfile {
   last_online?: string
 }
 
+// Define the types for the incoming data and ack function
+interface ChatMessageData {
+  sender: string
+  msg: string
+  timestamp?: string
+}
+
 export default function Chat() {
   const [matches, setMatches] = useState<MatchItem[]>([])
   const [chats, setChats] = useState<MatchItem[]>([])
@@ -56,40 +63,36 @@ export default function Chat() {
   const [views, setViews] = useState<any[]>([])
   const [userId, setUserId] = useState('')
   const [expandedProfile, setExpandedProfile] = useState<FullProfile | null>(null)
-  const socketRef = useRef<Socket | null>(null)
+  const socketRef = useRef<any>(null)
   const chatHistoryRef = useRef<HTMLDivElement | null>(null)
   const selectedUserIdRef = useRef<string | null>(null)
   const navigate = useNavigate()
+
+  useEffect(() => { setExpandedProfile(null) }, [view])
 
   const formatLastOnline = (lastOnlineStr?: string): string => {
     if (!lastOnlineStr) return 'Unknown'
     const lastOnline = new Date(lastOnlineStr)
     const diffMs = new Date().getTime() - lastOnline.getTime()
     const diffMinutes = Math.floor(diffMs / 60000)
-    if (diffMinutes < 1) return 'Just now'
-    return `${diffMinutes} minute${diffMinutes === 1 ? '' : 's'} ago`
+    return diffMinutes < 1 ? 'Just now' : `${diffMinutes} minute${diffMinutes === 1 ? '' : 's'} ago`
   }
 
   useEffect(() => {
     (async () => {
       const res = await fetch(`${window.location.origin}/api/profiles/me`, { credentials: 'include' })
       const data = await res.json()
-      if (data.status === 'success') {
-        setUserId(data.data.user_id)
-      } else {
-        navigate('/profile')
-      }
+      if (data.status === 'success') setUserId(data.data.user_id)
+      else navigate('/profile')
     })()
   }, [navigate])
 
-  useEffect(() => {
-    selectedUserIdRef.current = selectedUserId
-  }, [selectedUserId])
+  useEffect(() => { selectedUserIdRef.current = selectedUserId }, [selectedUserId])
 
   useEffect(() => {
     if (!userId) return
     socketRef.current = io('ws://localhost:3000/api/chat', { withCredentials: true })
-    socketRef.current.on('chat message', (data, ack) => {
+    socketRef.current.on('chat message', (data: ChatMessageData, ack: (response: string) => void) => {
       const newMsg: ChatMessage = {
         chat_id: Math.random().toString(36).substring(2),
         sender_user_id: data.sender,
@@ -97,14 +100,10 @@ export default function Chat() {
         message: data.msg,
         sent_at: data.timestamp || new Date().toISOString()
       }
-      if (
-        newMsg.sender_user_id === selectedUserIdRef.current ||
-        newMsg.receiver_user_id === selectedUserIdRef.current
-      ) {
+      if (newMsg.sender_user_id === selectedUserIdRef.current || newMsg.receiver_user_id === selectedUserIdRef.current)
         setMessageHistory(prev =>
           [...prev, newMsg].sort((a, b) => new Date(a.sent_at).getTime() - new Date(b.sent_at).getTime())
         )
-      }
       setChats(prev =>
         prev.map(c =>
           c.id === data.sender
@@ -115,23 +114,18 @@ export default function Chat() {
       if (typeof ack === 'function') ack('Message received')
     })
     socketRef.current.on('error', () => {})
-    return () => {
-      socketRef.current?.disconnect()
-    }
+    return () => { socketRef.current?.disconnect() }
   }, [userId])
 
   useEffect(() => {
     if (!userId) return
     (async () => {
-      const [matchedRes, likesRes, visitsRes] = await Promise.all([
+      const [matchedRes, likesRes] = await Promise.all([
         fetch('http://localhost:3000/api/profiles/matched', { credentials: 'include' }),
-        fetch('http://localhost:3000/api/profiles/likes', { credentials: 'include' }),
-        fetch('http://localhost:3000/api/profiles/visits', { credentials: 'include' })
+        fetch('http://localhost:3000/api/profiles/likes', { credentials: 'include' })
       ])
       const matchedData = await matchedRes.json()
       const likesData = await likesRes.json()
-      const visitsData = await visitsRes.json()
-
       if (matchedData.status === 'success' && Array.isArray(matchedData.data?.matches)) {
         const freshMatches: MatchItem[] = []
         const freshChats: MatchItem[] = []
@@ -146,48 +140,59 @@ export default function Chat() {
               lastMessage: m.lastMessage,
               timestamp: m.timestamp ? new Date(m.timestamp).toLocaleString() : undefined
             }
-            if (m.lastMessage) freshChats.push(item)
-            else freshMatches.push(item)
+            m.lastMessage ? freshChats.push(item) : freshMatches.push(item)
           }
         })
         setMatches(freshMatches)
         setChats(freshChats)
       }
       if (likesData.status === 'success' && Array.isArray(likesData.data?.likes)) {
-        const arr = likesData.data.likes.map((like: any) => {
-          const u = like.matched?.[0]
-          return u
-            ? {
+        const arr = likesData.data.likes
+          .map((like: any) => {
+            if (userId === like.likee_user_id && like.matcher && like.matcher.length > 0) {
+              const u = like.matcher[0]
+              return {
                 user_id: u.user_id,
                 first_name: u.first_name,
                 last_name: u.last_name || '',
                 profile_picture: u.profile_picture || 'https://via.placeholder.com/40'
               }
-            : { user_id: like.liker_user_id, first_name: '', last_name: '', profile_picture: 'https://via.placeholder.com/40' }
-        })
+            }
+            return null
+          })
+          .filter(Boolean)
         setLikes(arr)
       }
-      if (visitsData.status === 'success' && Array.isArray(visitsData.data?.visits)) {
-        const processedViews = visitsData.data.visits.map((visit: any) => {
-          if (visit.visitor_profile && Array.isArray(visit.visitor_profile) && visit.visitor_profile.length > 0) {
-            const profile = visit.visitor_profile[0]
-            return {
-              ...visit,
-              name: `${profile.first_name || ''} ${profile.last_name || ''}`.trim() || 'Unknown User',
-              profile_picture: profile.profile_picture || 'https://via.placeholder.com/40'
+    })()
+  }, [userId])
+
+  useEffect(() => {
+    if (!userId) return
+    (async () => {
+      const res = await fetch('http://localhost:3000/api/profiles/visits', { credentials: 'include' })
+      const data = await res.json()
+      if (data.status === 'success' && Array.isArray(data.data?.visits)) {
+        const processedViews = data.data.visits
+          .filter((visit: any) => visit.visited_user_id === userId)
+          .map((visit: any) => {
+            if (visit.visitor_profile && visit.visitor_profile.length > 0) {
+              const profile = visit.visitor_profile[0]
+              return {
+                ...visit,
+                name: `${profile.first_name || ''} ${profile.last_name || ''}`.trim() || 'Unknown User',
+                profile_picture: profile.profile_picture || 'https://via.placeholder.com/40'
+              }
             }
-          }
-          return { name: 'Unknown User', profile_picture: 'https://via.placeholder.com/40' }
-        })
+            return { name: 'Unknown User', profile_picture: 'https://via.placeholder.com/40' }
+          })
         setViews(processedViews)
       }
     })()
   }, [userId])
 
   useEffect(() => {
-    if (chatHistoryRef.current) {
+    if (chatHistoryRef.current)
       chatHistoryRef.current.scrollTop = chatHistoryRef.current.scrollHeight
-    }
   }, [messageHistory])
 
   const openChat = async (uid: string) => {
@@ -202,7 +207,7 @@ export default function Chat() {
         )
         setMessageHistory(sortedChats)
       }
-    } catch {}
+    } catch (error) {}
   }
 
   const handleSendMessage = async () => {
@@ -243,35 +248,39 @@ export default function Chat() {
           }
         }
       }
-    } catch {}
-    if (socketRef.current) {
+    } catch (error) {}
+    if (socketRef.current)
       socketRef.current.emit('chat message', { msg, receiver: selectedUserId })
-    }
     setChats(prev => {
       const existing = prev.find(c => c.id === selectedUserId)
-      if (existing) {
+      if (existing)
         return prev.map(c =>
-          c.id === selectedUserId
-            ? { ...c, lastMessage: msg, timestamp: new Date().toLocaleString() }
-            : c
+          c.id === selectedUserId ? { ...c, lastMessage: msg, timestamp: new Date().toLocaleString() } : c
         )
-      }
       const maybeMatch = matches.find(m => m.id === selectedUserId)
-      return maybeMatch
-        ? [...prev, { ...maybeMatch, lastMessage: msg, timestamp: new Date().toLocaleString() }]
-        : prev
+      return maybeMatch ? [...prev, { ...maybeMatch, lastMessage: msg, timestamp: new Date().toLocaleString() }] : prev
     })
     setMatches(prev => prev.filter(x => x.id !== selectedUserId))
   }
 
-  const fetchFullProfile = async (likeUserId: string) => {
-    const res = await fetch(`http://localhost:3000/api/profiles/${likeUserId}`, { credentials: 'include' })
-    const data = await res.json()
-    return data.status === 'success' && data.data ? (data.data as FullProfile) : null
+  const fetchFullProfile = async (userId: string) => {
+    try {
+      const res = await fetch(`http://localhost:3000/api/profiles/${userId}`, { credentials: 'include' })
+      const data = await res.json()
+      return data.status === 'success' && data.data ? (data.data as FullProfile) : null
+    } catch (error) {
+      return null
+    }
   }
 
   const handleExpandLike = async (like: LikeUser) => {
     const profileData = await fetchFullProfile(like.user_id)
+    if (profileData) setExpandedProfile(profileData)
+  }
+
+  const handleExpandView = async (viewItem: any) => {
+    if (!viewItem.visited_user_id) return
+    const profileData = await fetchFullProfile(viewItem.visited_user_id)
     if (profileData) setExpandedProfile(profileData)
   }
 
@@ -297,36 +306,43 @@ export default function Chat() {
     }
   }
 
-  const renderExpandedProfile = () =>
-    expandedProfile && (
-      <div className="d-flex justify-content-center mt-3">
-        <div className="card text-center p-3 shadow-lg" style={{ width: '22rem' }}>
-          <img src={expandedProfile.profile_picture || 'https://via.placeholder.com/200'} alt={`${expandedProfile.first_name} ${expandedProfile.last_name}`} className="card-img-top" />
-          <div className="card-body">
-            <h4 className="card-title mb-2">{expandedProfile.first_name} {expandedProfile.last_name}, {expandedProfile.age}</h4>
-            <p className="card-text text-muted mb-3">{expandedProfile.biography}</p>
-            {expandedProfile.interests && expandedProfile.interests.length > 0 && (
-              <p className="card-text mb-3"><strong>Interests:</strong> {expandedProfile.interests.map(i => i.interest_tag).join(', ')}</p>
-            )}
-            <p className="card-text text-muted mb-1">Fame Rating: {expandedProfile.fame_rating}</p>
-            {expandedProfile.last_online && (
-              <p className="card-text text-muted mb-1">Last online: {formatLastOnline(expandedProfile.last_online)}</p>
-            )}
-            <div className="d-flex justify-content-around mt-3">
-              <button className="btn btn-secondary" onClick={() => setExpandedProfile(null)}>Close</button>
-              <button className="btn btn-danger" onClick={handleReportFake}>Report</button>
-            </div>
+  const renderExpandedProfile = () => (
+    <div className="d-flex justify-content-center mt-3">
+      <div className="card text-center p-3 shadow-lg" style={{ width: '22rem' }}>
+        <img
+          src={expandedProfile?.profile_picture || 'https://via.placeholder.com/200'}
+          alt={`${expandedProfile?.first_name} ${expandedProfile?.last_name}`}
+          className="card-img-top"
+        />
+        <div className="card-body">
+          <h4 className="card-title mb-2">
+            {expandedProfile?.first_name} {expandedProfile?.last_name}, {expandedProfile?.age}
+          </h4>
+          <p className="card-text text-muted mb-3">{expandedProfile?.biography}</p>
+          {expandedProfile?.interests && expandedProfile.interests.length > 0 && (
+            <p className="card-text mb-3">
+              <strong>Interests:</strong> {expandedProfile.interests.map(i => i.interest_tag).join(', ')}
+            </p>
+          )}
+          <p className="card-text text-muted mb-1">Fame Rating: {expandedProfile?.fame_rating}</p>
+          {expandedProfile?.last_online && (
+            <p className="card-text text-muted mb-1">Last online: {formatLastOnline(expandedProfile.last_online)}</p>
+          )}
+          <div className="d-flex justify-content-around mt-3">
+            <button className="btn btn-secondary" onClick={() => setExpandedProfile(null)}>Close</button>
+            <button className="btn btn-danger" onClick={handleReportFake}>Report</button>
           </div>
         </div>
       </div>
-    )
+    </div>
+  )
 
   const renderMatches = () => (
     <div className="matches-list d-flex overflow-auto mb-3">
       {matches.length ? (
         matches.map(m => (
           <div key={m.id} className="match-avatar-container mx-2" onClick={() => openChat(m.id)} style={{ cursor: 'pointer' }}>
-            <img src={m.image} alt={m.name} className="match-avatar rounded-circle" />
+            <img src={m.image} alt={m.name} className="match-avatar rounded-circle" width="50" height="50" style={{ objectFit: 'cover' }} />
             <p className="match-name text-center mt-2">{m.name}</p>
           </div>
         ))
@@ -341,7 +357,7 @@ export default function Chat() {
       {chats.length ? (
         chats.map(chat => (
           <div key={chat.id} className="chat-item p-3 shadow-sm d-flex align-items-center" onClick={() => openChat(chat.id)} style={{ cursor: 'pointer' }}>
-            <img src={chat.image} alt={chat.name} className="chat-avatar rounded-circle" />
+            <img src={chat.image} alt={chat.name} className="chat-avatar rounded-circle" width="50" height="50" style={{ objectFit: 'cover' }} />
             <div className="chat-info ms-3">
               <h5>{chat.name}</h5>
               <p className="text-muted mb-0">{chat.lastMessage || 'No messages yet'}</p>
@@ -354,32 +370,6 @@ export default function Chat() {
       )}
     </div>
   )
-
-  const handleUnmatch = async () => {
-    if (!selectedUserId) return
-    await fetch(`http://localhost:3000/api/profiles/${selectedUserId}/like`, {
-      method: 'DELETE',
-      headers: { 'Content-Type': 'application/json' },
-      credentials: 'include'
-    })
-    setChats(prev => prev.filter(chat => chat.id !== selectedUserId))
-    setMatches(prev => prev.filter(match => match.id !== selectedUserId))
-    setSelectedUserId(null)
-    setMessageHistory([])
-  }
-
-  const handleBlock = async () => {
-    if (!selectedUserId) return
-    await fetch(`http://localhost:3000/api/profiles/${selectedUserId}/block`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      credentials: 'include'
-    })
-    setChats(prev => prev.filter(chat => chat.id !== selectedUserId))
-    setMatches(prev => prev.filter(match => match.id !== selectedUserId))
-    setSelectedUserId(null)
-    setMessageHistory([])
-  }
 
   const renderChatWindow = () => {
     if (!selectedUserId) return null
@@ -402,54 +392,103 @@ export default function Chat() {
           ))}
         </div>
         <div className="chat-input">
-          <textarea className="form-control" rows={2} placeholder="Type your message..." value={messageInput} onChange={e => setMessageInput(e.target.value)} onKeyDown={e => {
-            if (e.key === 'Enter' && !e.shiftKey) {
-              e.preventDefault()
-              handleSendMessage()
-            }
-          }} />
+          <textarea
+            className="form-control"
+            rows={2}
+            placeholder="Type your message..."
+            value={messageInput}
+            onChange={e => setMessageInput(e.target.value)}
+            onKeyDown={e => {
+              if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault()
+                handleSendMessage()
+              }
+            }}
+          />
           <button className="btn btn-success" onClick={handleSendMessage}>Send</button>
         </div>
       </div>
     )
   }
 
-  const renderLikesViews = () => {
-    if (expandedProfile) return renderExpandedProfile()
-    return (
-      <div className="likes-views-section d-flex justify-content-around mt-3">
-        <div className="likes-container w-50 px-3">
-          <h4>Likes</h4>
-          <ul className="list-group">
-            {likes.length ? (
-              likes.map(like => (
-                <li key={like.user_id} className="list-group-item d-flex align-items-center" style={{ cursor: 'pointer' }} onClick={() => handleExpandLike(like)}>
-                  <img src={like.profile_picture} alt={`${like.first_name} ${like.last_name}`.trim() || 'Unknown'} className="me-3 rounded-circle" width="40" height="40" />
-                  <span>{`${like.first_name} ${like.last_name}`.trim() || 'Unknown'}</span>
-                </li>
-              ))
-            ) : (
-              <div>No likes yet</div>
-            )}
-          </ul>
-        </div>
-        <div className="views-container w-50 px-3">
-          <h4>Views</h4>
-          <ul className="list-group">
-            {views.length ? (
-              views.map((v, i) => (
-                <li key={i} className="list-group-item">
-                  {v.name || 'Unknown User'}
-                </li>
-              ))
-            ) : (
-              <div>No views yet</div>
-            )}
-          </ul>
-        </div>
-      </div>
-    )
+  const handleUnmatch = async () => {
+    if (!selectedUserId) return
+    try {
+      await fetch(`http://localhost:3000/api/profiles/${selectedUserId}/like`, {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include'
+      })
+    } catch (error) {}
+    setChats(prev => prev.filter(chat => chat.id !== selectedUserId))
+    setMatches(prev => prev.filter(match => match.id !== selectedUserId))
+    setSelectedUserId(null)
+    setMessageHistory([])
   }
+
+  const handleBlock = async () => {
+    if (!selectedUserId) return
+    try {
+      await fetch(`http://localhost:3000/api/profiles/${selectedUserId}/block`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include'
+      })
+    } catch (error) {}
+    setChats(prev => prev.filter(chat => chat.id !== selectedUserId))
+    setMatches(prev => prev.filter(match => match.id !== selectedUserId))
+    setSelectedUserId(null)
+    setMessageHistory([])
+  }
+
+  const renderLikesViews = () => (
+    <div className="likes-views-section d-flex justify-content-around mt-3">
+      <div className="likes-container w-50 px-3">
+        <h4>Likes</h4>
+        <ul className="list-group">
+          {likes.length ? (
+            likes.map(like => (
+              <li key={like.user_id} className="list-group-item d-flex align-items-center" style={{ cursor: 'pointer' }} onClick={() => handleExpandLike(like)}>
+                <img
+                  src={like.profile_picture}
+                  alt={`${(like.first_name + ' ' + (like.last_name || '')).trim() || 'Unknown'}`}
+                  className="me-3 rounded-circle"
+                  width="40"
+                  height="40"
+                  style={{ objectFit: 'cover' }}
+                />
+                <span>{`${like.first_name} ${like.last_name}`.trim() || 'Unknown'}</span>
+              </li>
+            ))
+          ) : (
+            <div>No likes yet</div>
+          )}
+        </ul>
+      </div>
+      <div className="views-container w-50 px-3">
+        <h4>Views</h4>
+        <ul className="list-group">
+          {views.length ? (
+            views.map((v, i) => (
+              <li key={i} className="list-group-item d-flex align-items-center" style={{ cursor: 'pointer' }} onClick={() => handleExpandView(v)}>
+                <img
+                  src={v.profile_picture || 'https://via.placeholder.com/40'}
+                  alt={v.name || 'Unknown User'}
+                  className="me-3 rounded-circle"
+                  width="40"
+                  height="40"
+                  style={{ objectFit: 'cover' }}
+                />
+                <span>{v.name || 'Unknown User'}</span>
+              </li>
+            ))
+          ) : (
+            <div>No views yet</div>
+          )}
+        </ul>
+      </div>
+    </div>
+  )
 
   const renderVisitedProfiles = () => (
     <div className="visited-profiles-section mt-3">
@@ -457,8 +496,15 @@ export default function Chat() {
       <div className="visited-profiles d-flex flex-wrap justify-content-center">
         {views.length ? (
           views.map((v: any, i: number) => (
-            <div key={i} className="visited-profile-card m-2 text-center">
-              <img src={v.profile_picture || 'https://via.placeholder.com/40'} alt={v.name || 'Unknown User'} className="rounded-circle" width="60" height="60" />
+            <div key={i} className="visited-profile-card m-2 text-center" style={{ cursor: 'pointer' }} onClick={() => handleExpandView(v)}>
+              <img
+                src={v.profile_picture || 'https://via.placeholder.com/40'}
+                alt={v.name || 'Unknown User'}
+                className="rounded-circle"
+                width="60"
+                height="60"
+                style={{ objectFit: 'cover' }}
+              />
               <p className="mt-2">{v.name || 'Unknown User'}</p>
             </div>
           ))
@@ -469,46 +515,31 @@ export default function Chat() {
     </div>
   )
 
-return (
-  <>
-    <div className="slant-shape1"></div>
-    <NavbarLogged />
-    <div className="content d-flex flex-column align-items-center justify-content-center mt-5">
-      <div className="card text-center p-3 shadow-lg chat-card">
-        <div className="toggle-buttons d-flex justify-content-center mb-3">
-          <button
-            className={`btn hero-button ${view === 'matches' ? 'active' : ''}`}
-            onClick={() => setView('matches')}
-          >
-            Chats
-          </button>
-          <button
-            className={`btn hero-button ${view === 'likes' ? 'active' : ''}`}
-            onClick={() => setView('likes')}
-          >
-            Likes
-          </button>
-          <button
-            className={`btn hero-button ${view === 'visited' ? 'active' : ''}`}
-            onClick={() => setView('visited')}
-          >
-            Profiles
-          </button>
+  return (
+    <>
+      <div className="slant-shape1"></div>
+      <NavbarLogged />
+      <div className="content d-flex flex-column align-items-center justify-content-center mt-5">
+        <div className="card text-center p-3 shadow-lg chat-card">
+          <div className="toggle-buttons d-flex justify-content-center mb-3">
+            <button className={`btn hero-button ${view === 'matches' ? 'active' : ''}`} onClick={() => setView('matches')}>Chats</button>
+            <button className={`btn hero-button ${view === 'likes' ? 'active' : ''}`} onClick={() => setView('likes')}>Likes</button>
+            <button className={`btn hero-button ${view === 'visited' ? 'active' : ''}`} onClick={() => setView('visited')}>Profiles</button>
+          </div>
+          {expandedProfile && renderExpandedProfile()}
+          {view === 'matches'
+            ? <>
+                {renderMatches()}
+                {renderChats()}
+                {renderChatWindow()}
+              </>
+            : view === 'likes'
+              ? renderLikesViews()
+              : view === 'visited'
+                ? renderVisitedProfiles()
+                : null}
         </div>
-        {view === 'matches' ? (
-          <>
-            {renderMatches()}
-            {renderChats()}
-            {renderChatWindow()}
-          </>
-        ) : view === 'likes' ? (
-          renderLikesViews()
-        ) : view === 'visited' ? (
-          renderVisitedProfiles()
-        ) : null}
-        {expandedProfile && renderExpandedProfile()}
       </div>
-    </div>
-  </>
-);
+    </>
+  )
 }
