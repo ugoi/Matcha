@@ -78,7 +78,8 @@ export default function Chat() {
   const [messageInput, setMessageInput] = useState('')
   const [view, setView] = useState<'matches' | 'likes' | 'visited'>('matches')
   const [likes, setLikes] = useState<LikeUser[]>([])
-  const [views, setViews] = useState<any[]>([])
+  const [inboundVisits, setInboundVisits] = useState<any[]>([])
+  const [outboundVisits, setOutboundVisits] = useState<any[]>([])
   const [userId, setUserId] = useState('')
   const [expandedProfile, setExpandedProfile] = useState<FullProfile | null>(null)
   const socketRef = useRef<any>(null)
@@ -141,16 +142,8 @@ export default function Chat() {
         sent_at: data.timestamp || new Date().toISOString()
       }
       if (newMsg.sender_user_id === selectedUserIdRef.current || newMsg.receiver_user_id === selectedUserIdRef.current)
-        setMessageHistory(prev =>
-          [...prev, newMsg].sort((a, b) => new Date(a.sent_at).getTime() - new Date(b.sent_at).getTime())
-        )
-      setChats(prev =>
-        prev.map(c =>
-          c.id === data.sender
-            ? { ...c, lastMessage: data.msg, timestamp: new Date(data.timestamp || Date.now()).toLocaleString() }
-            : c
-        )
-      )
+        setMessageHistory(prev => [...prev, newMsg].sort((a, b) => new Date(a.sent_at).getTime() - new Date(b.sent_at).getTime()))
+      setChats(prev => prev.map(c => c.id === data.sender ? { ...c, lastMessage: data.msg, timestamp: new Date(data.timestamp || Date.now()).toLocaleString() } : c))
       if (typeof ack === 'function') ack('Message received')
     })
     socketRef.current.on('error', () => {})
@@ -189,20 +182,18 @@ export default function Chat() {
         setChats(freshChats)
       }
       if (likesData.status === 'success' && Array.isArray(likesData.data?.likes)) {
-        const arr = likesData.data.likes
-          .map((like: any) => {
-            if (userId === like.likee_user_id && like.matcher && like.matcher.length > 0) {
-              const u = like.matcher[0]
-              return {
-                user_id: u.user_id,
-                first_name: u.first_name,
-                last_name: u.last_name || '',
-                profile_picture: u.profile_picture || 'https://via.placeholder.com/40'
-              }
+        const arr = likesData.data.likes.map((like: any) => {
+          if (userId === like.likee_user_id && like.matcher && like.matcher.length > 0) {
+            const u = like.matcher[0]
+            return {
+              user_id: u.user_id,
+              first_name: u.first_name,
+              last_name: u.last_name || '',
+              profile_picture: u.profile_picture || 'https://via.placeholder.com/40'
             }
-            return null
-          })
-          .filter(Boolean)
+          }
+          return null
+        }).filter(Boolean)
         setLikes(arr)
       }
     })()
@@ -213,21 +204,33 @@ export default function Chat() {
     (async () => {
       const res = await fetch('http://localhost:3000/api/profiles/visits', { credentials: 'include' })
       const data = await res.json()
-      if (data.status === 'success' && Array.isArray(data.data?.visits)) {
-        const processedViews = data.data.visits
-          .filter((visit: any) => visit.visited_user_id === userId)
-          .map((visit: any) => {
-            if (visit.visitor_profile && visit.visitor_profile.length > 0) {
-              const profile = visit.visitor_profile[0]
-              return {
-                ...visit,
-                name: `${profile.first_name || ''} ${profile.last_name || ''}`.trim() || 'Unknown User',
-                profile_picture: profile.profile_picture || 'https://via.placeholder.com/40'
-              }
+      if (data.status === 'success' && data.data?.visits) {
+        const inbound = data.data.visits.inbound
+        const outbound = data.data.visits.outbound
+        const processedInbound = inbound.map((visit: any) => {
+          if (visit.visitor_profile && visit.visitor_profile.length > 0) {
+            const profile = visit.visitor_profile[0]
+            return {
+              ...visit,
+              name: `${profile.first_name || ''} ${profile.last_name || ''}`.trim() || 'Unknown User',
+              profile_picture: profile.profile_picture || 'https://via.placeholder.com/40'
             }
-            return { name: 'Unknown User', profile_picture: 'https://via.placeholder.com/40' }
-          })
-        setViews(processedViews)
+          }
+          return { name: 'Unknown User', profile_picture: 'https://via.placeholder.com/40' }
+        })
+        setInboundVisits(processedInbound)
+        const processedOutbound = outbound.map((visit: any) => {
+          if (visit.visited_profile && visit.visited_profile.length > 0) {
+            const profile = visit.visited_profile[0]
+            return {
+              ...visit,
+              name: `${profile.first_name || ''} ${profile.last_name || ''}`.trim() || 'Unknown User',
+              profile_picture: profile.profile_picture || 'https://via.placeholder.com/40'
+            }
+          }
+          return { name: 'Unknown User', profile_picture: 'https://via.placeholder.com/40' }
+        })
+        setOutboundVisits(processedOutbound)
       }
     })()
   }, [userId])
@@ -244,9 +247,7 @@ export default function Chat() {
       const res = await fetch(`http://localhost:3000/api/chats/${uid}?limit=20`, { credentials: 'include' })
       const j = await res.json()
       if (j.status === 'success' && Array.isArray(j.data?.chats)) {
-        const sortedChats = j.data.chats.sort(
-          (a: ChatMessage, b: ChatMessage) => new Date(a.sent_at).getTime() - new Date(b.sent_at).getTime()
-        )
+        const sortedChats = j.data.chats.sort((a: ChatMessage, b: ChatMessage) => new Date(a.sent_at).getTime() - new Date(b.sent_at).getTime())
         setMessageHistory(sortedChats)
       }
     } catch (error) {}
@@ -263,9 +264,7 @@ export default function Chat() {
       message: msg,
       sent_at: new Date().toISOString()
     }
-    setMessageHistory(prev =>
-      [...prev, tempMsg].sort((a, b) => new Date(a.sent_at).getTime() - new Date(b.sent_at).getTime())
-    )
+    setMessageHistory(prev => [...prev, tempMsg].sort((a, b) => new Date(a.sent_at).getTime() - new Date(b.sent_at).getTime()))
     try {
       const res = await fetch(`http://localhost:3000/api/chats/${selectedUserId}`, {
         method: 'POST',
@@ -277,16 +276,10 @@ export default function Chat() {
         const data = await res.json()
         if (data.status === 'success') {
           if (Array.isArray(data.data?.chats)) {
-            const sortedChats = data.data.chats.sort(
-              (a: ChatMessage, b: ChatMessage) => new Date(a.sent_at).getTime() - new Date(b.sent_at).getTime()
-            )
+            const sortedChats = data.data.chats.sort((a: ChatMessage, b: ChatMessage) => new Date(a.sent_at).getTime() - new Date(b.sent_at).getTime())
             setMessageHistory(sortedChats)
           } else if (data.data?.chat) {
-            setMessageHistory(prev =>
-              [...prev.filter(x => x.chat_id !== tempMsg.chat_id), data.data.chat].sort(
-                (a: ChatMessage, b: ChatMessage) => new Date(a.sent_at).getTime() - new Date(b.sent_at).getTime()
-              )
-            )
+            setMessageHistory(prev => [...prev.filter(x => x.chat_id !== tempMsg.chat_id), data.data.chat].sort((a, b) => new Date(a.sent_at).getTime() - new Date(b.sent_at).getTime()))
           }
         }
       }
@@ -296,9 +289,7 @@ export default function Chat() {
     setChats(prev => {
       const existing = prev.find(c => c.id === selectedUserId)
       if (existing)
-        return prev.map(c =>
-          c.id === selectedUserId ? { ...c, lastMessage: msg, timestamp: new Date().toLocaleString() } : c
-        )
+        return prev.map(c => c.id === selectedUserId ? { ...c, lastMessage: msg, timestamp: new Date().toLocaleString() } : c)
       const maybeMatch = matches.find(m => m.id === selectedUserId)
       return maybeMatch ? [...prev, { ...maybeMatch, lastMessage: msg, timestamp: new Date().toLocaleString() }] : prev
     })
@@ -321,8 +312,14 @@ export default function Chat() {
   }
 
   const handleExpandView = async (viewItem: any) => {
-    if (!viewItem.visited_user_id) return
-    const profileData = await fetchFullProfile(viewItem.visited_user_id)
+    let targetUserId: string | null = null
+    if (viewItem.visitor_profile && viewItem.visitor_profile.length > 0) {
+      targetUserId = viewItem.visitor_user_id
+    } else if (viewItem.visited_profile && viewItem.visited_profile.length > 0) {
+      targetUserId = viewItem.visited_user_id
+    }
+    if (!targetUserId) return
+    const profileData = await fetchFullProfile(targetUserId)
     if (profileData) setExpandedProfile(profileData)
   }
 
@@ -351,15 +348,9 @@ export default function Chat() {
   const renderExpandedProfile = () => (
     <div className="d-flex justify-content-center mt-3">
       <div className="card text-center p-3 shadow-lg" style={{ width: '22rem' }}>
-        <img
-          src={expandedProfile?.profile_picture || 'https://via.placeholder.com/200'}
-          alt={`${expandedProfile?.first_name} ${expandedProfile?.last_name}`}
-          className="card-img-top"
-        />
+        <img src={expandedProfile?.profile_picture || 'https://via.placeholder.com/200'} alt={`${expandedProfile?.first_name} ${expandedProfile?.last_name}`} className="card-img-top" />
         <div className="card-body">
-          <h4 className="card-title mb-2">
-            {expandedProfile?.first_name} {expandedProfile?.last_name}, {expandedProfile?.age}
-          </h4>
+          <h4 className="card-title mb-2">{expandedProfile?.first_name} {expandedProfile?.last_name}, {expandedProfile?.age}</h4>
           <p className="card-text text-muted mb-3">{expandedProfile?.biography}</p>
           {expandedProfile?.interests && expandedProfile.interests.length > 0 && (
             <p className="card-text mb-3">
@@ -491,14 +482,7 @@ export default function Chat() {
           {likes.length ? (
             likes.map(like => (
               <li key={like.user_id} className="list-group-item d-flex align-items-center" style={{ cursor: 'pointer' }} onClick={() => handleExpandLike(like)}>
-                <img
-                  src={like.profile_picture}
-                  alt={`${(like.first_name + ' ' + (like.last_name || '')).trim() || 'Unknown'}`}
-                  className="me-3 rounded-circle"
-                  width="40"
-                  height="40"
-                  style={{ objectFit: 'cover' }}
-                />
+                <img src={like.profile_picture} alt={`${(like.first_name + ' ' + (like.last_name || '')).trim() || 'Unknown'}`} className="me-3 rounded-circle" width="40" height="40" style={{ objectFit: 'cover' }} />
                 <span>{`${like.first_name} ${like.last_name}`.trim() || 'Unknown'}</span>
               </li>
             ))
@@ -510,17 +494,10 @@ export default function Chat() {
       <div className="views-container w-50 px-3">
         <h4>Views</h4>
         <ul className="list-group">
-          {views.length ? (
-            views.map((v, i) => (
+          {inboundVisits.length ? (
+            inboundVisits.map((v, i) => (
               <li key={i} className="list-group-item d-flex align-items-center" style={{ cursor: 'pointer' }} onClick={() => handleExpandView(v)}>
-                <img
-                  src={v.profile_picture || 'https://via.placeholder.com/40'}
-                  alt={v.name || 'Unknown User'}
-                  className="me-3 rounded-circle"
-                  width="40"
-                  height="40"
-                  style={{ objectFit: 'cover' }}
-                />
+                <img src={v.profile_picture || 'https://via.placeholder.com/40'} alt={v.name || 'Unknown User'} className="me-3 rounded-circle" width="40" height="40" style={{ objectFit: 'cover' }} />
                 <span>{v.name || 'Unknown User'}</span>
               </li>
             ))
@@ -536,17 +513,10 @@ export default function Chat() {
     <div className="visited-profiles-section mt-3">
       <h4>Visited Profiles</h4>
       <div className="visited-profiles d-flex flex-wrap justify-content-center">
-        {views.length ? (
-          views.map((v: any, i: number) => (
+        {outboundVisits.length ? (
+          outboundVisits.map((v: any, i: number) => (
             <div key={i} className="visited-profile-card m-2 text-center" style={{ cursor: 'pointer' }} onClick={() => handleExpandView(v)}>
-              <img
-                src={v.profile_picture || 'https://via.placeholder.com/40'}
-                alt={v.name || 'Unknown User'}
-                className="rounded-circle"
-                width="60"
-                height="60"
-                style={{ objectFit: 'cover' }}
-              />
+              <img src={v.profile_picture || 'https://via.placeholder.com/40'} alt={v.name || 'Unknown User'} className="rounded-circle" width="60" height="60" style={{ objectFit: 'cover' }} />
               <p className="mt-2">{v.name || 'Unknown User'}</p>
             </div>
           ))
