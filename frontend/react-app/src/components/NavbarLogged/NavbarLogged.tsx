@@ -1,26 +1,26 @@
-import Container from 'react-bootstrap/Container';
-import Nav from 'react-bootstrap/Nav';
-import Navbar from 'react-bootstrap/Navbar';
-import $ from 'jquery';
-import NotificationHandler from '../NotificationHandler.tsx';
-import './NavbarLogged.css';
+// NavbarLogged.tsx
+import Container from 'react-bootstrap/Container'
+import Nav from 'react-bootstrap/Nav'
+import Navbar from 'react-bootstrap/Navbar'
+import $ from 'jquery'
+import NotificationHandler from '../NotificationHandler'
+import './NavbarLogged.css'
 
 const handleLogout = () => {
   const settings = {
     url: "http://localhost:3000/api/logout",
     method: "GET",
     timeout: 0,
-  };
-
+  }
   $.ajax(settings)
     .done(function (response) {
-      console.log(response);
-      window.location.href = '/';
+      console.log(response)
+      window.location.href = '/'
     })
     .fail(function (jqXHR) {
-      console.error('Logout failed:', jqXHR.statusText);
-    });
-};
+      console.error("Logout failed:", jqXHR.statusText)
+    })
+}
 
 function NavbarLogged() {
   return (
@@ -29,9 +29,7 @@ function NavbarLogged() {
         <Container>
           <Navbar.Brand href="/chat">
             <NotificationHandler />
-            {/* <i className="bi-bell-fill"></i> */}
           </Navbar.Brand>
-          
           <Navbar.Toggle aria-controls="responsive-navbar-nav" />
           <Navbar.Collapse id="responsive-navbar-nav">
             <Nav className="mx-auto align-items-center">
@@ -47,7 +45,7 @@ function NavbarLogged() {
         </Container>
       </Navbar>
     </div>
-  );
+  )
 }
 
-export default NavbarLogged;
+export default NavbarLogged

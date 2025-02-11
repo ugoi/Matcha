@@ -45,11 +45,29 @@ interface FullProfile {
   last_online?: string
 }
 
-// Define the types for the incoming data and ack function
 interface ChatMessageData {
   sender: string
   msg: string
   timestamp?: string
+}
+
+const markNotificationsAsRead = async (notificationIds: string[]) => {
+  const myHeaders = new Headers()
+  myHeaders.append("Content-Type", "application/x-www-form-urlencoded")
+  const urlencoded = new URLSearchParams()
+  urlencoded.append("status", "2")
+  notificationIds.forEach(id => urlencoded.append("ids", id))
+  const requestOptions = {
+    method: "PATCH",
+    headers: myHeaders,
+    body: urlencoded,
+    redirect: "follow" as RequestRedirect
+  }
+  try {
+    const response = await fetch("http://localhost:3000/api/notifications", requestOptions)
+    const result = await response.text()
+    console.log(result)
+  } catch (error) {}
 }
 
 export default function Chat() {
@@ -68,7 +86,27 @@ export default function Chat() {
   const selectedUserIdRef = useRef<string | null>(null)
   const navigate = useNavigate()
 
-  useEffect(() => { setExpandedProfile(null) }, [view])
+  useEffect(() => {
+    setExpandedProfile(null)
+  }, [view])
+
+  useEffect(() => {
+    const markAllAsRead = async () => {
+      try {
+        const response = await fetch("http://localhost:3000/api/notifications", {
+          method: "GET",
+          headers: { "Content-Type": "application/json" },
+          redirect: "follow"
+        })
+        const result = await response.json()
+        if (result.status === "success" && Array.isArray(result.data.notifications)) {
+          const unreadIds = result.data.notifications.filter((n: any) => n.status !== "2").map((n: any) => n.id)
+          if (unreadIds.length > 0) await markNotificationsAsRead(unreadIds)
+        }
+      } catch (error) {}
+    }
+    markAllAsRead()
+  }, [])
 
   const formatLastOnline = (lastOnlineStr?: string): string => {
     if (!lastOnlineStr) return 'Unknown'
@@ -87,7 +125,9 @@ export default function Chat() {
     })()
   }, [navigate])
 
-  useEffect(() => { selectedUserIdRef.current = selectedUserId }, [selectedUserId])
+  useEffect(() => {
+    selectedUserIdRef.current = selectedUserId
+  }, [selectedUserId])
 
   useEffect(() => {
     if (!userId) return
@@ -114,7 +154,9 @@ export default function Chat() {
       if (typeof ack === 'function') ack('Message received')
     })
     socketRef.current.on('error', () => {})
-    return () => { socketRef.current?.disconnect() }
+    return () => {
+      socketRef.current?.disconnect()
+    }
   }, [userId])
 
   useEffect(() => {
