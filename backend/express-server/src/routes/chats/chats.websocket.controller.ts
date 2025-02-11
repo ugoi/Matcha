@@ -10,6 +10,7 @@ import {
 } from "../notifications/notification.interface.js";
 import { blockedUsersRepository } from "../profiles/blocks/blocks.repository.js";
 import { validationLimits } from "../../config/validation-config.js";
+import { profilesService } from "../profiles/profiles.service.js";
 
 export function initChatSocket(io: Server) {
   /**
@@ -27,13 +28,28 @@ export function initChatSocket(io: Server) {
       // the user ID is used as a room
       socket.join(`user:${userId}`);
 
+      // Immediately update last online timestamp upon connection
+      profilesService
+        .updateLastOnline(userId)
+        .catch((err) => console.error("Error updating last online:", err));
+
+      // Set up a persistent heartbeat to update the last online timestamp every 60 seconds
+      const heartbeatInterval = setInterval(async () => {
+        try {
+          await profilesService.updateLastOnline(userId);
+        } catch (err) {
+          console.error("Error updating last online:", err);
+        }
+      }, 60000);
+
       // Global error event on the socket to catch any unexpected errors
       socket.on("error", (err) => {
         console.error("Socket encountered an error:", err);
       });
 
       socket.on("disconnect", () => {
-        // Optional cleanup on disconnect
+        // Clean up the heartbeat interval on disconnect
+        clearInterval(heartbeatInterval);
       });
 
       socket.on("chat message", async ({ msg, receiver }) => {
