@@ -83,7 +83,6 @@ export default function Chat() {
   const [userId, setUserId] = useState('')
   const [expandedProfile, setExpandedProfile] = useState<FullProfile | null>(null)
   const [expandedPhotoIndex, setExpandedPhotoIndex] = useState(0)
-
   const socketRef = useRef<any>(null)
   const chatHistoryRef = useRef<HTMLDivElement | null>(null)
   const selectedUserIdRef = useRef<string | null>(null)
@@ -271,25 +270,6 @@ export default function Chat() {
       sent_at: new Date().toISOString()
     }
     setMessageHistory(prev => [...prev, tempMsg].sort((a, b) => new Date(a.sent_at).getTime() - new Date(b.sent_at).getTime()))
-    try {
-      const res = await fetch(`http://localhost:3000/api/chats/${selectedUserId}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify({ message: msg })
-      })
-      if (res.ok) {
-        const data = await res.json()
-        if (data.status === 'success') {
-          if (Array.isArray(data.data?.chats)) {
-            const sortedChats = data.data.chats.sort((a: ChatMessage, b: ChatMessage) => new Date(a.sent_at).getTime() - new Date(b.sent_at).getTime())
-            setMessageHistory(sortedChats)
-          } else if (data.data?.chat) {
-            setMessageHistory(prev => [...prev.filter(x => x.chat_id !== tempMsg.chat_id), data.data.chat].sort((a, b) => new Date(a.sent_at).getTime() - new Date(b.sent_at).getTime()))
-          }
-        }
-      }
-    } catch (error) {}
     if (socketRef.current)
       socketRef.current.emit('chat message', { msg, receiver: selectedUserId })
     setChats(prev => {
@@ -352,12 +332,12 @@ export default function Chat() {
   }
 
   const handleNextExpandedPhoto = () => {
-    if (!expandedProfile?.pictures || expandedProfile.pictures.length === 0) return
+    if (!expandedProfile?.pictures?.length) return
     setExpandedPhotoIndex(prev => (prev + 1) % expandedProfile.pictures!.length)
   }
 
   const handlePreviousExpandedPhoto = () => {
-    if (!expandedProfile?.pictures || expandedProfile.pictures.length === 0) return
+    if (!expandedProfile?.pictures?.length) return
     setExpandedPhotoIndex(prev => (prev - 1 + expandedProfile.pictures!.length) % expandedProfile.pictures!.length)
   }
 
@@ -375,7 +355,6 @@ export default function Chat() {
               alt={`${expandedProfile.first_name} ${expandedProfile.last_name}`}
               className="card-img-top"
             />
-            {/* Only show arrows if there is more than one picture */}
             {expandedProfile.pictures && expandedProfile.pictures.length > 1 && (
               <>
                 <button
@@ -502,9 +481,7 @@ export default function Chat() {
           {messageHistory.map(msg => (
             <div
               key={msg.chat_id}
-              className={`message-bubble ${
-                msg.sender_user_id === userId ? 'message-sent' : 'message-received'
-              }`}
+              className={`message-bubble ${msg.sender_user_id === userId ? 'message-sent' : 'message-received'}`}
             >
               <p>{msg.message}</p>
               <small className="text-muted">
