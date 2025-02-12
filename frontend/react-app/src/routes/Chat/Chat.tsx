@@ -332,20 +332,29 @@ export default function Chat() {
   }
 
   const handleNextExpandedPhoto = () => {
-    if (!expandedProfile?.pictures?.length) return
-    setExpandedPhotoIndex(prev => (prev + 1) % expandedProfile.pictures!.length)
+    if (!expandedProfile) return
+    const orderedPictures = expandedProfile.profile_picture
+      ? [{ picture_url: expandedProfile.profile_picture }, ...(expandedProfile.pictures ? expandedProfile.pictures.filter(p => p.picture_url !== expandedProfile.profile_picture) : [])]
+      : (expandedProfile.pictures || [])
+    if (!orderedPictures.length) return
+    setExpandedPhotoIndex(prev => (prev + 1) % orderedPictures.length)
   }
 
   const handlePreviousExpandedPhoto = () => {
-    if (!expandedProfile?.pictures?.length) return
-    setExpandedPhotoIndex(prev => (prev - 1 + expandedProfile.pictures!.length) % expandedProfile.pictures!.length)
+    if (!expandedProfile) return
+    const orderedPictures = expandedProfile.profile_picture
+      ? [{ picture_url: expandedProfile.profile_picture }, ...(expandedProfile.pictures ? expandedProfile.pictures.filter(p => p.picture_url !== expandedProfile.profile_picture) : [])]
+      : (expandedProfile.pictures || [])
+    if (!orderedPictures.length) return
+    setExpandedPhotoIndex(prev => (prev - 1 + orderedPictures.length) % orderedPictures.length)
   }
 
   const renderExpandedProfile = () => {
     if (!expandedProfile) return null
-    const currentPhoto = (expandedProfile.pictures && expandedProfile.pictures.length > 0)
-      ? expandedProfile.pictures[expandedPhotoIndex].picture_url
-      : expandedProfile.profile_picture || 'https://via.placeholder.com/200'
+    const orderedPictures = expandedProfile.profile_picture
+      ? [{ picture_url: expandedProfile.profile_picture }, ...(expandedProfile.pictures ? expandedProfile.pictures.filter(p => p.picture_url !== expandedProfile.profile_picture) : [])]
+      : (expandedProfile.pictures || [])
+    const currentPhoto = orderedPictures.length ? orderedPictures[expandedPhotoIndex]?.picture_url : expandedProfile.profile_picture || 'https://via.placeholder.com/200'
     return (
       <div className="d-flex justify-content-center mt-3 position-relative">
         <div className="card text-center p-3 shadow-lg" style={{ width: '22rem' }}>
@@ -355,7 +364,7 @@ export default function Chat() {
               alt={`${expandedProfile.first_name} ${expandedProfile.last_name}`}
               className="card-img-top"
             />
-            {expandedProfile.pictures && expandedProfile.pictures.length > 1 && (
+            {orderedPictures.length > 1 && (
               <>
                 <button
                   className="photo-arrow left-arrow position-absolute top-50 start-0 translate-middle-y btn btn-light"
