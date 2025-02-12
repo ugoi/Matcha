@@ -81,14 +81,14 @@ export default function NotificationHandler() {
             backgroundColor: "#333",
             color: "#fff",
             borderRadius: "4px",
-            boxShadow: "0 2px 6px rgba(0,0,0,0.3)",
+            boxShadow: "0 2px 6px rgba(0, 83, 138, 0.3)",
             minWidth: "200px",
             opacity: 0.9,
           }}>
             <div><strong>{toast.type}</strong></div>
             <div>{toast.message}</div>
             <div style={{ fontSize: "0.75rem", marginTop: "5px" }}>
-              {new Date(toast.timestamp).toLocaleTimeString()}
+              {/* {new Date(toast.timestamp).toLocaleTimeString()} */}
             </div>
           </div>
         ))}

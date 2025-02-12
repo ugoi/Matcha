@@ -74,7 +74,6 @@ function Settings() {
   };
 
   const handleSaveChanges = async () => {
-    // Update email
     const emailParams = new URLSearchParams();
     emailParams.append("email", email);
     await fetch("http://localhost:3000/api/users/me", {
@@ -83,7 +82,6 @@ function Settings() {
       body: emailParams,
     });
 
-    // Prepare profile parameters
     const profileParams = new URLSearchParams();
     profileParams.append("gender", gender || "");
     profileParams.append("sexual_preference", sexualPreference || "");
@@ -92,7 +90,6 @@ function Settings() {
     profileParams.append("location_radius", distance.toString());
     profileParams.append("fame_rating_min", minFameRating.toString());
     profileParams.append("fame_rating_max", maxFameRating.toString());
-    // Send the selected common tags as interests_filter (ensure each tag has a '#' prefix)
     profileParams.append(
       "interests_filter",
       commonTags.map(t => t.startsWith('#') ? t : '#' + t).join(', ')
