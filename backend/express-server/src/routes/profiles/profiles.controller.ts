@@ -58,24 +58,44 @@ router.get(
       next(new JFail({ title: "invalid input", errors }));
       return;
     }
-
     try {
+      let filterBy;
+      if (req.query.filter_by) {
+        filterBy = JSON.parse(req.query.filter_by as string);
+        // If a distance filter is provided, convert its value(s) from km to meters.
+        if (filterBy.distance) {
+          for (const operator in filterBy.distance) {
+            const value = parseFloat(filterBy.distance[operator]);
+            if (!isNaN(value)) {
+              filterBy.distance[operator] = value * 1000;
+            }
+          }
+        }
+      }
+
+      const sortBy = req.query.sort_by
+        ? JSON.parse(req.query.sort_by as string)
+        : undefined;
+      const limit = req.query.limit || 20;
+
       const profiles = await profilesService.searchProfiles({
         user_id: req.user.user_id,
-        filter_by: req.query.filter_by
-          ? JSON.parse(req.query.filter_by as string)
-          : undefined,
-        sort_by: req.query.sort_by
-          ? JSON.parse(req.query.sort_by as string)
-          : undefined,
-        limit: req.query.limit || 20,
+        filter_by: filterBy,
+        sort_by: sortBy,
+        limit: limit,
       });
 
-      const publicProfiles = profiles.map(
+      // Convert the "distance" field from meters to kilometers,
+      // and round it to 2 decimal places for the API response.
+      const profilesInKm = profiles.map((profile) => ({
+        ...profile,
+        distance: parseFloat((profile.distance / 1000).toFixed(2)),
+      }));
+
+      const publicProfiles = profilesInKm.map(
         (profile) => new PublicProfile(profile)
       );
 
-      // Wrap result in SuccessResponse
       const response = new SuccessResponse({ profiles: publicProfiles });
       res.json(response);
     } catch (error) {
