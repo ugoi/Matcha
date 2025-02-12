@@ -108,7 +108,6 @@ function Profile() {
   const handleSaveClick = async () => {
     if (!user) return
     try {
-      // Update name if changed
       const finalFirstName = (editedFirstName || '').trim() === '' ? user.first_name : (editedFirstName || '').trim()
       const finalLastName = (editedLastName || '').trim() === '' ? user.last_name : (editedLastName || '').trim()
       if (finalFirstName !== user.first_name || finalLastName !== user.last_name) {
@@ -123,7 +122,6 @@ function Profile() {
         if (!res.ok) throw new Error('Failed to update name')
       }
 
-      // Update biography if changed
       if (editedBio !== user.biography) {
         const res = await fetch(`${window.location.origin}/api/profiles/me`, {
           method: 'PATCH',
@@ -133,7 +131,6 @@ function Profile() {
         if (!res.ok) throw new Error('Failed to update biography')
       }
 
-      // Process interests as plain text (no "#" prepended)
       const newInterests = (editedInterests || '')
         .split(',')
         .map(tag => tag.trim())
@@ -144,7 +141,6 @@ function Profile() {
       }
       const oldInterests = user.interests?.map(i => i.interest_tag) || []
       if (JSON.stringify(newInterests) !== JSON.stringify(oldInterests)) {
-        // --- DELETE old interests using body (x-www-form-urlencoded) ---
         const deleteBody = new URLSearchParams()
         oldInterests.forEach(interest => {
           deleteBody.append("interests", interest)
@@ -160,7 +156,6 @@ function Profile() {
         const delRes = await fetch(`${window.location.origin}/api/profiles/me/interests`, deleteOptions)
         if (!delRes.ok) throw new Error("Failed to delete interests")
 
-        // --- POST new interests using x-www-form-urlencoded ---
         if (newInterests.length > 0) {
           const postBody = new URLSearchParams()
           newInterests.forEach(interest => {
@@ -178,8 +173,7 @@ function Profile() {
           if (!postRes.ok) throw new Error("Failed to update interests")
         }
       }
-
-      // Update local state
+      
       setUser({
         ...user,
         first_name: finalFirstName,
@@ -417,11 +411,10 @@ function Profile() {
                 <p className="card-text text-muted mb-3">{user.biography}</p>
                 {user.interests && user.interests.length > 0 ? (
                   <p className="card-text text-muted">
-                    <strong>Interests:</strong> {user.interests.map(i => i.interest_tag).join(', ')}
+                    <strong>Interests:</strong> {user.interests.map(i => " #" + i.interest_tag)}
                   </p>
                 ) : (
                   <p className="card-text text-muted">
-                    <strong>Interests:</strong> None
                   </p>
                 )}
               </>

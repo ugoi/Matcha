@@ -110,21 +110,27 @@ function Home() {
         });
         const data = await res.json();
         if (data.status === 'success' && Array.isArray(data.data?.profiles)) {
-          const formatted = data.data.profiles.map((d: any) => ({
-            profile_id: d.user_id,
-            name: `${d.first_name} ${d.last_name}`,
-            age: d.age,
-            gender: d.gender,
-            sexual_preference: d.sexual_preference,
-            biography: d.biography,
-            profile_picture: d.profile_picture,
-            gps_latitude: d.gps_latitude,
-            gps_longitude: d.gps_longitude,
-            nearest_location: d.nearest_location || '',
-            pictures: d.pictures,
-            interests: d.interests,
-            fame_rating: d.fame_rating,
-          }));
+          const formatted = data.data.profiles.map((d: any) => {
+            const originalPictures = d.pictures || [];
+            const pictures = d.profile_picture
+              ? [{ picture_url: d.profile_picture }, ...originalPictures.filter((pic: any) => pic.picture_url !== d.profile_picture)]
+              : originalPictures;
+            return {
+              profile_id: d.user_id,
+              name: `${d.first_name} ${d.last_name}`,
+              age: d.age,
+              gender: d.gender,
+              sexual_preference: d.sexual_preference,
+              biography: d.biography,
+              profile_picture: d.profile_picture,
+              gps_latitude: d.gps_latitude,
+              gps_longitude: d.gps_longitude,
+              nearest_location: d.nearest_location || '',
+              pictures,
+              interests: d.interests,
+              fame_rating: d.fame_rating,
+            };
+          });
           setUsers(formatted);
         } else {
           setUsers([]);
@@ -176,8 +182,10 @@ function Home() {
       }
     } catch {}
     setIsActionLoading(false);
-    setCurrentIndex(prev => (prev + 1) % users.length);
-    setPhotoIndex(0);
+    if (currentIndex + 1 < users.length) {
+      setCurrentIndex(prev => prev + 1);
+      setPhotoIndex(0);
+    }
   };
 
   const handleDislikeUser = async () => {
@@ -194,8 +202,10 @@ function Home() {
       setActedUserIds(prev => new Set(prev).add(currentUser.profile_id));
     } catch {}
     setIsActionLoading(false);
-    setCurrentIndex(prev => (prev + 1) % users.length);
-    setPhotoIndex(0);
+    if (currentIndex + 1 < users.length) {
+      setCurrentIndex(prev => prev + 1);
+      setPhotoIndex(0);
+    }
   };
 
   const handleNextPhoto = () => {

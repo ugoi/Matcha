@@ -380,7 +380,7 @@ export default function Chat() {
             {expandedProfile.interests && expandedProfile.interests.length > 0 && (
               <p className="card-text mb-3">
                 <strong>Interests:</strong>{' '}
-                {expandedProfile.interests.map(i => i.interest_tag).join(', ')}
+                {expandedProfile.interests.map(i => " #" + i.interest_tag)}
               </p>
             )}
             <p className="card-text text-muted mb-1">Fame Rating: {expandedProfile.fame_rating}</p>
