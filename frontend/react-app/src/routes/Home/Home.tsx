@@ -27,6 +27,8 @@ function Home() {
   const [sortCriteria, setSortCriteria] = useState<Record<string, { $order: "asc" | "desc" }>>({
     distance: { $order: "desc" },
     age: { $order: "asc" },
+    fame_rating: { $order: "desc" },
+    common_interests: { $order: "desc" },
   });
   const [actedUserIds, setActedUserIds] = useState<Set<number>>(new Set());
   const [showMatchAnimation, setShowMatchAnimation] = useState(false);
@@ -154,14 +156,8 @@ function Home() {
     }).catch(() => {});
   }, [currentIndex, users]);
 
-  const toggleSort = (field: string, defaultOrder: "asc" | "desc") => {
-    setSortCriteria(prev => {
-      if (prev[field]) {
-        const newOrder = prev[field].$order === "asc" ? "desc" : "asc";
-        return { [field]: { $order: newOrder } };
-      }
-      return { [field]: { $order: defaultOrder } };
-    });
+  const updateSort = (field: string, order: "asc" | "desc") => {
+    setSortCriteria(prev => ({ ...prev, [field]: { $order: order } }));
   };
 
   const handleLikeUser = async () => {
@@ -233,20 +229,93 @@ function Home() {
           </div>
         </div>
       )}
-      <ul className="list-unstyled d-flex justify-content-center gap-3 my-3">
-        <li>
-          <button className="btn hero-button" onClick={() => toggleSort("age", "asc")}>Age</button>
-        </li>
-        <li>
-          <button className="btn hero-button" onClick={() => toggleSort("distance", "desc")}>Distance</button>
-        </li>
-        <li>
-          <button className="btn hero-button" onClick={() => toggleSort("fame_rating", "desc")}>Fame</button>
-        </li>
-        <li>
-          <button className="btn hero-button" onClick={() => toggleSort("common_interests", "desc")}>Interests</button>
-        </li>
-      </ul>
+
+      <div className="d-flex justify-content-center gap-3 my-3">
+        {/* Age */}
+        <div className="d-flex flex-column align-items-center">
+          <small>Age</small>
+          <div className="btn-group" role="group" aria-label="Sort by age">
+            <button
+              type="button"
+              className={`btn btn-sm ${sortCriteria.age?.$order === 'asc' ? 'btn-primary' : 'btn-outline-primary'}`}
+              onClick={() => updateSort("age", "asc")}
+            >
+              ↑
+            </button>
+            <button
+              type="button"
+              className={`btn btn-sm ${sortCriteria.age?.$order === 'desc' ? 'btn-primary' : 'btn-outline-primary'}`}
+              onClick={() => updateSort("age", "desc")}
+            >
+              ↓
+            </button>
+          </div>
+        </div>
+
+        {/* Distance */}
+        <div className="d-flex flex-column align-items-center">
+          <small>Distance</small>
+          <div className="btn-group" role="group" aria-label="Sort by distance">
+            <button
+              type="button"
+              className={`btn btn-sm ${sortCriteria.distance?.$order === 'asc' ? 'btn-primary' : 'btn-outline-primary'}`}
+              onClick={() => updateSort("distance", "asc")}
+            >
+              ↑
+            </button>
+            <button
+              type="button"
+              className={`btn btn-sm ${sortCriteria.distance?.$order === 'desc' ? 'btn-primary' : 'btn-outline-primary'}`}
+              onClick={() => updateSort("distance", "desc")}
+            >
+              ↓
+            </button>
+          </div>
+        </div>
+
+        {/* Fame */}
+        <div className="d-flex flex-column align-items-center">
+          <small>Fame</small>
+          <div className="btn-group" role="group" aria-label="Sort by fame rating">
+            <button
+              type="button"
+              className={`btn btn-sm ${sortCriteria.fame_rating?.$order === 'asc' ? 'btn-primary' : 'btn-outline-primary'}`}
+              onClick={() => updateSort("fame_rating", "asc")}
+            >
+              ↑
+            </button>
+            <button
+              type="button"
+              className={`btn btn-sm ${sortCriteria.fame_rating?.$order === 'desc' ? 'btn-primary' : 'btn-outline-primary'}`}
+              onClick={() => updateSort("fame_rating", "desc")}
+            >
+              ↓
+            </button>
+          </div>
+        </div>
+
+        {/* Interests */}
+        <div className="d-flex flex-column align-items-center">
+          <small>Interests</small>
+          <div className="btn-group" role="group" aria-label="Sort by interests">
+            <button
+              type="button"
+              className={`btn btn-sm ${sortCriteria.common_interests?.$order === 'asc' ? 'btn-primary' : 'btn-outline-primary'}`}
+              onClick={() => updateSort("common_interests", "asc")}
+            >
+              ↑
+            </button>
+            <button
+              type="button"
+              className={`btn btn-sm ${sortCriteria.common_interests?.$order === 'desc' ? 'btn-primary' : 'btn-outline-primary'}`}
+              onClick={() => updateSort("common_interests", "desc")}
+            >
+              ↓
+            </button>
+          </div>
+        </div>
+      </div>
+
       <div className="content d-flex flex-column align-items-center justify-content-center mt-5">
         {currentUser ? (
           <div className="card text-center p-3 shadow-lg position-relative">
