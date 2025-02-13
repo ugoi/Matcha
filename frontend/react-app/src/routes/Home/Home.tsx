@@ -119,7 +119,7 @@ function Home() {
               : originalPictures;
             return {
               profile_id: d.user_id,
-              name: `${d.first_name} ${d.last_name}`,
+              name: `${d.first_name} ${d.last_name || ""}`,
               age: d.age,
               gender: d.gender,
               sexual_preference: d.sexual_preference,
@@ -178,10 +178,8 @@ function Home() {
       }
     } catch {}
     setIsActionLoading(false);
-    if (currentIndex + 1 < users.length) {
-      setCurrentIndex(prev => prev + 1);
-      setPhotoIndex(0);
-    }
+    setCurrentIndex(prev => prev + 1);
+    setPhotoIndex(0);
   };
 
   const handleDislikeUser = async () => {
@@ -198,10 +196,8 @@ function Home() {
       setActedUserIds(prev => new Set(prev).add(currentUser.profile_id));
     } catch {}
     setIsActionLoading(false);
-    if (currentIndex + 1 < users.length) {
-      setCurrentIndex(prev => prev + 1);
-      setPhotoIndex(0);
-    }
+    setCurrentIndex(prev => prev + 1);
+    setPhotoIndex(0);
   };
 
   const handleNextPhoto = () => {
@@ -229,9 +225,7 @@ function Home() {
           </div>
         </div>
       )}
-
       <div className="d-flex justify-content-center gap-3 my-3">
-        {/* Age */}
         <div className="d-flex flex-column align-items-center">
           <small>Age</small>
           <div className="btn-group" role="group" aria-label="Sort by age">
@@ -251,8 +245,6 @@ function Home() {
             </button>
           </div>
         </div>
-
-        {/* Distance */}
         <div className="d-flex flex-column align-items-center">
           <small>Distance</small>
           <div className="btn-group" role="group" aria-label="Sort by distance">
@@ -272,8 +264,6 @@ function Home() {
             </button>
           </div>
         </div>
-
-        {/* Fame */}
         <div className="d-flex flex-column align-items-center">
           <small>Fame</small>
           <div className="btn-group" role="group" aria-label="Sort by fame rating">
@@ -293,8 +283,6 @@ function Home() {
             </button>
           </div>
         </div>
-
-        {/* Interests */}
         <div className="d-flex flex-column align-items-center">
           <small>Interests</small>
           <div className="btn-group" role="group" aria-label="Sort by interests">
@@ -315,7 +303,6 @@ function Home() {
           </div>
         </div>
       </div>
-
       <div className="content d-flex flex-column align-items-center justify-content-center mt-5">
         {currentUser ? (
           <div className="card text-center p-3 shadow-lg position-relative">
