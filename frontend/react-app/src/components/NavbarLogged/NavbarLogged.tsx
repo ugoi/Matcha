@@ -1,4 +1,5 @@
 // NavbarLogged.tsx
+import { Link } from "react-router-dom";
 import Container from 'react-bootstrap/Container'
 import Nav from 'react-bootstrap/Nav'
 import Navbar from 'react-bootstrap/Navbar'
@@ -33,10 +34,10 @@ function NavbarLogged() {
           <Navbar.Toggle aria-controls="responsive-navbar-nav" />
           <Navbar.Collapse id="responsive-navbar-nav">
             <Nav className="mx-auto align-items-center">
-              <Nav.Link href="/home">Home</Nav.Link>
-              <Nav.Link href="/profile">Profile</Nav.Link>
-              <Nav.Link href="/chat">Chat</Nav.Link>
-              <Nav.Link href="/settings">Settings</Nav.Link>
+              <Link to="/home" className="navbar-links">Home</Link>
+              <Link to="/profile" className="navbar-links">Profile</Link>
+              <Link to="/chat" className="navbar-links">Chat</Link>
+              <Link to="/settings" className="navbar-links">Settings</Link>
               <Nav.Link onClick={handleLogout} className="logout-link">
                 Logout
               </Nav.Link>

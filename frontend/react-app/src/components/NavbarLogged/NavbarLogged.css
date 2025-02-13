@@ -9,7 +9,7 @@
   
   .notification-wrapper {
     display: flex;
-    align-items: center;
+    align-items: left;
   }
   
   .navbar-nav {
@@ -21,9 +21,8 @@
     color: #2B3A45;
   }
   
-  .navbar-nav a {
-    color: #2B3A45;
-    transition: color 0.3s;
+  .navbar-links {
+    padding: 10px;
   }
   
   .logout-link {
