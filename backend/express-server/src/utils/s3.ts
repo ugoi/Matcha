@@ -13,10 +13,6 @@ const s3Client = new S3Client({
   forcePathStyle: true, // Needed for some S3-compatible services
 });
 
-const S3_URL =
-  process.env.AWS_ENDPOINT ||
-  `https://s3.${process.env.AWS_REGION || "us-east-1"}.amazonaws.com`;
-
 // Configure multer for memory storage
 export const upload = multer({
   storage: multer.memoryStorage(),
@@ -44,6 +40,7 @@ export async function uploadToS3(file: Express.Multer.File): Promise<string> {
 
   await s3Client.send(command);
 
-  // Return the URL of the uploaded file
-  return `${S3_URL}/${process.env.AWS_BUCKET_NAME}/${key}`;
+  return `https://${process.env.AWS_BUCKET_NAME}.s3.${
+    process.env.AWS_REGION || "us-east-1"
+  }.amazonaws.com/${key}`;
 }

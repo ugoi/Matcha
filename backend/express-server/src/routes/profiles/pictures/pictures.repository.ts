@@ -30,7 +30,7 @@ export const picturesRepository = {
       picture_url: picture,
     }));
 
-    const insert = pgp.helpers.insert(data, cs);
+    const insertQuery = pgp.helpers.insert(data, cs) + " RETURNING *";
 
     return await db.tx(async (t) => {
       // Check current picture count
@@ -50,17 +50,10 @@ export const picturesRepository = {
       }
 
       // Insert new pictures
-      await t.none(insert);
+      const insertedRows = await t.manyOrNone(insertQuery);
 
       // Return updated pictures
-      return await t.manyOrNone(
-        `
-        SELECT * 
-        FROM user_pictures 
-        WHERE user_id = $1
-        `,
-        [user_id]
-      );
+      return insertedRows;
     });
   },
 
