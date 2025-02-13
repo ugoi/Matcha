@@ -17,7 +17,6 @@ function Settings() {
   const [availableInterests, setAvailableInterests] = useState<string[]>([]);
 
   useEffect(() => {
-    // Fetch user info (email)
     fetch("http://localhost:3000/api/users/me")
       .then((res) => res.json())
       .then((response) => {
@@ -27,7 +26,6 @@ function Settings() {
       })
       .catch(() => {});
 
-    // Fetch profile data and search preferences
     fetch("http://localhost:3000/api/profiles/me", { credentials: "include" })
       .then((res) => res.json())
       .then((result) => {
@@ -41,7 +39,6 @@ function Settings() {
             if (prefs.age_max !== undefined) setMaxAge(prefs.age_max);
             if (prefs.fame_rating_min !== undefined) setMinFameRating(prefs.fame_rating_min);
             if (prefs.fame_rating_max !== undefined) setMaxFameRating(prefs.fame_rating_max);
-            // Try to read "interests_filter", or fall back to "intereses"
             const tagsString = prefs.interests_filter || prefs.intereses || '';
             const tags = tagsString
               .split(',')
@@ -157,7 +154,6 @@ function Settings() {
     }
   };
 
-  // Toggle the selection of a common tag (using checkboxes)
   const toggleCommonTag = (tag: string) => {
     if (commonTags.includes(tag)) {
       setCommonTags(commonTags.filter(t => t !== tag));
