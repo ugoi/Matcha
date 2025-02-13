@@ -173,7 +173,7 @@ function Profile() {
           if (!postRes.ok) throw new Error("Failed to update interests")
         }
       }
-      
+
       setUser({
         ...user,
         first_name: finalFirstName,
@@ -372,6 +372,7 @@ function Profile() {
                       value={editedFirstName}
                       onChange={(e) => setEditedFirstName(e.target.value)}
                       placeholder="First Name"
+                      maxLength={20}
                     />
                   </div>
                   <div className="col">
@@ -381,6 +382,7 @@ function Profile() {
                       value={editedLastName}
                       onChange={(e) => setEditedLastName(e.target.value)}
                       placeholder="Last Name"
+                      maxLength={20}
                     />
                   </div>
                 </div>
@@ -389,6 +391,7 @@ function Profile() {
                   value={editedBio}
                   onChange={(e) => setEditedBio(e.target.value)}
                   rows={4}
+                  maxLength={100}
                 />
                 <input
                   type="text"
@@ -396,6 +399,7 @@ function Profile() {
                   value={editedInterests}
                   onChange={(e) => setEditedInterests(e.target.value)}
                   placeholder="e.g. golf, cycling"
+                  maxLength={40}
                 />
                 <div className="d-flex justify-content-center gap-2">
                   <button className="btn btn-primary" onClick={handleSaveClick}>
