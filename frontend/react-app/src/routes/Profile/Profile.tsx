@@ -121,7 +121,6 @@ function Profile() {
         })
         if (!res.ok) throw new Error('Failed to update name')
       }
-
       if (editedBio !== user.biography) {
         const res = await fetch(`${window.location.origin}/api/profiles/me`, {
           method: 'PATCH',
@@ -130,7 +129,6 @@ function Profile() {
         })
         if (!res.ok) throw new Error('Failed to update biography')
       }
-
       const newInterests = (editedInterests || '')
         .split(',')
         .map(tag => tag.trim())
@@ -155,7 +153,6 @@ function Profile() {
         }
         const delRes = await fetch(`${window.location.origin}/api/profiles/me/interests`, deleteOptions)
         if (!delRes.ok) throw new Error("Failed to delete interests")
-
         if (newInterests.length > 0) {
           const postBody = new URLSearchParams()
           newInterests.forEach(interest => {
@@ -173,7 +170,6 @@ function Profile() {
           if (!postRes.ok) throw new Error("Failed to update interests")
         }
       }
-
       setUser({
         ...user,
         first_name: finalFirstName,
@@ -185,50 +181,71 @@ function Profile() {
     } catch (error) {
       console.error(error)
     }
-  };
+  }
 
   const handlePictureUpload = async (file: File) => {
-    if (!file || !user) return;
-    setIsUploading(true);
+    if (!file || !user) return
+    setIsUploading(true)
     try {
-      const formData = new FormData();
-      formData.append('image', file);
-      const imgbbRes = await fetch('https://api.imgbb.com/1/upload?key=90d36ad33552879ee7c36bb4ba197e92', {
+      const formData = new FormData()
+      formData.append('pictures', file)
+      const response = await fetch(`${window.location.origin}/api/profiles/me/pictures/upload`, {
         method: 'POST',
         body: formData
-      });
-      const imgbbResult = await imgbbRes.json();
-      if (!imgbbRes.ok) throw new Error(imgbbResult.message || 'Failed to upload picture');
-      const res = await fetch(`${window.location.origin}/api/profiles/me/pictures`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ pictures: [imgbbResult.data.url] })
-      });
-      if (!res.ok) throw new Error('Failed to save picture');
-      const result = await res.json();
-      setUser({ ...user, pictures: [...user.pictures, { picture_id: result.picture_id, picture_url: imgbbResult.data.url }] });
+      })
+      const result = await response.json()
+      if (!response.ok) throw new Error(result.message || 'Failed to upload picture')
+      if (
+        !result.data ||
+        !result.data.pictures ||
+        !Array.isArray(result.data.pictures) ||
+        result.data.pictures.length === 0
+      ) {
+        throw new Error('No pictures returned from backend')
+      }
+      const newPic = result.data.pictures[0]
+      setUser({ ...user, pictures: [...user.pictures, { picture_id: newPic.picture_id, picture_url: newPic.picture_url }] })
     } catch (error) {
-      console.error(error);
+      console.error(error)
     } finally {
-      setIsUploading(false);
+      setIsUploading(false)
     }
-  };
+  }
 
-  const handleDeletePicture = async (pictureId: string) => {
+  const handleDeletePicture = async (pictureId: string, pictureUrl: string) => {
     if (!user || user.pictures.length <= 3) {
-      alert('You must maintain at least 3 pictures');
-      return;
+      alert('You must maintain at least 3 pictures')
+      return
     }
     try {
-      const res = await fetch(`${window.location.origin}/api/profiles/me/pictures/${pictureId}`, { method: 'DELETE' });
-      if (!res.ok) throw new Error('Failed to delete picture');
-      const newPics = user.pictures.filter(pic => pic.picture_id !== pictureId);
-      setUser({ ...user, pictures: newPics });
-      if (currentPhotoIndex >= newPics.length) setCurrentPhotoIndex(0);
+      const myHeaders = new Headers()
+      myHeaders.append("Content-Type", "application/x-www-form-urlencoded")
+      const urlencoded = new URLSearchParams()
+      urlencoded.append("pictures", pictureUrl)
+      const requestOptions : any = {
+        method: "DELETE",
+        headers: myHeaders,
+        body: urlencoded.toString(),
+        redirect: "follow"
+      }
+      const res = await fetch(`${window.location.origin}/api/profiles/me/pictures`, requestOptions)
+      if (!res.ok) throw new Error('Failed to delete picture')
+      const newPics = user.pictures.filter(pic => pic.picture_id !== pictureId)
+      let newProfilePicture = user.profile_picture
+      if (user.profile_picture === pictureUrl && newPics.length > 0) {
+        newProfilePicture = newPics[0].picture_url
+        await fetch(`${window.location.origin}/api/profiles/me`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ profile_picture: newProfilePicture })
+        })
+      }
+      setUser({ ...user, pictures: newPics, profile_picture: newProfilePicture })
+      if (currentPhotoIndex >= newPics.length) setCurrentPhotoIndex(0)
     } catch (error) {
-      console.error(error);
+      console.error(error)
     }
-  };
+  }
 
   const handleSetProfilePicture = async (pictureUrl: string) => {
     try {
@@ -236,18 +253,18 @@ function Profile() {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ profile_picture: pictureUrl })
-      });
-      if (!res.ok) throw new Error('Failed to update profile picture');
+      })
+      if (!res.ok) throw new Error('Failed to update profile picture')
       setUser(prev => {
-        if (!prev) return prev;
-        const idx = prev.pictures.findIndex(pic => pic.picture_url === pictureUrl);
-        if (idx !== -1) setCurrentPhotoIndex(idx);
-        return { ...prev, profile_picture: pictureUrl };
-      });
+        if (!prev) return prev
+        const idx = prev.pictures.findIndex(pic => pic.picture_url === pictureUrl)
+        if (idx !== -1) setCurrentPhotoIndex(idx)
+        return { ...prev, profile_picture: pictureUrl }
+      })
     } catch (error) {
-      console.error(error);
+      console.error(error)
     }
-  };
+  }
 
   if (error) {
     return (
@@ -259,10 +276,10 @@ function Profile() {
           </div>
         </section>
       </main>
-    );
+    )
   }
 
-  if (!user) return <p></p>;
+  if (!user) return <p></p>
   return (
     <main>
       <div className="slant-shape1"></div>
@@ -296,7 +313,7 @@ function Profile() {
                         />
                         <button
                           className="remove-picture-btn"
-                          onClick={() => handleDeletePicture(pic.picture_id)}
+                          onClick={() => handleDeletePicture(pic.picture_id, pic.picture_url)}
                           type="button"
                           disabled={user.pictures.length <= 3}
                         >
@@ -326,8 +343,8 @@ function Profile() {
                     type="file"
                     accept="image/*"
                     onChange={(e) => {
-                      const file = e.target.files?.[0];
-                      if (file) handlePictureUpload(file);
+                      const file = e.target.files?.[0]
+                      if (file) handlePictureUpload(file)
                     }}
                     className="picture-input"
                     disabled={isUploading || user.pictures.length >= 5}
@@ -418,8 +435,7 @@ function Profile() {
                     <strong>Interests:</strong> {user.interests.map(i => " #" + i.interest_tag)}
                   </p>
                 ) : (
-                  <p className="card-text text-muted">
-                  </p>
+                  <p className="card-text text-muted"></p>
                 )}
               </>
             )}
@@ -429,7 +445,7 @@ function Profile() {
         </article>
       </section>
     </main>
-  );
+  )
 }
 
-export default Profile;
+export default Profile

@@ -59,6 +59,25 @@ function CreateProfile() {
     }
   }, []);
 
+  useEffect(() => {
+    if (step === 5) {
+      fetch(`${window.location.origin}/api/profiles/me/pictures`, {
+        method: 'GET',
+        headers: { 'Content-Type': 'application/json' }
+      })
+        .then(response => response.json())
+        .then(result => {
+          if (result.status === 'success' && result.data && Array.isArray(result.data.pictures)) {
+            const urls = result.data.pictures.map((pic: any) => pic.picture_url);
+            setUploadedPictures(urls);
+          }
+        })
+        .catch(err => {
+          console.error('Error fetching pictures', err);
+        });
+    }
+  }, [step]);
+
   const nextStep = () => setStep(step + 1);
   const prevStep = () => setStep(step - 1);
 
@@ -71,28 +90,26 @@ function CreateProfile() {
       }
       setIsUploading(true);
       try {
-        for (const file of newFiles) {
-          const formData = new FormData();
-          formData.append('image', file);
-          const response = await fetch('https://api.imgbb.com/1/upload?key=90d36ad33552879ee7c36bb4ba197e92', {
-            method: 'POST',
-            body: formData,
-          });
-          const result = await response.json();
-          if (!response.ok) throw new Error(result.message || 'Failed to upload picture');
-          const backendResponse = await fetch(`${window.location.origin}/api/profiles/me/pictures`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ pictures: [result.data.url] }),
-          });
-          if (!backendResponse.ok) {
-            const errorData = await backendResponse.json();
-            throw new Error(errorData.message || 'Failed to save picture URL to backend');
-          }
-          setUploadedPictures(prev => [...prev, result.data.url]);
+        const formData = new FormData();
+        newFiles.forEach(file => {
+          formData.append('pictures', file);
+        });
+        const response = await fetch(`${window.location.origin}/api/profiles/me/pictures/upload`, {
+          method: 'POST',
+          body: formData
+        });
+        const result = await response.json();
+        if (!response.ok) throw new Error(result.message || 'Failed to upload picture');
+        if (!result.data || !result.data.pictures || !Array.isArray(result.data.pictures) || result.data.pictures.length === 0) {
+          throw new Error('No pictures returned from backend');
         }
+        const newUrls = result.data.pictures.map((pic: any) => pic.picture_url);
+        setUploadedPictures(prev => [...prev, ...newUrls]);
       } catch (error) {
-        setErrors(prev => ({ ...prev, pictures: error instanceof Error ? error.message : 'Failed to upload pictures' }));
+        setErrors(prev => ({
+          ...prev,
+          pictures: error instanceof Error ? error.message : 'Failed to upload pictures'
+        }));
       } finally {
         setIsUploading(false);
       }
@@ -101,15 +118,24 @@ function CreateProfile() {
 
   const handleRemovePicture = async (urlToRemove: string, index: number) => {
     try {
-      const response = await fetch(`${window.location.origin}/api/profiles/me/pictures`, {
-        method: 'DELETE',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ url: urlToRemove }),
-      });
+      const myHeaders = new Headers();
+      myHeaders.append("Content-Type", "application/x-www-form-urlencoded");
+      const urlencoded = new URLSearchParams();
+      urlencoded.append("pictures", urlToRemove);
+      const requestOptions: any = {
+        method: "DELETE",
+        headers: myHeaders,
+        body: urlencoded,
+        redirect: "follow"
+      };
+      const response = await fetch(`${window.location.origin}/api/profiles/me/pictures`, requestOptions);
       if (!response.ok) throw new Error('Failed to remove picture');
       setUploadedPictures(prev => prev.filter((_, i) => i !== index));
     } catch (error) {
-      setErrors(prev => ({ ...prev, pictures: error instanceof Error ? error.message : 'Failed to remove picture' }));
+      setErrors(prev => ({
+        ...prev,
+        pictures: error instanceof Error ? error.message : 'Failed to remove picture'
+      }));
     }
   };
 
@@ -160,7 +186,7 @@ function CreateProfile() {
       const response = await fetch(`${window.location.origin}/api/profiles/me`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-        body: formData.toString(),
+        body: formData.toString()
       });
       const result = await response.json();
       if (!response.ok) {
@@ -176,21 +202,21 @@ function CreateProfile() {
       }
       if (splitted.length > 0) {
         const headers = new Headers();
-        headers.append("Content-Type", "application/x-www-form-urlencoded");
-        headers.append("Authorization", "Bearer YOUR_JWT_TOKEN");
+        headers.append('Content-Type', 'application/x-www-form-urlencoded');
+        headers.append('Authorization', 'Bearer YOUR_JWT_TOKEN');
         const urlencoded = new URLSearchParams();
         for (const interest of splitted) {
           const cleanInterest = interest.startsWith('#') ? interest.substring(1) : interest;
-          urlencoded.append("interests", cleanInterest);
+          urlencoded.append('interests', cleanInterest);
         }
         const requestOptions = {
-          method: "POST",
+          method: 'POST',
           headers: headers,
-          body: urlencoded,
+          body: urlencoded
         };
         const interestsResponse = await fetch(`${window.location.origin}/api/profiles/me/interests`, requestOptions);
         if (!interestsResponse.ok) {
-          throw new Error("Failed to update interests");
+          throw new Error('Failed to update interests');
         }
       }
       navigate('/profile');
