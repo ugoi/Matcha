@@ -32,6 +32,41 @@ function Profile() {
   const [isUploading, setIsUploading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
+  const handleUpdateGPS = () => {
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        const { latitude, longitude } = position.coords;
+        const params = new URLSearchParams();
+        params.append("gps_longitude", longitude.toString());
+        params.append("gps_latitude", latitude.toString());
+        fetch("http://localhost:3000/api/profiles/me", {
+          method: "PATCH",
+          headers: { "Content-Type": "application/x-www-form-urlencoded" },
+          body: params,
+        });
+      },
+      () => getLocationByIP(),
+      { timeout: 5000 }
+    );
+  };
+
+  const getLocationByIP = async () => {
+    try {
+      const res = await fetch('https://ipapi.co/json/');
+      const data = await res.json();
+      if (data.latitude && data.longitude) {
+        const params = new URLSearchParams();
+        params.append("gps_longitude", data.longitude.toString());
+        params.append("gps_latitude", data.latitude.toString());
+        await fetch("http://localhost:3000/api/profiles/me", {
+          method: "PATCH",
+          headers: { "Content-Type": "application/x-www-form-urlencoded" },
+          body: params,
+        });
+      }
+    } catch {}
+  };
+
   useEffect(() => {
     async function fetchProfileData() {
       try {
@@ -46,6 +81,7 @@ function Profile() {
           setError(responseJson.data)
           return
         }
+        handleUpdateGPS();
         const { data } = responseJson
         let nearestLocation = 'Unknown location'
         if (

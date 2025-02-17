@@ -36,6 +36,41 @@ function Home() {
   const [myProfile, setMyProfile] = useState<any>(null);
   const navigate = useNavigate();
 
+  const handleUpdateGPS = () => {
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        const { latitude, longitude } = position.coords;
+        const params = new URLSearchParams();
+        params.append("gps_longitude", longitude.toString());
+        params.append("gps_latitude", latitude.toString());
+        fetch("http://localhost:3000/api/profiles/me", {
+          method: "PATCH",
+          headers: { "Content-Type": "application/x-www-form-urlencoded" },
+          body: params,
+        });
+      },
+      () => getLocationByIP(),
+      { timeout: 5000 }
+    );
+  };
+
+  const getLocationByIP = async () => {
+    try {
+      const res = await fetch('https://ipapi.co/json/');
+      const data = await res.json();
+      if (data.latitude && data.longitude) {
+        const params = new URLSearchParams();
+        params.append("gps_longitude", data.longitude.toString());
+        params.append("gps_latitude", data.latitude.toString());
+        await fetch("http://localhost:3000/api/profiles/me", {
+          method: "PATCH",
+          headers: { "Content-Type": "application/x-www-form-urlencoded" },
+          body: params,
+        });
+      }
+    } catch {}
+  };
+
   useEffect(() => {
     async function fetchUserProfile() {
       try {
@@ -44,6 +79,7 @@ function Home() {
         });
         const result = await res.json();
         if (result.status === 'success') {
+          handleUpdateGPS();
           setPreferences(buildPreferences(result.data));
           setMyProfile(result.data);
         } else {
