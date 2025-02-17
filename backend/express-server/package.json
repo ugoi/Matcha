@@ -10,6 +10,7 @@
     "db:down": "node ./dist/migrations/down.script.js",
     "db:up": "node ./dist/migrations/up.script.js",
     "db:add-test-users": "node ./dist/migrations/add-test-users.script.js",
+    "add-test-users": "node ./scripts/add_test_users.js",
     "test": "vitest --config ./vitest.config.js --no-file-parallelism"
   },
   "dependencies": {
@@ -20,6 +21,8 @@
     "@types/passport-facebook": "^3.0.3",
     "@types/supertest": "^6.0.2",
     "@types/uuid": "^10.0.0",
+    "axios": "^1.7.9",
+    "axios-cookiejar-support": "^5.0.5",
     "bcrypt": "^5.1.1",
     "cookie-parser": "^1.4.7",
     "cors": "^2.8.5",
