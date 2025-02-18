@@ -80,10 +80,23 @@ router.post(
         return;
       }
 
-      // Upload all files to S3 and get their URLs
-      const uploadPromises = (req.files as Express.Multer.File[]).map((file) =>
-        uploadToS3(file)
-      );
+      // For each file, generate a custom filename instead of using the original name,
+      // then upload the file to S3.
+      const uploadPromises = (req.files as Express.Multer.File[]).map((file) => {
+        // Split original name to extract the extension (if any)
+        const originalNameParts = file.originalname.split(".");
+        const extension = originalNameParts.length > 1 ? `.${originalNameParts.pop()}` : "";
+
+        // Generate a custom filename using timestamp and a random string
+        const customFilename = `${Date.now()}-${Math.random().toString(36).substring(2, 10)}${extension}`;
+
+        // Override the file's name with the custom filename
+        file.originalname = customFilename;
+        file.filename = customFilename;
+
+        // Upload the file to S3 using the custom filename
+        return uploadToS3(file);
+      });
       const pictureUrls = await Promise.all(uploadPromises);
 
       const pictures = await picturesRepository.add(
