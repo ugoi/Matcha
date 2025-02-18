@@ -27,6 +27,7 @@ import passport from "passport";
 import { profilesService } from "../profiles/profiles.service.js";
 import { SuccessResponse } from "../../interfaces/response.js";
 import { validationLimits } from "../../config/validation-config.js";
+import { ProtectedUser } from "../users/users.interface.js";
 
 /* Check if user is authenticated */
 router.get(
@@ -121,9 +122,11 @@ router.post(
         sameSite: "strict",
       });
 
+      const protectedUser = new ProtectedUser(result.user);
+
       const response = new SuccessResponse({
         title: "Logged in",
-        user: result.user,
+        user: protectedUser,
         token: result.token,
       });
 
