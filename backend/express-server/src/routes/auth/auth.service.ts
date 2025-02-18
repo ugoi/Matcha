@@ -221,12 +221,36 @@ export async function createJwtToken(user: User): Promise<string> {
       iss: process.env.JWT_ISSUER,
       aud: process.env.JWT_AUDIENCE,
     },
-
     env.JWT_SECRET,
     { expiresIn: "30d" }
   );
 
   return token;
+}
+
+// Added helper function to generate a unique username
+async function generateUsername(profile: any, email: string): Promise<string> {
+  let baseUsername;
+  if (profile.displayName) {
+    baseUsername = profile.displayName.replace(/\s+/g, "").toLowerCase();
+  } else if (
+    profile.name &&
+    (profile.name.givenName || profile.name.familyName)
+  ) {
+    baseUsername = `${profile.name.givenName || ""}${
+      profile.name.familyName || ""
+    }`.toLowerCase();
+  } else {
+    baseUsername = email.split("@")[0].toLowerCase();
+  }
+  baseUsername = baseUsername.replace(/[^a-z0-9]/gi, "");
+  let username = baseUsername;
+  let suffix = 0;
+  while (await userRepository.findOne({ username })) {
+    suffix++;
+    username = baseUsername + suffix;
+  }
+  return username;
 }
 
 export async function authenticatedWithFederatedProvider(
@@ -238,8 +262,7 @@ export async function authenticatedWithFederatedProvider(
     [issuer, profile.id]
   );
   if (!cred) {
-    // The Google user has not logged in to this app before.  Create a
-    // new user record and link it to the Google user.
+    // The Google user has not logged in to this app before. Create a new user record and link it to the Google user.
     const { givenName, familyName } = profile.name;
     const email = profile?.emails?.[0]?.value;
 
@@ -252,34 +275,38 @@ export async function authenticatedWithFederatedProvider(
         await db.none("DELETE FROM users WHERE user_id = $1", [
           userData.user_id,
         ]);
+        const username = await generateUsername(profile, email);
         userData = await userRepository.create({
           first_name: givenName,
           last_name: familyName,
           email: email,
+          username: username,
           is_email_verified: true,
-          created_at: new Date(),
         });
       }
-
       await db.none(
         "INSERT INTO federated_credentials (user_id, provider, subject) VALUES ($1, $2, $3)",
         [userData.user_id, issuer, profile.id]
       );
     } else {
+      const username = await generateUsername(profile, email);
       userData = await userRepository.create({
         first_name: givenName,
         last_name: familyName,
         email: email,
+        username: username,
         is_email_verified: true,
       });
+      await db.none(
+        "INSERT INTO federated_credentials (user_id, provider, subject) VALUES ($1, $2, $3)",
+        [userData.user_id, issuer, profile.id]
+      );
     }
 
     return userData;
   } else {
-    // The Google user has previously logged in to the app.  Get the
-    // user record linked to the Google user and log the user in.
+    // The Google user has previously logged in to the app. Get the user record linked to the Google user and log the user in.
     const user = await userRepository.findOne({ id: cred.user_id });
-
     return user;
   }
 }
