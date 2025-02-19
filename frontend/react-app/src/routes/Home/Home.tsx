@@ -117,7 +117,7 @@ function Home() {
       }
     }
     if (search_preferences.interests_filter) {
-      filterObject.interests = { $in: search_preferences.interests_filter.split(',').map((t: string) => t.trim()) };
+      filterObject.interests = { $overlap: search_preferences.interests_filter.split(',').map((t: string) => t.trim()) };
     }
     if (search_preferences.common_interests !== undefined) {
       filterObject.common_interests = { $gte: String(search_preferences.common_interests) };
