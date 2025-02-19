@@ -13,7 +13,7 @@ export default function NotificationHandler() {
 
   useEffect(() => {
     const token = localStorage.getItem('jwtToken')
-    const socket = io("ws://localhost:3000/api/notifications", { auth: { token: `Bearer ${token}` } })
+    const socket = io("ws://${window.location.origin}/api/notifications", { auth: { token: `Bearer ${token}` } })
 
     socket.on("connect", () => {
       console.log("Connected to notifications namespace.")

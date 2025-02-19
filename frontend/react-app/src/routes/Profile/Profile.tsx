@@ -39,7 +39,7 @@ function Profile() {
         const params = new URLSearchParams();
         params.append("gps_longitude", longitude.toString());
         params.append("gps_latitude", latitude.toString());
-        fetch("http://localhost:3000/api/profiles/me", {
+        fetch("http://${window.location.origin}/api/profiles/me", {
           method: "PATCH",
           headers: { "Content-Type": "application/x-www-form-urlencoded" },
           body: params,
@@ -58,7 +58,7 @@ function Profile() {
         const params = new URLSearchParams();
         params.append("gps_longitude", data.longitude.toString());
         params.append("gps_latitude", data.latitude.toString());
-        await fetch("http://localhost:3000/api/profiles/me", {
+        await fetch("http://${window.location.origin}/api/profiles/me", {
           method: "PATCH",
           headers: { "Content-Type": "application/x-www-form-urlencoded" },
           body: params,
