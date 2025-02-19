@@ -10,7 +10,7 @@ build-frontend:
 	npm install && cd $(FRONTEND_DIR) &&  npm install && npm run build
 
 build-backend:
-	cd $(BACKEND_DIR) && npm install
+	cd $(BACKEND_DIR) && npm install && npm run build
 
 start-backend-prod:
 	cd $(BACKEND_DIR) && npm run db:up && npm run dev 
@@ -30,3 +30,6 @@ dev: start-frontend-dev start-backend-dev
 
 del:
 	@cd $(BACKEND_DIR) && npm run db:down
+
+reset:
+	rm -rf $(FRONTEND_DIR)/node_modules $(BACKEND_DIR)/package-lock.json
