@@ -137,7 +137,7 @@ export default function Chat() {
 
   useEffect(() => {
     if (!userId) return
-    socketRef.current = io('ws://${window.location.origin}/api/chat', { withCredentials: true })
+    socketRef.current = io(`ws://${window.location.origin}/api/chat`, { withCredentials: true })
     socketRef.current.on('chat message', (data: ChatMessageData, ack: (response: string) => void) => {
       const newMsg: ChatMessage = {
         chat_id: Math.random().toString(36).substring(2),
@@ -161,8 +161,8 @@ export default function Chat() {
     if (!userId) return
     (async () => {
       const [matchedRes, likesRes] = await Promise.all([
-        fetch('${window.location.origin}/api/profiles/matched', { credentials: 'include' }),
-        fetch('${window.location.origin}/api/profiles/likes', { credentials: 'include' })
+        fetch(`${window.location.origin}/api/profiles/matched`, { credentials: 'include' }),
+        fetch(`${window.location.origin}/api/profiles/likes`, { credentials: 'include' })
       ])
       const matchedData = await matchedRes.json()
       const likesData = await likesRes.json()
@@ -207,7 +207,7 @@ export default function Chat() {
   useEffect(() => {
     if (!userId) return
     (async () => {
-      const res = await fetch('${window.location.origin}/api/profiles/visits', { credentials: 'include' })
+      const res = await fetch(`${window.location.origin}/api/profiles/visits`, { credentials: 'include' })
       const data = await res.json()
       if (data.status === 'success' && data.data?.visits) {
         const inbound = data.data.visits.inbound
