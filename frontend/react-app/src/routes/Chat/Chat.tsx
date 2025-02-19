@@ -2,7 +2,7 @@ import { useEffect, useState, useRef } from "react";
 import { io } from "socket.io-client";
 import { useNavigate } from "react-router-dom";
 import NavbarLogged from "../../components/NavbarLogged/NavbarLogged";
-import "./chat.css";
+import "./Chat.css";
 
 interface MatchItem {
   id: string;

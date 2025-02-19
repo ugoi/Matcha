@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import ReactSlider from 'react-slider';
 import NavbarLogged from '../../components/NavbarLogged/NavbarLogged';
-import './settings.css';
+import './Settings.css';
 
 function Settings() {
   const [distance, setDistance] = useState(50);

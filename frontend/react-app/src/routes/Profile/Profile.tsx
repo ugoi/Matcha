@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import NavbarLogged from '../../components/NavbarLogged/NavbarLogged'
-import './profile.css'
+import './Profile.css'
 
 export interface UserProfile {
   first_name: string

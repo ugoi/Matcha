@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import NavbarLogged from '../../components/NavbarLogged/NavbarLogged';
-import './home.css';
+import './Home.css';
 
 type User = {
   profile_id: number;
