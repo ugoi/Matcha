@@ -17,7 +17,7 @@ function Settings() {
   const [availableInterests, setAvailableInterests] = useState<string[]>([]);
 
   useEffect(() => {
-    fetch("http://${window.location.origin}/api/users/me")
+    fetch(`http://${window.location.origin}/api/users/me`)
       .then((res) => res.json())
       .then((response) => {
         if (response?.data?.user?.email) {
@@ -26,7 +26,7 @@ function Settings() {
       })
       .catch(() => {});
 
-    fetch("http://${window.location.origin}/api/profiles/me", { credentials: "include" })
+    fetch(`http://${window.location.origin}/api/profiles/me`, { credentials: "include" })
       .then((res) => res.json())
       .then((result) => {
         if (result?.status === "success") {
@@ -73,7 +73,7 @@ function Settings() {
   const handleSaveChanges = async () => {
     const emailParams = new URLSearchParams();
     emailParams.append("email", email);
-    await fetch("http://${window.location.origin}/api/users/me", {
+    await fetch(`http://${window.location.origin}/api/users/me`, {
       method: "PATCH",
       headers: { "Content-Type": "application/x-www-form-urlencoded" },
       body: emailParams,
@@ -93,7 +93,7 @@ function Settings() {
     );
     profileParams.append("common_interests", minCommonInterests.toString());
 
-    await fetch("http://${window.location.origin}/api/profiles/me", {
+    await fetch(`http://${window.location.origin}/api/profiles/me`, {
       method: "PATCH",
       headers: { "Content-Type": "application/x-www-form-urlencoded" },
       body: profileParams,
@@ -108,7 +108,7 @@ function Settings() {
         const params = new URLSearchParams();
         params.append("gps_longitude", longitude.toString());
         params.append("gps_latitude", latitude.toString());
-        fetch("http://${window.location.origin}/api/profiles/me", {
+        fetch(`http://${window.location.origin}/api/profiles/me`, {
           method: "PATCH",
           headers: { "Content-Type": "application/x-www-form-urlencoded" },
           body: params,
@@ -127,7 +127,7 @@ function Settings() {
         const params = new URLSearchParams();
         params.append("gps_longitude", data.longitude.toString());
         params.append("gps_latitude", data.latitude.toString());
-        await fetch("http://${window.location.origin}/api/profiles/me", {
+        await fetch(`http://${window.location.origin}/api/profiles/me`, {
           method: "PATCH",
           headers: { "Content-Type": "application/x-www-form-urlencoded" },
           body: params,
@@ -141,7 +141,7 @@ function Settings() {
       return;
     }
     try {
-      const res = await fetch("http://${window.location.origin}/api/users/me", {
+      const res = await fetch(`http://${window.location.origin}/api/users/me`, {
         method: "DELETE",
         credentials: "include",
       });

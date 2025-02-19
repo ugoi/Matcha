@@ -64,7 +64,7 @@ const markNotificationsAsRead = async (notificationIds: string[]) => {
     redirect: "follow" as RequestRedirect
   }
   try {
-    const response = await fetch("http://${window.location.origin}/api/notifications", requestOptions)
+    const response = await fetch(`http://${window.location.origin}/api/notifications`, requestOptions)
     const result = await response.text()
     console.log(result)
   } catch (error) {}
@@ -99,7 +99,7 @@ export default function Chat() {
   useEffect(() => {
     const markAllAsRead = async () => {
       try {
-        const response = await fetch("http://${window.location.origin}/api/notifications", {
+        const response = await fetch(`http://${window.location.origin}/api/notifications`, {
           method: "GET",
           headers: { "Content-Type": "application/json" },
           redirect: "follow"
