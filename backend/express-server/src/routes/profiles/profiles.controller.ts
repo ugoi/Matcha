@@ -43,13 +43,7 @@ router.get(
   passport.authenticate("jwt", { session: false }),
   isAuthorized,
   query("sort_by").optional(),
-  query("filter_by")
-    .optional()
-    .custom(validateFilterOperators)
-    .withMessage(
-      (value) =>
-        `Invalid filter: ${value}. Valid fields are: user_id, age, distance, fame_rating, common_interests, interests, username, email, gender, sexual_preference. Valid operators are: $eq, $neq, $gt, $gte, $lt, $lte, $in, $not_in`
-    ),
+  query("filter_by").optional().custom(validateFilterOperators),
   query("limit").optional().isInt({ min: 1, max: 100 }).toInt(),
   async function (req, res, next) {
     const result = validationResult(req);
@@ -70,6 +64,11 @@ router.get(
               filterBy.distance[operator] = value * 1000;
             }
           }
+        }
+        // Map 'interests' to 'overlapping_interests' if provided
+        if (filterBy.interests) {
+          filterBy.overlapping_interests = filterBy.interests;
+          delete filterBy.interests;
         }
       }
 

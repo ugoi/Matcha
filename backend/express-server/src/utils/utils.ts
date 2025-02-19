@@ -266,6 +266,8 @@ const VALID_OPERATORS = [
   "$lte",
   "$in",
   "$not_in",
+  "$overlap",
+  "$noverlap",
 ];
 
 // Valid fields that can be filtered on
@@ -276,6 +278,7 @@ const VALID_FILTER_FIELDS = [
   "fame_rating",
   "common_interests",
   "interests",
+  "overlapping_interests",
   "username",
   "email",
   "gender",
@@ -300,16 +303,29 @@ export function validateFilterOperators(value: string) {
       // Check operators if value is an object
       if (typeof value === "object" && value !== null) {
         const operators = Object.keys(value).filter((k) => k.startsWith("$"));
-        const invalidOperators = operators.filter(
-          (op) => !VALID_OPERATORS.includes(op)
-        );
-
-        if (invalidOperators.length > 0) {
-          throw new Error(
-            `Invalid operators: ${invalidOperators.join(
-              ", "
-            )}. Valid operators are: ${VALID_OPERATORS.join(", ")}`
+        if (field === "interests") {
+          const allowedOps = ["$overlap", "$noverlap"];
+          const invalidOperators = operators.filter(
+            (op) => !allowedOps.includes(op)
           );
+          if (invalidOperators.length > 0) {
+            throw new Error(
+              `Invalid operators for interests: ${invalidOperators.join(
+                ", "
+              )}. Only ${allowedOps.join(" and ")} are allowed.`
+            );
+          }
+        } else {
+          const invalidOperators = operators.filter(
+            (op) => !VALID_OPERATORS.includes(op)
+          );
+          if (invalidOperators.length > 0) {
+            throw new Error(
+              `Invalid operators: ${invalidOperators.join(
+                ", "
+              )}. Valid operators are: ${VALID_OPERATORS.join(", ")}`
+            );
+          }
         }
       }
     }
@@ -325,4 +341,3 @@ export function validateFilterOperators(value: string) {
     throw new Error("Invalid JSON format in filter");
   }
 }
-

@@ -25,6 +25,53 @@ import jsonSql from "json-sql";
 // Initialize json-sql with PostgreSQL dialect
 const builder = jsonSql({ dialect: "postgresql" });
 
+// Add custom operator $overlap that applies PostgreSQL's array overlap operator (&&)
+builder.dialect.operators.comparison.add("$overlap", {
+  inversedOperator: "$noverlap",
+  defaultFetchingOperator: "$inValues",
+  fn: function (field, value) {
+    if (Array.isArray(value)) {
+      // When value is a raw array, build a proper SQL array literal.
+      const sqlArray = `ARRAY[${value.map((item) => `'${item}'`).join(", ")}]`;
+      return `${field} && ${sqlArray}`;
+    } else if (typeof value === "string") {
+      // When value is a string (e.g. "($p6, $p7)") produced by the fetching operator,
+      // check if it is a parenthesized list.
+      const trimmed = value.trim();
+      if (trimmed.startsWith("(") && trimmed.endsWith(")")) {
+        // Remove the surrounding parentheses and wrap in ARRAY[..]
+        const inner = trimmed.slice(1, -1);
+        return `${field} && ARRAY[${inner}]`;
+      }
+      // Fallback: force a cast (may still not work if the value isn't a proper list)
+      return `${field} && (${value})::text[]`;
+    } else {
+      throw new Error("Unexpected value type for $overlap operator");
+    }
+  },
+});
+
+// Inverse operator: $noverlap
+builder.dialect.operators.comparison.add("$noverlap", {
+  inversedOperator: "$overlap",
+  defaultFetchingOperator: "$inValues",
+  fn: function (field, value) {
+    if (Array.isArray(value)) {
+      const sqlArray = `ARRAY[${value.map((item) => `'${item}'`).join(", ")}]`;
+      return `NOT (${field} && ${sqlArray})`;
+    } else if (typeof value === "string") {
+      const trimmed = value.trim();
+      if (trimmed.startsWith("(") && trimmed.endsWith(")")) {
+        const inner = trimmed.slice(1, -1);
+        return `NOT (${field} && ARRAY[${inner}])`;
+      }
+      return `NOT (${field} && (${value})::text[])`;
+    } else {
+      throw new Error("Unexpected value type for $noverlap operator");
+    }
+  },
+});
+
 // Helper function to convert our operators to json-sql operators
 const convertOperators = (filter: any) => {
   if (!filter) return filter;
@@ -259,6 +306,16 @@ export const profilesService = {
                   )`,
                 },
                 alias: "interests",
+              },
+              {
+                expression: {
+                  pattern: `(
+                    SELECT array_agg(i.interest_tag)
+                    FROM user_interests i
+                    WHERE i.user_id = profiles.user_id
+                  )`,
+                },
+                alias: "overlapping_interests",
               },
               {
                 expression: {
