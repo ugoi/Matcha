@@ -56,9 +56,11 @@ async function createUser(user) {
       Array.isArray(user.pictures) &&
       user.pictures.length > 0
     ) {
+      const picturesForm = new URLSearchParams();
+      user.pictures.forEach((pic) => picturesForm.append("pictures", pic));
       await client.post(
         `${BASE_URL}/api/profiles/me/pictures`,
-        qs.stringify({ pictures: user.pictures }, { arrayFormat: "repeat" }),
+        picturesForm.toString(),
         { headers: { "Content-Type": "application/x-www-form-urlencoded" } }
       );
       console.log(`User ${user.username} pictures uploaded successfully.`);
@@ -107,9 +109,13 @@ async function createUser(user) {
       Array.isArray(user.interests) &&
       user.interests.length > 0
     ) {
+      const interestsForm = new URLSearchParams();
+      user.interests.forEach((interest) =>
+        interestsForm.append("interests", interest)
+      );
       await client.post(
         `${BASE_URL}/api/profiles/me/interests`,
-        qs.stringify({ interests: user.interests }, { arrayFormat: "repeat" }),
+        interestsForm.toString(),
         { headers: { "Content-Type": "application/x-www-form-urlencoded" } }
       );
       console.log(`User ${user.username} interests added successfully.`);

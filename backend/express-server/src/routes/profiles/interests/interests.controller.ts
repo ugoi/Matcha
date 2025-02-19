@@ -33,9 +33,9 @@ router.post(
   passport.authenticate("jwt", { session: false }),
   body("interests")
     .notEmpty()
-    .escape()
     .customSanitizer(arraySanitizer)
     .isArray({ max: 30 }),
+  body("interests.*").isString().escape(),
   async function (req, res, next) {
     const result = validationResult(req);
     if (!result.isEmpty()) {

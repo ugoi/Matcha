@@ -29,7 +29,10 @@
     "lastName": "Wonderland",
     "email": "alice@example.com",
     "password": "AlicePassword123!",
-    "pictures": ["https://picsum.photos/id/21/200/200"],
+    "pictures": [
+      "https://picsum.photos/id/21/200/200",
+      "https://picsum.photos/id/22/200/200"
+    ],
     "gender": "female",
     "age": 25,
     "sexual_preference": "bisexual",
@@ -52,7 +55,10 @@
     "lastName": "Builder",
     "email": "bob@example.com",
     "password": "BobPassword123!",
-    "pictures": ["https://picsum.photos/id/22/200/200"],
+    "pictures": [
+      "https://picsum.photos/id/22/200/200",
+      "https://picsum.photos/id/23/200/200"
+    ],
     "gender": "male",
     "age": 30,
     "sexual_preference": "heterosexual",
@@ -75,7 +81,10 @@
     "lastName": "Chaplin",
     "email": "charlie@example.com",
     "password": "CharliePassword123!",
-    "pictures": ["https://picsum.photos/id/23/200/200"],
+    "pictures": [
+      "https://picsum.photos/id/23/200/200",
+      "https://picsum.photos/id/24/200/200"
+    ],
     "gender": "male",
     "age": 35,
     "sexual_preference": "bisexual",
@@ -98,7 +107,10 @@
     "lastName": "Prince",
     "email": "diana@example.com",
     "password": "DianaPassword123!",
-    "pictures": ["https://picsum.photos/id/24/200/200"],
+    "pictures": [
+      "https://picsum.photos/id/24/200/200",
+      "https://picsum.photos/id/25/200/200"
+    ],
     "gender": "female",
     "age": 28,
     "sexual_preference": "heterosexual",
@@ -114,5 +126,57 @@
     "interests_filter": "history, mythology",
     "common_interests": 1,
     "interests": ["reading", "archaeology"]
+  },
+  {
+    "firstName": "Ethan",
+    "username": "ethan_smith",
+    "lastName": "Smith",
+    "email": "ethan@example.com",
+    "password": "EthanPassword123!",
+    "pictures": [
+      "https://picsum.photos/id/25/200/200",
+      "https://picsum.photos/id/26/200/200"
+    ],
+    "gender": "male",
+    "age": 32,
+    "sexual_preference": "heterosexual",
+    "biography": "I love to travel and explore",
+    "profile_picture": "https://picsum.photos/id/25/200/200",
+    "gps_latitude": 40.715,
+    "gps_longitude": -74.015,
+    "age_min": 28,
+    "age_max": 38,
+    "fame_rating_min": 15,
+    "fame_rating_max": 70,
+    "location_radius": 80,
+    "interests_filter": "traveling, exploring",
+    "common_interests": 2,
+    "interests": ["traveling", "exploring"]
+  },
+  {
+    "firstName": "Fiona",
+    "username": "fiona_green",
+    "lastName": "Green",
+    "email": "fiona@example.com",
+    "password": "FionaPassword123!",
+    "pictures": [
+      "https://picsum.photos/id/26/200/200",
+      "https://picsum.photos/id/27/200/200"
+    ],
+    "gender": "female",
+    "age": 29,
+    "sexual_preference": "heterosexual",
+    "biography": "I love to cook and bake",
+    "profile_picture": "https://picsum.photos/id/26/200/200",
+    "gps_latitude": 40.71,
+    "gps_longitude": -74.01,
+    "age_min": 25,
+    "age_max": 35,
+    "fame_rating_min": 10,
+    "fame_rating_max": 60,
+    "location_radius": 70,
+    "interests_filter": "cooking, baking",
+    "common_interests": 1,
+    "interests": ["cooking", "baking"]
   }
 ]
