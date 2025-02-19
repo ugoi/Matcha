@@ -89,7 +89,7 @@ function Settings() {
     profileParams.append("fame_rating_max", maxFameRating.toString());
     profileParams.append(
       "interests_filter",
-      commonTags.map(t => t.startsWith('#') ? t : '#' + t).join(', ')
+      commonTags.map(t => t.replace(/^#/, '')).join(', ')
     );
     profileParams.append("common_interests", minCommonInterests.toString());
 
@@ -155,11 +155,12 @@ function Settings() {
   };
 
   const toggleCommonTag = (tag: string) => {
-    if (commonTags.includes(tag)) {
-      setCommonTags(commonTags.filter(t => t !== tag));
+    const normalizedTag = tag.replace(/^#/, '');
+    if (commonTags.includes(normalizedTag)) {
+      setCommonTags(commonTags.filter(t => t !== normalizedTag));
     } else {
       if (commonTags.length < 5) {
-        setCommonTags([...commonTags, tag]);
+        setCommonTags([...commonTags, normalizedTag]);
       } else {
         alert("Maximum 5 tags allowed");
       }
@@ -234,7 +235,7 @@ function Settings() {
                     className="form-check-input"
                     id={`tag-${idx}`}
                     value={tag}
-                    checked={commonTags.includes(tag)}
+                    checked={commonTags.includes(tag.replace(/^#/, ''))}
                     onChange={() => toggleCommonTag(tag)}
                   />
                   <label className="form-check-label" htmlFor={`tag-${idx}`}>
