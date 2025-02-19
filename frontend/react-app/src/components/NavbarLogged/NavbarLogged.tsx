@@ -9,7 +9,7 @@ import './NavbarLogged.css'
 
 const handleLogout = () => {
   const settings = {
-    url: `http://${window.location.origin}/api/logout`,
+    url: `${window.location.origin}/api/logout`,
     method: "GET",
     timeout: 0,
   }

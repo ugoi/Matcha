@@ -64,7 +64,7 @@ const markNotificationsAsRead = async (notificationIds: string[]) => {
     redirect: "follow" as RequestRedirect
   }
   try {
-    const response = await fetch(`http://${window.location.origin}/api/notifications`, requestOptions)
+    const response = await fetch(`${window.location.origin}/api/notifications`, requestOptions)
     const result = await response.text()
     console.log(result)
   } catch (error) {}
@@ -99,7 +99,7 @@ export default function Chat() {
   useEffect(() => {
     const markAllAsRead = async () => {
       try {
-        const response = await fetch(`http://${window.location.origin}/api/notifications`, {
+        const response = await fetch(`${window.location.origin}/api/notifications`, {
           method: "GET",
           headers: { "Content-Type": "application/json" },
           redirect: "follow"
@@ -161,8 +161,8 @@ export default function Chat() {
     if (!userId) return
     (async () => {
       const [matchedRes, likesRes] = await Promise.all([
-        fetch('http://${window.location.origin}/api/profiles/matched', { credentials: 'include' }),
-        fetch('http://${window.location.origin}/api/profiles/likes', { credentials: 'include' })
+        fetch('${window.location.origin}/api/profiles/matched', { credentials: 'include' }),
+        fetch('${window.location.origin}/api/profiles/likes', { credentials: 'include' })
       ])
       const matchedData = await matchedRes.json()
       const likesData = await likesRes.json()
@@ -207,7 +207,7 @@ export default function Chat() {
   useEffect(() => {
     if (!userId) return
     (async () => {
-      const res = await fetch('http://${window.location.origin}/api/profiles/visits', { credentials: 'include' })
+      const res = await fetch('${window.location.origin}/api/profiles/visits', { credentials: 'include' })
       const data = await res.json()
       if (data.status === 'success' && data.data?.visits) {
         const inbound = data.data.visits.inbound
@@ -249,7 +249,7 @@ export default function Chat() {
     setSelectedUserId(uid)
     setMessageHistory([])
     try {
-      const res = await fetch(`http://${window.location.origin}/api/chats/${uid}?limit=20`, { credentials: 'include' })
+      const res = await fetch(`${window.location.origin}/api/chats/${uid}?limit=20`, { credentials: 'include' })
       const j = await res.json()
       if (j.status === 'success' && Array.isArray(j.data?.chats)) {
         const sortedChats = j.data.chats.sort((a: ChatMessage, b: ChatMessage) => new Date(a.sent_at).getTime() - new Date(b.sent_at).getTime())
@@ -284,7 +284,7 @@ export default function Chat() {
 
   const fetchFullProfile = async (userId: string) => {
     try {
-      const res = await fetch(`http://${window.location.origin}/api/profiles/${userId}`, { credentials: 'include' })
+      const res = await fetch(`${window.location.origin}/api/profiles/${userId}`, { credentials: 'include' })
       const data = await res.json()
       return data.status === 'success' && data.data ? (data.data as FullProfile) : null
     } catch (error) {
@@ -313,7 +313,7 @@ export default function Chat() {
     if (!expandedProfile) return
     try {
       const params = new URLSearchParams({ reason: 'scammer asked for money' })
-      const res = await fetch(`http://${window.location.origin}/api/profiles/${expandedProfile.profile_id}/report`, {
+      const res = await fetch(`${window.location.origin}/api/profiles/${expandedProfile.profile_id}/report`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
         credentials: 'include',
@@ -524,7 +524,7 @@ export default function Chat() {
   const handleUnmatch = async () => {
     if (!selectedUserId) return
     try {
-      await fetch(`http://${window.location.origin}/api/profiles/${selectedUserId}/like`, {
+      await fetch(`${window.location.origin}/api/profiles/${selectedUserId}/like`, {
         method: 'DELETE',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include'
@@ -539,7 +539,7 @@ export default function Chat() {
   const handleBlock = async () => {
     if (!selectedUserId) return
     try {
-      await fetch(`http://${window.location.origin}/api/profiles/${selectedUserId}/block`, {
+      await fetch(`${window.location.origin}/api/profiles/${selectedUserId}/block`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include'

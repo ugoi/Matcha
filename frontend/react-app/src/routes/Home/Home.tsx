@@ -43,7 +43,7 @@ function Home() {
         const params = new URLSearchParams();
         params.append("gps_longitude", longitude.toString());
         params.append("gps_latitude", latitude.toString());
-        fetch(`http://${window.location.origin}/api/profiles/me`, {
+        fetch(`${window.location.origin}/api/profiles/me`, {
           method: "PATCH",
           headers: { "Content-Type": "application/x-www-form-urlencoded" },
           body: params,
@@ -62,7 +62,7 @@ function Home() {
         const params = new URLSearchParams();
         params.append("gps_longitude", data.longitude.toString());
         params.append("gps_latitude", data.latitude.toString());
-        await fetch(`http://${window.location.origin}/api/profiles/me`, {
+        await fetch(`${window.location.origin}/api/profiles/me`, {
           method: "PATCH",
           headers: { "Content-Type": "application/x-www-form-urlencoded" },
           body: params,
@@ -143,7 +143,7 @@ function Home() {
       }
       params.append("limit", "100");
       try {
-        const res = await fetch(`http://${window.location.origin}/api/profiles?${params.toString()}`, {
+        const res = await fetch(`${window.location.origin}/api/profiles?${params.toString()}`, {
           credentials: 'include'
         });
         const data = await res.json();
@@ -185,7 +185,7 @@ function Home() {
   useEffect(() => {
     const currentUser = users[currentIndex];
     if (!currentUser) return;
-    fetch(`http://${window.location.origin}/api/profiles/${currentUser.profile_id}/visits`, {
+    fetch(`${window.location.origin}/api/profiles/${currentUser.profile_id}/visits`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       credentials: 'include'
@@ -202,7 +202,7 @@ function Home() {
     if (actedUserIds.has(currentUser.profile_id)) return;
     setIsActionLoading(true);
     try {
-      await fetch(`http://${window.location.origin}/api/profiles/${currentUser.profile_id}/like`, {
+      await fetch(`${window.location.origin}/api/profiles/${currentUser.profile_id}/like`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
@@ -224,7 +224,7 @@ function Home() {
     if (actedUserIds.has(currentUser.profile_id)) return;
     setIsActionLoading(true);
     try {
-      await fetch(`http://${window.location.origin}/api/profiles/${currentUser.profile_id}/dislike`, {
+      await fetch(`${window.location.origin}/api/profiles/${currentUser.profile_id}/dislike`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
