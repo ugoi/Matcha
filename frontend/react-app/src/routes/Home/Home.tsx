@@ -24,12 +24,7 @@ function Home() {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [photoIndex, setPhotoIndex] = useState(0);
   const [preferences, setPreferences] = useState<any>(null);
-  const [sortCriteria, setSortCriteria] = useState<Record<string, { $order: "asc" | "desc" }>>({
-    distance: { $order: "desc" },
-    age: { $order: "asc" },
-    fame_rating: { $order: "desc" },
-    common_interests: { $order: "desc" },
-  });
+  const [sortCriteria, setSortCriteria] = useState<Record<string, { $order: "asc" | "desc" }>>({});
   const [actedUserIds, setActedUserIds] = useState<Set<number>>(new Set());
   const [showMatchAnimation, setShowMatchAnimation] = useState(false);
   const [isActionLoading, setIsActionLoading] = useState(false);
@@ -193,7 +188,15 @@ function Home() {
   }, [currentIndex, users]);
 
   const updateSort = (field: string, order: "asc" | "desc") => {
-    setSortCriteria(prev => ({ ...prev, [field]: { $order: order } }));
+    setSortCriteria(prev => {
+      const newCriteria = { ...prev };
+      if (prev[field] && prev[field].$order === order) {
+        delete newCriteria[field];
+      } else {
+        newCriteria[field] = { $order: order };
+      }
+      return newCriteria;
+    });
   };
 
   const handleLikeUser = async () => {
