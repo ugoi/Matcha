@@ -19,7 +19,7 @@
     "fame_rating_min": 1,
     "fame_rating_max": 100,
     "location_radius": 100,
-    "interests_filter": "biking, hiking",
+    "interests_filter": "diving, cycling",
     "common_interests": 2,
     "interests": ["diving", "cycling", "gaming"]
   },
@@ -45,7 +45,7 @@
     "fame_rating_min": 10,
     "fame_rating_max": 50,
     "location_radius": 50,
-    "interests_filter": "hiking, reading",
+    "interests_filter": "photography",
     "common_interests": 3,
     "interests": ["traveling", "photography"]
   },
@@ -71,7 +71,7 @@
     "fame_rating_min": 5,
     "fame_rating_max": 60,
     "location_radius": 100,
-    "interests_filter": "building, fixing",
+    "interests_filter": "construction, design",
     "common_interests": 1,
     "interests": ["construction", "design"]
   },
@@ -97,7 +97,7 @@
     "fame_rating_min": 10,
     "fame_rating_max": 70,
     "location_radius": 80,
-    "interests_filter": "comedy, cinema",
+    "interests_filter": "acting",
     "common_interests": 2,
     "interests": ["acting", "filmmaking"]
   },
@@ -123,7 +123,7 @@
     "fame_rating_min": 15,
     "fame_rating_max": 65,
     "location_radius": 75,
-    "interests_filter": "history, mythology",
+    "interests_filter": "history",
     "common_interests": 1,
     "interests": ["reading", "archaeology"]
   },
@@ -149,7 +149,7 @@
     "fame_rating_min": 15,
     "fame_rating_max": 70,
     "location_radius": 80,
-    "interests_filter": "traveling, exploring",
+    "interests_filter": "traveling",
     "common_interests": 2,
     "interests": ["traveling", "exploring"]
   },
@@ -175,7 +175,7 @@
     "fame_rating_min": 10,
     "fame_rating_max": 60,
     "location_radius": 70,
-    "interests_filter": "cooking, baking",
+    "interests_filter": "cooking",
     "common_interests": 1,
     "interests": ["cooking", "baking"]
   }
